@@ -1,5 +1,129 @@
-# Vue 3 + TypeScript + Vite
+# 医疗数据分析系统前端
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+## 项目简介
+这是一个基于 Vue 3 开发的医疗数据分析系统前端项目，主要用于展示和分析患者的医疗数据。系统提供了直观的数据可视化界面，支持多种医疗参数的展示和分析。
 
-Learn more about the recommended Project Setup and IDE Support in the [Vue Docs TypeScript Guide](https://vuejs.org/guide/typescript/overview.html#project-setup).
+## 功能特点
+- 患者基本信息展示
+- 多参数数据分析和展示
+- 数据可视化图表展示
+- 数据表格展示
+- 时间范围筛选
+- 数据导出功能（支持图片和Excel格式）
+- 响应式设计
+
+## 技术栈
+- Vue 3
+- Element Plus
+- Vue Router
+- SVG 图表
+- SCSS/CSS
+
+## 安装说明
+
+### 环境要求
+- Node.js >= 14.0.0
+- npm >= 6.0.0
+
+### 安装步骤
+1. 克隆项目
+```bash
+git clone [项目地址]
+cd data_system_frontend
+```
+
+2. 安装依赖
+```bash
+npm install
+```
+
+3. 启动开发服务器
+```bash
+npm run dev
+```
+
+4. 构建生产版本
+```bash
+npm run build
+```
+
+## 使用说明
+
+### 主要功能
+1. 患者信息展示
+   - 显示患者姓名、年龄、性别
+   - 显示病例ID
+   - 支持返回选择功能
+
+2. 数据分析
+   - 支持多种医疗参数选择
+   - 提供YTD（年初至今）时间筛选
+   - 支持自定义日期范围选择
+
+3. 数据展示
+   - 图表展示：支持折线图等可视化展示
+   - 表格展示：支持数据表格形式展示
+   - 支持数据导出为图片和Excel格式
+
+### 参数说明
+系统支持以下主要参数的分析：
+- YEB
+- 红细胞计数
+- 白细胞计数
+- 中性粒细胞比例
+- 血红蛋白
+- 血小板计数
+- 总蛋白
+- 白蛋白
+- 球蛋白
+- 总胆红素
+- 直接胆红素
+- 间接胆红素
+- 尿素氮
+- 谷氨酰转肽酶
+- 天冬氨酸氨基转移酶
+- 激活部分凝血活酶时间
+- 凝血酶原时间
+- 血浆纤维蛋白原
+- CRP
+- 血氨
+- 他克莫司
+
+## 项目结构
+```
+data_system_frontend/
+├── src/
+│   ├── views/
+│   │   └── visualization/
+│   │       └── DataAnalysisResultDisplay.vue
+│   ├── components/
+│   ├── assets/
+│   └── ...
+├── public/
+├── package.json
+└── README.md
+```
+
+## 开发指南
+1. 组件开发规范
+   - 使用 Vue 3 组合式 API
+   - 遵循 Element Plus 组件使用规范
+   - 保持代码结构清晰，注释完整
+
+2. 样式开发规范
+   - 使用 scoped CSS
+   - 遵循 BEM 命名规范
+   - 保持样式模块化
+
+## 贡献指南
+1. Fork 项目
+2. 创建特性分支
+3. 提交更改
+4. 推送到分支
+5. 创建 Pull Request
+
+## 许可证
+[待定]
+
+## 联系方式
+[待定]
