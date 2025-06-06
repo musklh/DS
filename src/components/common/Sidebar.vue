@@ -3,8 +3,8 @@
     <el-menu
       :default-active="activeMenu"
       class="sidebar-menu"
-      @select="handleSelect"
       :router="true"
+      @select="handleSelect"
     >
       <el-menu-item index="/dashboard/help">
         <img src="@/assets/1.png" class="menu-icon" />
@@ -16,10 +16,10 @@
           <img src="@/assets/2.png" class="menu-icon" />
           <span>数据维护</span>
         </template>
-        <el-menu-item index="/dashboard/system">系统词条</el-menu-item>
-        <el-menu-item index="/dashboard/template">临床模板</el-menu-item>
+        <el-menu-item index="/dashboard/system"> 系统词条 </el-menu-item>
+        <el-menu-item index="/dashboard/template"> 临床模板 </el-menu-item>
         <!--         <el-menu-item index="/dashboard/calculation">计算属性</el-menu-item>  -->
-        <el-menu-item index="/dashboard/disease">专病数据</el-menu-item>
+        <el-menu-item index="/dashboard/disease"> 专病数据 </el-menu-item>
       </el-sub-menu>
 
       <el-sub-menu index="patient">
@@ -27,8 +27,8 @@
           <img src="@/assets/p.png" class="menu-icon" />
           <span>患者管理</span>
         </template>
-        <el-menu-item index="/dashboard/patient-list">患者列表</el-menu-item>
-        <el-menu-item index="/dashboard/data-entry">数据录入</el-menu-item>
+        <el-menu-item index="/dashboard/patient-list"> 患者列表 </el-menu-item>
+        <el-menu-item index="/dashboard/data-entry"> 数据录入 </el-menu-item>
       </el-sub-menu>
 
       <el-menu-item index="/dashboard/DataAnalysisView">
@@ -40,25 +40,25 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { defineComponent, ref } from 'vue';
+import { useRoute } from 'vue-router';
 
 export default defineComponent({
   name: 'Sidebar',
   setup() {
-    const route = useRoute()
-    const activeMenu = ref(route.path)
+    const route = useRoute();
+    const activeMenu = ref(route.path);
 
     const handleSelect = (index: string) => {
-      activeMenu.value = index
-    }
+      activeMenu.value = index;
+    };
 
     return {
       activeMenu,
-      handleSelect
-    }
-  }
-})
+      handleSelect,
+    };
+  },
+});
 </script>
 
 <style scoped lang="scss">

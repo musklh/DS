@@ -1,6 +1,6 @@
 // @ts-ignore
 /* eslint-disable */
-import request from "@/request";
+import request from '@/request';
 
 /** 此处后端没有提供注释 GET /documents/ */
 export async function documentsList(
@@ -13,8 +13,8 @@ export async function documentsList(
     next?: string;
     previous?: string;
     results: API.Documents[];
-  }>("/documents/", {
-    method: "GET",
+  }>('/documents/', {
+    method: 'GET',
     params: {
       ...params,
     },
@@ -23,14 +23,11 @@ export async function documentsList(
 }
 
 /** 此处后端没有提供注释 POST /documents/ */
-export async function documentsCreate(
-  body: API.Documents,
-  options?: { [key: string]: any }
-) {
-  return request<API.Documents>("/documents/", {
-    method: "POST",
+export async function documentsCreate(body: API.Documents, options?: { [key: string]: any }) {
+  return request<API.Documents>('/documents/', {
+    method: 'POST',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     data: body,
     ...(options || {}),
@@ -45,7 +42,7 @@ export async function documentsRead(
 ) {
   const { id: param0, ...queryParams } = params;
   return request<API.Documents>(`/documents/${param0}/`, {
-    method: "GET",
+    method: 'GET',
     params: { ...queryParams },
     ...(options || {}),
   });
@@ -60,9 +57,9 @@ export async function documentsUpdate(
 ) {
   const { id: param0, ...queryParams } = params;
   return request<API.Documents>(`/documents/${param0}/`, {
-    method: "PUT",
+    method: 'PUT',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     params: { ...queryParams },
     data: body,
@@ -78,7 +75,7 @@ export async function documentsDelete(
 ) {
   const { id: param0, ...queryParams } = params;
   return request<any>(`/documents/${param0}/`, {
-    method: "DELETE",
+    method: 'DELETE',
     params: { ...queryParams },
     ...(options || {}),
   });
@@ -93,9 +90,9 @@ export async function documentsPartialUpdate(
 ) {
   const { id: param0, ...queryParams } = params;
   return request<API.Documents>(`/documents/${param0}/`, {
-    method: "PATCH",
+    method: 'PATCH',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     params: { ...queryParams },
     data: body,

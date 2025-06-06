@@ -1,83 +1,85 @@
 <template>
-  <div class="chart-wrapper" ref="chartRef"></div>
+  <div ref="chartRef" class="chart-wrapper" />
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, watch } from 'vue'
-import * as echarts from 'echarts'
+import { defineComponent, ref, onMounted, watch } from 'vue';
+import * as echarts from 'echarts';
 
 export default defineComponent({
   name: 'ScatterChart',
   props: {
     config: {
       type: Object,
-      required: true
+      required: true,
     },
     data: {
       type: Array,
-      required: true
-    }
+      required: true,
+    },
   },
   setup(props) {
-    const chartRef = ref<HTMLElement | null>(null)
-    let chart: echarts.ECharts | null = null
+    const chartRef = ref<HTMLElement | null>(null);
+    let chart: echarts.ECharts | null = null;
 
     const initChart = () => {
-      if (!chartRef.value) return
-      chart = echarts.init(chartRef.value)
-      updateChart()
-    }
+      if (!chartRef.value) return;
+      chart = echarts.init(chartRef.value);
+      updateChart();
+    };
 
     const updateChart = () => {
-      if (!chart) return
+      if (!chart) return;
       const scatterData = props.data.map((item: any) => [
         item[props.config.xAxis],
-        item[props.config.yAxis]
-      ])
+        item[props.config.yAxis],
+      ]);
 
       const option = {
         title: {
-          text: props.config.title
+          text: props.config.title,
         },
         tooltip: {
           trigger: 'item',
           formatter: (params: any) => {
-            return `${props.config.xAxis}: ${params.value[0]}<br/>${props.config.yAxis}: ${params.value[1]}`
-          }
+            return `${props.config.xAxis}: ${params.value[0]}<br/>${props.config.yAxis}: ${params.value[1]}`;
+          },
         },
         xAxis: {
           type: 'value',
-          name: props.config.xAxis
+          name: props.config.xAxis,
         },
         yAxis: {
           type: 'value',
-          name: props.config.yAxis
+          name: props.config.yAxis,
         },
-        series: [{
-          type: 'scatter',
-          data: scatterData,
-          symbolSize: 10,
-          itemStyle: {
-            opacity: 0.8
-          }
-        }]
-      }
+        series: [
+          {
+            type: 'scatter',
+            data: scatterData,
+            symbolSize: 10,
+            itemStyle: {
+              opacity: 0.8,
+            },
+          },
+        ],
+      };
 
-      chart.setOption(option)
-    }
+      chart.setOption(option);
+    };
 
     onMounted(() => {
-      initChart()
-    })
+      initChart();
+    });
 
-    watch(() => props.config, updateChart, { deep: true })
-    watch(() => props.data, updateChart, { deep: true })
+    watch(() => props.config, updateChart, { deep: true });
+    watch(() => props.data, updateChart, { deep: true });
 
     return {
-      chartRef
-    }
-  }
-})
+      chartRef,
+    };
+  },
+});
 </script>
 
 <style scoped>
@@ -85,4 +87,4 @@ export default defineComponent({
   width: 100%;
   height: 500px;
 }
-</style> 
+</style>

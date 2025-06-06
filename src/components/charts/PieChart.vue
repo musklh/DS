@@ -1,37 +1,37 @@
 <template>
-  <div class="chart-wrapper" ref="chartRef"></div>
+  <div ref="chartRef" class="chart-wrapper" />
 </template>
 
 <script lang="ts">
-import { defineComponent, watch } from 'vue'
-import BaseChart from './BaseChart'
-import type { ChartData } from '../../types/chart'
+import { defineComponent, watch } from 'vue';
+import BaseChart from './BaseChart';
+import type { ChartData } from '../../types/chart';
 
 export default defineComponent({
   name: 'PieChart',
   extends: BaseChart,
   setup(props) {
     const updateChart = () => {
-      if (!props.chart) return
+      if (!props.chart) return;
 
       const pieData = props.data.map((item: ChartData) => ({
         name: String(item[props.config.xAxis]),
-        value: Number(item[props.config.yAxis])
-      }))
+        value: Number(item[props.config.yAxis]),
+      }));
 
       const option = {
         title: {
           text: props.config.title,
-          left: 'center'
+          left: 'center',
         },
         tooltip: {
           trigger: 'item',
-          formatter: '{a} <br/>{b}: {c} ({d}%)'
+          formatter: '{a} <br/>{b}: {c} ({d}%)',
         },
         legend: {
           orient: 'vertical',
           left: 'left',
-          type: 'scroll'
+          type: 'scroll',
         },
         series: [
           {
@@ -42,38 +42,38 @@ export default defineComponent({
             itemStyle: {
               borderRadius: 10,
               borderColor: '#fff',
-              borderWidth: 2
+              borderWidth: 2,
             },
             label: {
               show: false,
-              position: 'center'
+              position: 'center',
             },
             emphasis: {
               label: {
                 show: true,
                 fontSize: 16,
-                fontWeight: 'bold'
-              }
+                fontWeight: 'bold',
+              },
             },
             labelLine: {
-              show: false
+              show: false,
             },
-            data: pieData
-          }
-        ]
-      }
+            data: pieData,
+          },
+        ],
+      };
 
-      props.chart.setOption(option)
-    }
+      props.chart.setOption(option);
+    };
 
-    watch(() => props.config, updateChart, { deep: true })
-    watch(() => props.data, updateChart, { deep: true })
+    watch(() => props.config, updateChart, { deep: true });
+    watch(() => props.data, updateChart, { deep: true });
 
     return {
-      updateChart
-    }
-  }
-})
+      updateChart,
+    };
+  },
+});
 </script>
 
 <style scoped>
@@ -81,4 +81,4 @@ export default defineComponent({
   width: 100%;
   height: 500px;
 }
-</style> 
+</style>

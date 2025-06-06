@@ -1,6 +1,6 @@
 // @ts-ignore
 /* eslint-disable */
-import request from "@/request";
+import request from '@/request';
 
 /** 此处后端没有提供注释 GET /images/ */
 export async function imagesList(
@@ -13,8 +13,8 @@ export async function imagesList(
     next?: string;
     previous?: string;
     results: API.Image[];
-  }>("/images/", {
-    method: "GET",
+  }>('/images/', {
+    method: 'GET',
     params: {
       ...params,
     },
@@ -23,14 +23,11 @@ export async function imagesList(
 }
 
 /** 此处后端没有提供注释 POST /images/ */
-export async function imagesCreate(
-  body: API.Image,
-  options?: { [key: string]: any }
-) {
-  return request<API.Image>("/images/", {
-    method: "POST",
+export async function imagesCreate(body: API.Image, options?: { [key: string]: any }) {
+  return request<API.Image>('/images/', {
+    method: 'POST',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     data: body,
     ...(options || {}),
@@ -45,7 +42,7 @@ export async function imagesRead(
 ) {
   const { id: param0, ...queryParams } = params;
   return request<API.Image>(`/images/${param0}/`, {
-    method: "GET",
+    method: 'GET',
     params: { ...queryParams },
     ...(options || {}),
   });
@@ -60,9 +57,9 @@ export async function imagesUpdate(
 ) {
   const { id: param0, ...queryParams } = params;
   return request<API.Image>(`/images/${param0}/`, {
-    method: "PUT",
+    method: 'PUT',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     params: { ...queryParams },
     data: body,
@@ -78,7 +75,7 @@ export async function imagesDelete(
 ) {
   const { id: param0, ...queryParams } = params;
   return request<any>(`/images/${param0}/`, {
-    method: "DELETE",
+    method: 'DELETE',
     params: { ...queryParams },
     ...(options || {}),
   });
@@ -93,9 +90,9 @@ export async function imagesPartialUpdate(
 ) {
   const { id: param0, ...queryParams } = params;
   return request<API.Image>(`/images/${param0}/`, {
-    method: "PATCH",
+    method: 'PATCH',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     params: { ...queryParams },
     data: body,

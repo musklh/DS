@@ -39,9 +39,9 @@
         </el-radio-group>
       </div>
       <div class="chart-actions">
-        <el-button type="primary" @click="saveChart">保存图表</el-button>
-        <el-button @click="exportChart">导出图表</el-button>
-        <el-button type="danger" @click="resetChart">重置图表</el-button>
+        <el-button type="primary" @click="saveChart"> 保存图表 </el-button>
+        <el-button @click="exportChart"> 导出图表 </el-button>
+        <el-button type="danger" @click="resetChart"> 重置图表 </el-button>
       </div>
     </div>
 
@@ -50,24 +50,24 @@
       <!-- 左侧导航 -->
       <div class="sidebar">
         <div class="sidebar-buttons">
-          <el-button type="primary" @click="addChart">添加图表</el-button>
-          <el-button type="danger" @click="selectCondition">选择病症</el-button>
+          <el-button type="primary" @click="addChart"> 添加图表 </el-button>
+          <el-button type="danger" @click="selectCondition"> 选择病症 </el-button>
         </div>
         <el-menu :default-active="activeMenu" class="sidebar-menu">
           <el-menu-item index="data">
             <span>数据</span>
           </el-menu-item>
           <el-submenu index="style">
-            <template #title>样式</template>
-            <el-menu-item index="style-1">标题样式</el-menu-item>
-            <el-menu-item index="style-2">轴线样式</el-menu-item>
-            <el-menu-item index="style-3">图形样式</el-menu-item>
+            <template #title> 样式 </template>
+            <el-menu-item index="style-1"> 标题样式 </el-menu-item>
+            <el-menu-item index="style-2"> 轴线样式 </el-menu-item>
+            <el-menu-item index="style-3"> 图形样式 </el-menu-item>
           </el-submenu>
           <el-submenu index="attribute">
-            <template #title>属性</template>
-            <el-menu-item index="attribute-1">显示数值</el-menu-item>
-            <el-menu-item index="attribute-2">显示标签</el-menu-item>
-            <el-menu-item index="attribute-3">支持分析</el-menu-item>
+            <template #title> 属性 </template>
+            <el-menu-item index="attribute-1"> 显示数值 </el-menu-item>
+            <el-menu-item index="attribute-2"> 显示标签 </el-menu-item>
+            <el-menu-item index="attribute-3"> 支持分析 </el-menu-item>
           </el-submenu>
           <el-menu-item index="animation">
             <span>动画</span>
@@ -77,26 +77,24 @@
 
       <!-- 图表预览 -->
       <div class="chart-preview">
-        <div v-if="!chartConfig.title" class="preview-placeholder">
-          图表预览将在生成后显示...
-        </div>
-        <component 
+        <div v-if="!chartConfig.title" class="preview-placeholder">图表预览将在生成后显示...</div>
+        <component
+          :is="currentChartComponent"
           v-else
-          :is="currentChartComponent" 
+          ref="chartComponent"
           :config="chartConfig"
           :data="filteredChartData"
-          ref="chartComponent"
         />
       </div>
 
       <!-- 右侧配置面板 -->
       <div class="chart-config">
         <div class="config-header">
-          <el-button type="text" @click="toggleConfig('data')">数据</el-button>
-          <el-button type="text" @click="toggleConfig('style')">样式</el-button>
-          <el-button type="text" @click="toggleConfig('attribute')">属性</el-button>
+          <el-button type="text" @click="toggleConfig('data')"> 数据 </el-button>
+          <el-button type="text" @click="toggleConfig('style')"> 样式 </el-button>
+          <el-button type="text" @click="toggleConfig('attribute')"> 属性 </el-button>
         </div>
-        <el-form label-position="top" v-if="currentConfigTab === 'data'">
+        <el-form v-if="currentConfigTab === 'data'" label-position="top">
           <el-form-item label="字段">
             <el-checkbox-group v-model="chartConfig.selectedFields">
               <el-checkbox label="显示数值" />
@@ -134,12 +132,12 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed } from 'vue'
-import BarChart from '../../components/charts/BarChart.vue'
-import LineChart from '../../components/charts/LineChart.vue'
-import PieChart from '../../components/charts/PieChart.vue'
-import ScatterChart from '../../components/charts/ScatterChart.vue'
-import { useRouter } from 'vue-router'
+import { defineComponent, ref, computed } from 'vue';
+import BarChart from '../../components/charts/BarChart.vue';
+import LineChart from '../../components/charts/LineChart.vue';
+import PieChart from '../../components/charts/PieChart.vue';
+import ScatterChart from '../../components/charts/ScatterChart.vue';
+import { useRouter } from 'vue-router';
 
 export default defineComponent({
   name: 'ChartCreate',
@@ -147,14 +145,14 @@ export default defineComponent({
     BarChart,
     LineChart,
     PieChart,
-    ScatterChart
+    ScatterChart,
   },
   setup() {
-    const router = useRouter()
-    const currentChart = ref('bar')
-    const activeMenu = ref('data')
-    const currentConfigTab = ref('data')
-    const chartComponent = ref(null)
+    const router = useRouter();
+    const currentChart = ref('bar');
+    const activeMenu = ref('data');
+    const currentConfigTab = ref('data');
+    const chartComponent = ref(null);
 
     const chartConfig = ref({
       title: '',
@@ -164,8 +162,8 @@ export default defineComponent({
       labelStyle: 'academic',
       position: [],
       labelColor: '#000',
-      friendlyStyle: []
-    })
+      friendlyStyle: [],
+    });
 
     const dataFields = ref([
       '年龄',
@@ -175,24 +173,69 @@ export default defineComponent({
       '白细胞计数',
       '心率',
       '体重',
-      '身高'
-    ])
+      '身高',
+    ]);
 
     const chartData = ref([
-      { age: 25, bloodPressure: 120, glucose: 5.2, cholesterol: 180, wbc: 7.2, heartRate: 70, weight: 65, height: 170 },
-      { age: 30, bloodPressure: 125, glucose: 5.5, cholesterol: 190, wbc: 6.8, heartRate: 72, weight: 70, height: 175 },
-      { age: 35, bloodPressure: 130, glucose: 5.8, cholesterol: 200, wbc: 7.5, heartRate: 75, weight: 75, height: 180 },
-      { age: 40, bloodPressure: 135, glucose: 6.0, cholesterol: 210, wbc: 8.0, heartRate: 78, weight: 80, height: 178 },
-      { age: 45, bloodPressure: 140, glucose: 6.2, cholesterol: 220, wbc: 8.5, heartRate: 80, weight: 85, height: 182 }
-    ])
+      {
+        age: 25,
+        bloodPressure: 120,
+        glucose: 5.2,
+        cholesterol: 180,
+        wbc: 7.2,
+        heartRate: 70,
+        weight: 65,
+        height: 170,
+      },
+      {
+        age: 30,
+        bloodPressure: 125,
+        glucose: 5.5,
+        cholesterol: 190,
+        wbc: 6.8,
+        heartRate: 72,
+        weight: 70,
+        height: 175,
+      },
+      {
+        age: 35,
+        bloodPressure: 130,
+        glucose: 5.8,
+        cholesterol: 200,
+        wbc: 7.5,
+        heartRate: 75,
+        weight: 75,
+        height: 180,
+      },
+      {
+        age: 40,
+        bloodPressure: 135,
+        glucose: 6.0,
+        cholesterol: 210,
+        wbc: 8.0,
+        heartRate: 78,
+        weight: 80,
+        height: 178,
+      },
+      {
+        age: 45,
+        bloodPressure: 140,
+        glucose: 6.2,
+        cholesterol: 220,
+        wbc: 8.5,
+        heartRate: 80,
+        weight: 85,
+        height: 182,
+      },
+    ]);
 
     const filteredChartData = computed(() => {
-      if (!chartConfig.value.xAxis || !chartConfig.value.yAxis) return chartData.value
-      return chartData.value.map(item => ({
+      if (!chartConfig.value.xAxis || !chartConfig.value.yAxis) return chartData.value;
+      return chartData.value.map((item) => ({
         [chartConfig.value.xAxis]: item[chartConfig.value.xAxis],
-        [chartConfig.value.yAxis]: item[chartConfig.value.yAxis]
-      }))
-    })
+        [chartConfig.value.yAxis]: item[chartConfig.value.yAxis],
+      }));
+    });
 
     const currentChartComponent = computed(() => {
       const chartMap = {
@@ -203,73 +246,74 @@ export default defineComponent({
         scatter: 'ScatterChart',
         heatmap: 'ScatterChart',
         grid: 'BarChart',
-        gri: 'LineChart'
-      }
-      return chartMap[currentChart.value]
-    })
+        gri: 'LineChart',
+      };
+      return chartMap[currentChart.value];
+    });
 
     const toggleConfig = (tab: string) => {
-      currentConfigTab.value = tab
-    }
+      currentConfigTab.value = tab;
+    };
 
     const addChart = () => {
       if (!chartConfig.value.selectedFields.length) {
-        alert('请至少选择一个字段！')
-        return
+        alert('请至少选择一个字段！');
+        return;
       }
-      chartConfig.value.title = '新图表'
-      chartConfig.value.xAxis = 'age'
-      chartConfig.value.yAxis = chartData.value[0] && Object.keys(chartData.value[0])[1] || 'bloodPressure'
-    }
+      chartConfig.value.title = '新图表';
+      chartConfig.value.xAxis = 'age';
+      chartConfig.value.yAxis =
+        (chartData.value[0] && Object.keys(chartData.value[0])[1]) || 'bloodPressure';
+    };
 
     const saveChart = async () => {
       if (!chartConfig.value.title) {
-        alert('请先添加图表！')
-        return
+        alert('请先添加图表！');
+        return;
       }
       try {
         const response = await fetch('/api/save-chart', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
           },
           body: JSON.stringify({
             type: currentChart.value,
             config: chartConfig.value,
-            data: filteredChartData.value
-          })
-        })
+            data: filteredChartData.value,
+          }),
+        });
         if (response.ok) {
-          alert('图表保存成功！')
-          router.push('/chart-display')
+          alert('图表保存成功！');
+          router.push('/chart-display');
         } else {
-          throw new Error('保存失败')
+          throw new Error('保存失败');
         }
       } catch (error) {
-        alert('保存图表失败：' + error.message)
+        alert('保存图表失败：' + error.message);
       }
-    }
+    };
 
     const exportChart = async () => {
       if (!chartConfig.value.title) {
-        alert('请先添加图表！')
-        return
+        alert('请先添加图表！');
+        return;
       }
       try {
         // Assuming the chart component has a method to get the image URL
-        const imageUrl = chartComponent.value?.getImageUrl?.()
+        const imageUrl = chartComponent.value?.getImageUrl?.();
         if (imageUrl) {
-          const link = document.createElement('a')
-          link.href = imageUrl
-          link.download = `${chartConfig.value.title}.png`
-          link.click()
+          const link = document.createElement('a');
+          link.href = imageUrl;
+          link.download = `${chartConfig.value.title}.png`;
+          link.click();
         } else {
-          throw new Error('无法导出图表')
+          throw new Error('无法导出图表');
         }
       } catch (error) {
-        alert('导出图表失败：' + error.message)
+        alert('导出图表失败：' + error.message);
       }
-    }
+    };
 
     const resetChart = () => {
       chartConfig.value = {
@@ -280,13 +324,13 @@ export default defineComponent({
         labelStyle: 'academic',
         position: [],
         labelColor: '#000',
-        friendlyStyle: []
-      }
-    }
+        friendlyStyle: [],
+      };
+    };
 
     const selectCondition = () => {
-      alert('选择病症功能待实现！')
-    }
+      alert('选择病症功能待实现！');
+    };
 
     return {
       currentChart,
@@ -303,10 +347,10 @@ export default defineComponent({
       exportChart,
       resetChart,
       selectCondition,
-      chartComponent
-    }
-  }
-})
+      chartComponent,
+    };
+  },
+});
 </script>
 
 <style scoped lang="scss">
@@ -340,7 +384,7 @@ export default defineComponent({
 
 .chart-create-container {
   padding: 20px;
-  background: #DEDCC7;
+  background: #dedcc7;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -435,8 +479,8 @@ export default defineComponent({
         .el-button {
           color: #333;
           &.is-active {
-            color: #409EFF;
-            border-bottom: 2px solid #409EFF;
+            color: #409eff;
+            border-bottom: 2px solid #409eff;
           }
         }
       }

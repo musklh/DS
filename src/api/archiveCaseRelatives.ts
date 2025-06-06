@@ -1,13 +1,11 @@
 // @ts-ignore
 /* eslint-disable */
-import request from "@/request";
+import request from '@/request';
 
 /** 此处后端没有提供注释 GET /archive-case-relatives/ */
-export async function archiveCaseRelativesList(options?: {
-  [key: string]: any;
-}) {
-  return request<API.ArchiveCaseRelative[]>("/archive-case-relatives/", {
-    method: "GET",
+export async function archiveCaseRelativesList(options?: { [key: string]: any }) {
+  return request<API.ArchiveCaseRelative[]>('/archive-case-relatives/', {
+    method: 'GET',
     ...(options || {}),
   });
 }
@@ -17,10 +15,10 @@ export async function archiveCaseRelativesCreate(
   body: API.ArchiveCaseRelative,
   options?: { [key: string]: any }
 ) {
-  return request<API.ArchiveCaseRelative>("/archive-case-relatives/", {
-    method: "POST",
+  return request<API.ArchiveCaseRelative>('/archive-case-relatives/', {
+    method: 'POST',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     data: body,
     ...(options || {}),
@@ -34,14 +32,11 @@ export async function archiveCaseRelativesRead(
   options?: { [key: string]: any }
 ) {
   const { id: param0, ...queryParams } = params;
-  return request<API.ArchiveCaseRelative>(
-    `/archive-case-relatives/${param0}/`,
-    {
-      method: "GET",
-      params: { ...queryParams },
-      ...(options || {}),
-    }
-  );
+  return request<API.ArchiveCaseRelative>(`/archive-case-relatives/${param0}/`, {
+    method: 'GET',
+    params: { ...queryParams },
+    ...(options || {}),
+  });
 }
 
 /** 此处后端没有提供注释 PUT /archive-case-relatives/${param0}/ */
@@ -52,18 +47,15 @@ export async function archiveCaseRelativesUpdate(
   options?: { [key: string]: any }
 ) {
   const { id: param0, ...queryParams } = params;
-  return request<API.ArchiveCaseRelative>(
-    `/archive-case-relatives/${param0}/`,
-    {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      params: { ...queryParams },
-      data: body,
-      ...(options || {}),
-    }
-  );
+  return request<API.ArchiveCaseRelative>(`/archive-case-relatives/${param0}/`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    params: { ...queryParams },
+    data: body,
+    ...(options || {}),
+  });
 }
 
 /** 此处后端没有提供注释 DELETE /archive-case-relatives/${param0}/ */
@@ -74,7 +66,7 @@ export async function archiveCaseRelativesDelete(
 ) {
   const { id: param0, ...queryParams } = params;
   return request<any>(`/archive-case-relatives/${param0}/`, {
-    method: "DELETE",
+    method: 'DELETE',
     params: { ...queryParams },
     ...(options || {}),
   });
@@ -88,16 +80,13 @@ export async function archiveCaseRelativesPartialUpdate(
   options?: { [key: string]: any }
 ) {
   const { id: param0, ...queryParams } = params;
-  return request<API.ArchiveCaseRelative>(
-    `/archive-case-relatives/${param0}/`,
-    {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      params: { ...queryParams },
-      data: body,
-      ...(options || {}),
-    }
-  );
+  return request<API.ArchiveCaseRelative>(`/archive-case-relatives/${param0}/`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    params: { ...queryParams },
+    data: body,
+    ...(options || {}),
+  });
 }

@@ -1,6 +1,6 @@
 // @ts-ignore
 /* eslint-disable */
-import request from "@/request";
+import request from '@/request';
 
 /** 此处后端没有提供注释 GET /texts/ */
 export async function textsList(
@@ -13,8 +13,8 @@ export async function textsList(
     next?: string;
     previous?: string;
     results: API.Text[];
-  }>("/texts/", {
-    method: "GET",
+  }>('/texts/', {
+    method: 'GET',
     params: {
       ...params,
     },
@@ -23,14 +23,11 @@ export async function textsList(
 }
 
 /** 此处后端没有提供注释 POST /texts/ */
-export async function textsCreate(
-  body: API.Text,
-  options?: { [key: string]: any }
-) {
-  return request<API.Text>("/texts/", {
-    method: "POST",
+export async function textsCreate(body: API.Text, options?: { [key: string]: any }) {
+  return request<API.Text>('/texts/', {
+    method: 'POST',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     data: body,
     ...(options || {}),
@@ -45,7 +42,7 @@ export async function textsRead(
 ) {
   const { id: param0, ...queryParams } = params;
   return request<API.Text>(`/texts/${param0}/`, {
-    method: "GET",
+    method: 'GET',
     params: { ...queryParams },
     ...(options || {}),
   });
@@ -60,9 +57,9 @@ export async function textsUpdate(
 ) {
   const { id: param0, ...queryParams } = params;
   return request<API.Text>(`/texts/${param0}/`, {
-    method: "PUT",
+    method: 'PUT',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     params: { ...queryParams },
     data: body,
@@ -78,7 +75,7 @@ export async function textsDelete(
 ) {
   const { id: param0, ...queryParams } = params;
   return request<any>(`/texts/${param0}/`, {
-    method: "DELETE",
+    method: 'DELETE',
     params: { ...queryParams },
     ...(options || {}),
   });
@@ -93,9 +90,9 @@ export async function textsPartialUpdate(
 ) {
   const { id: param0, ...queryParams } = params;
   return request<API.Text>(`/texts/${param0}/`, {
-    method: "PATCH",
+    method: 'PATCH',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     params: { ...queryParams },
     data: body,

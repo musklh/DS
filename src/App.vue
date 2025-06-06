@@ -1,9 +1,9 @@
 <script lang="ts">
-import { defineComponent } from 'vue'
-import '@/access'
+import { defineComponent } from 'vue';
+import '@/access';
 export default defineComponent({
-  name: 'App'
-})
+  name: 'App',
+});
 </script>
 
 <template>

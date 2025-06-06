@@ -1,6 +1,6 @@
 // @ts-ignore
 /* eslint-disable */
-import request from "@/request";
+import request from '@/request';
 
 /** 获取所有词条 & 创建新词条 GET /dictionary/ */
 export async function dictionaryList(
@@ -13,8 +13,8 @@ export async function dictionaryList(
     next?: string;
     previous?: string;
     results: API.Dictionary[];
-  }>("/dictionary/", {
-    method: "GET",
+  }>('/dictionary/', {
+    method: 'GET',
     params: {
       ...params,
     },
@@ -23,14 +23,11 @@ export async function dictionaryList(
 }
 
 /** 获取所有词条 & 创建新词条 POST /dictionary/ */
-export async function dictionaryCreate(
-  body: API.Dictionary,
-  options?: { [key: string]: any }
-) {
-  return request<API.Dictionary>("/dictionary/", {
-    method: "POST",
+export async function dictionaryCreate(body: API.Dictionary, options?: { [key: string]: any }) {
+  return request<API.Dictionary>('/dictionary/', {
+    method: 'POST',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     data: body,
     ...(options || {}),
@@ -45,7 +42,7 @@ export async function dictionaryRead(
 ) {
   const { id: param0, ...queryParams } = params;
   return request<API.Dictionary>(`/dictionary/${param0}/`, {
-    method: "GET",
+    method: 'GET',
     params: { ...queryParams },
     ...(options || {}),
   });
@@ -60,9 +57,9 @@ export async function dictionaryUpdate(
 ) {
   const { id: param0, ...queryParams } = params;
   return request<API.Dictionary>(`/dictionary/${param0}/`, {
-    method: "PUT",
+    method: 'PUT',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     params: { ...queryParams },
     data: body,
@@ -78,7 +75,7 @@ export async function dictionaryDelete(
 ) {
   const { id: param0, ...queryParams } = params;
   return request<any>(`/dictionary/${param0}/`, {
-    method: "DELETE",
+    method: 'DELETE',
     params: { ...queryParams },
     ...(options || {}),
   });
@@ -93,9 +90,9 @@ export async function dictionaryPartialUpdate(
 ) {
   const { id: param0, ...queryParams } = params;
   return request<API.Dictionary>(`/dictionary/${param0}/`, {
-    method: "PATCH",
+    method: 'PATCH',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     params: { ...queryParams },
     data: body,

@@ -1,15 +1,14 @@
 export interface ChartConfig {
-  title: string
-  xAxis: string
-  yAxis: string
+  title: string;
+  xAxis: string;
+  yAxis: string;
 }
 
 export interface ChartData {
-  [key: string]: number | string
+  [key: string]: number | string;
 }
 
 export interface ChartProps {
-  config: ChartConfig
-  data: ChartData[]
-}            
-
+  config: ChartConfig;
+  data: ChartData[];
+}

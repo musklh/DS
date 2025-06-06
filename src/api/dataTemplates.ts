@@ -1,6 +1,6 @@
 // @ts-ignore
 /* eslint-disable */
-import request from "@/request";
+import request from '@/request';
 
 /** 获取所有数据模板 & 创建新数据模板 GET /data-templates/ */
 export async function dataTemplatesList(
@@ -13,8 +13,8 @@ export async function dataTemplatesList(
     next?: string;
     previous?: string;
     results: API.DataTemplates[];
-  }>("/data-templates/", {
-    method: "GET",
+  }>('/data-templates/', {
+    method: 'GET',
     params: {
       ...params,
     },
@@ -27,10 +27,10 @@ export async function dataTemplatesCreate(
   body: API.DataTemplates,
   options?: { [key: string]: any }
 ) {
-  return request<API.DataTemplates>("/data-templates/", {
-    method: "POST",
+  return request<API.DataTemplates>('/data-templates/', {
+    method: 'POST',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     data: body,
     ...(options || {}),
@@ -45,7 +45,7 @@ export async function dataTemplatesRead(
 ) {
   const { id: param0, ...queryParams } = params;
   return request<API.DataTemplates>(`/data-templates/${param0}/`, {
-    method: "GET",
+    method: 'GET',
     params: { ...queryParams },
     ...(options || {}),
   });
@@ -60,9 +60,9 @@ export async function dataTemplatesUpdate(
 ) {
   const { id: param0, ...queryParams } = params;
   return request<API.DataTemplates>(`/data-templates/${param0}/`, {
-    method: "PUT",
+    method: 'PUT',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     params: { ...queryParams },
     data: body,
@@ -78,7 +78,7 @@ export async function dataTemplatesDelete(
 ) {
   const { id: param0, ...queryParams } = params;
   return request<any>(`/data-templates/${param0}/`, {
-    method: "DELETE",
+    method: 'DELETE',
     params: { ...queryParams },
     ...(options || {}),
   });
@@ -93,9 +93,9 @@ export async function dataTemplatesPartialUpdate(
 ) {
   const { id: param0, ...queryParams } = params;
   return request<API.DataTemplates>(`/data-templates/${param0}/`, {
-    method: "PATCH",
+    method: 'PATCH',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     params: { ...queryParams },
     data: body,
