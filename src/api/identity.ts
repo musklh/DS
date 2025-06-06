@@ -1,6 +1,6 @@
 // @ts-ignore
 /* eslint-disable */
-import request from "@/request";
+import request from '@/request';
 
 /** 此处后端没有提供注释 GET /identity/ */
 export async function identityList(
@@ -13,8 +13,8 @@ export async function identityList(
     next?: string;
     previous?: string;
     results: API.Identity[];
-  }>("/identity/", {
-    method: "GET",
+  }>('/identity/', {
+    method: 'GET',
     params: {
       ...params,
     },
@@ -23,14 +23,11 @@ export async function identityList(
 }
 
 /** 此处后端没有提供注释 POST /identity/ */
-export async function identityCreate(
-  body: API.Identity,
-  options?: { [key: string]: any }
-) {
-  return request<API.Identity>("/identity/", {
-    method: "POST",
+export async function identityCreate(body: API.Identity, options?: { [key: string]: any }) {
+  return request<API.Identity>('/identity/', {
+    method: 'POST',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     data: body,
     ...(options || {}),
@@ -45,7 +42,7 @@ export async function identityRead(
 ) {
   const { id: param0, ...queryParams } = params;
   return request<API.Identity>(`/identity/${param0}/`, {
-    method: "GET",
+    method: 'GET',
     params: { ...queryParams },
     ...(options || {}),
   });
@@ -60,9 +57,9 @@ export async function identityUpdate(
 ) {
   const { id: param0, ...queryParams } = params;
   return request<API.Identity>(`/identity/${param0}/`, {
-    method: "PUT",
+    method: 'PUT',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     params: { ...queryParams },
     data: body,
@@ -78,7 +75,7 @@ export async function identityDelete(
 ) {
   const { id: param0, ...queryParams } = params;
   return request<any>(`/identity/${param0}/`, {
-    method: "DELETE",
+    method: 'DELETE',
     params: { ...queryParams },
     ...(options || {}),
   });
@@ -93,9 +90,9 @@ export async function identityPartialUpdate(
 ) {
   const { id: param0, ...queryParams } = params;
   return request<API.Identity>(`/identity/${param0}/`, {
-    method: "PATCH",
+    method: 'PATCH',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     params: { ...queryParams },
     data: body,

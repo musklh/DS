@@ -1,6 +1,6 @@
 // @ts-ignore
 /* eslint-disable */
-import request from "@/request";
+import request from '@/request';
 
 /** 此处后端没有提供注释 GET /examination-images/ */
 export async function examinationImagesList(
@@ -13,8 +13,8 @@ export async function examinationImagesList(
     next?: string;
     previous?: string;
     results: API.ExaminationImages[];
-  }>("/examination-images/", {
-    method: "GET",
+  }>('/examination-images/', {
+    method: 'GET',
     params: {
       ...params,
     },
@@ -27,10 +27,10 @@ export async function examinationImagesCreate(
   body: API.ExaminationImages,
   options?: { [key: string]: any }
 ) {
-  return request<API.ExaminationImages>("/examination-images/", {
-    method: "POST",
+  return request<API.ExaminationImages>('/examination-images/', {
+    method: 'POST',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     data: body,
     ...(options || {}),
@@ -45,7 +45,7 @@ export async function examinationImagesRead(
 ) {
   const { id: param0, ...queryParams } = params;
   return request<API.ExaminationImages>(`/examination-images/${param0}/`, {
-    method: "GET",
+    method: 'GET',
     params: { ...queryParams },
     ...(options || {}),
   });
@@ -60,9 +60,9 @@ export async function examinationImagesUpdate(
 ) {
   const { id: param0, ...queryParams } = params;
   return request<API.ExaminationImages>(`/examination-images/${param0}/`, {
-    method: "PUT",
+    method: 'PUT',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     params: { ...queryParams },
     data: body,
@@ -78,7 +78,7 @@ export async function examinationImagesDelete(
 ) {
   const { id: param0, ...queryParams } = params;
   return request<any>(`/examination-images/${param0}/`, {
-    method: "DELETE",
+    method: 'DELETE',
     params: { ...queryParams },
     ...(options || {}),
   });
@@ -93,9 +93,9 @@ export async function examinationImagesPartialUpdate(
 ) {
   const { id: param0, ...queryParams } = params;
   return request<API.ExaminationImages>(`/examination-images/${param0}/`, {
-    method: "PATCH",
+    method: 'PATCH',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     params: { ...queryParams },
     data: body,

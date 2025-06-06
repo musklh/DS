@@ -1,6 +1,6 @@
 // @ts-ignore
 /* eslint-disable */
-import request from "@/request";
+import request from '@/request';
 
 /** 此处后端没有提供注释 GET /document-charts/ */
 export async function documentChartsList(
@@ -13,8 +13,8 @@ export async function documentChartsList(
     next?: string;
     previous?: string;
     results: API.DocumentChart[];
-  }>("/document-charts/", {
-    method: "GET",
+  }>('/document-charts/', {
+    method: 'GET',
     params: {
       ...params,
     },
@@ -27,10 +27,10 @@ export async function documentChartsCreate(
   body: API.DocumentChart,
   options?: { [key: string]: any }
 ) {
-  return request<API.DocumentChart>("/document-charts/", {
-    method: "POST",
+  return request<API.DocumentChart>('/document-charts/', {
+    method: 'POST',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     data: body,
     ...(options || {}),
@@ -45,7 +45,7 @@ export async function documentChartsRead(
 ) {
   const { id: param0, ...queryParams } = params;
   return request<API.DocumentChart>(`/document-charts/${param0}/`, {
-    method: "GET",
+    method: 'GET',
     params: { ...queryParams },
     ...(options || {}),
   });
@@ -60,9 +60,9 @@ export async function documentChartsUpdate(
 ) {
   const { id: param0, ...queryParams } = params;
   return request<API.DocumentChart>(`/document-charts/${param0}/`, {
-    method: "PUT",
+    method: 'PUT',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     params: { ...queryParams },
     data: body,
@@ -78,7 +78,7 @@ export async function documentChartsDelete(
 ) {
   const { id: param0, ...queryParams } = params;
   return request<any>(`/document-charts/${param0}/`, {
-    method: "DELETE",
+    method: 'DELETE',
     params: { ...queryParams },
     ...(options || {}),
   });
@@ -93,9 +93,9 @@ export async function documentChartsPartialUpdate(
 ) {
   const { id: param0, ...queryParams } = params;
   return request<API.DocumentChart>(`/document-charts/${param0}/`, {
-    method: "PATCH",
+    method: 'PATCH',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     params: { ...queryParams },
     data: body,

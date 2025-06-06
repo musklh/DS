@@ -8,7 +8,12 @@
     "build": "vue-tsc -b && vite build",
     "build-pure": "vite build",
     "preview": "vite preview",
-    "openapi": "node openapi.config.js"
+    "openapi": "node openapi.config.js",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "coverage": "vitest run --coverage",
+    "lint": "eslint . --ext .vue,.js,.ts,.jsx,.tsx --fix",
+    "format": "prettier --write \"src/**/*.{vue,ts,js,json,md}\""
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.1",
@@ -23,13 +28,27 @@
     "vue-router": "^4.5.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.28.0",
     "@types/node": "^22.13.10",
     "@types/vue": "^2.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.33.1",
+    "@typescript-eslint/parser": "^8.33.1",
     "@umijs/openapi": "^1.13.0",
     "@vitejs/plugin-vue": "^5.2.1",
+    "@vitest/ui": "^3.2.2",
+    "@vue/test-utils": "^2.4.6",
+    "eslint": "^9.28.0",
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-prettier": "^5.4.1",
+    "eslint-plugin-vue": "^10.2.0",
+    "globals": "^16.2.0",
+    "happy-dom": "^17.6.3",
+    "prettier": "^3.5.3",
     "sass-embedded": "^1.85.1",
     "typescript": "~5.6.3",
     "vite": "^6.2.1",
+    "vite-plugin-eslint": "^1.8.1",
+    "vitest": "^3.2.2",
     "vue-tsc": "^2.2.8"
   }
 }

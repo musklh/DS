@@ -1,25 +1,16 @@
 <template>
-  <el-dialog
-    :title="dialogTitle"
-    :visible.sync="visible"
-    width="60%"
-    @close="handleClose"
-  >
-    <el-form :model="formData" :rules="rules" ref="form" label-width="100px">
+  <el-dialog v-model:visible="visible" :title="dialogTitle" width="60%" @close="handleClose">
+    <el-form ref="form" :model="formData" :rules="rules" label-width="100px">
       <el-form-item label="模版名称" prop="name">
-        <el-input v-model="formData.name" placeholder="请输入模版名称"/>
+        <el-input v-model="formData.name" placeholder="请输入模版名称" />
       </el-form-item>
-      
+
       <el-form-item label="模版编号" prop="code">
-        <el-input v-model="formData.code" placeholder="请输入模版编号"/>
+        <el-input v-model="formData.code" placeholder="请输入模版编号" />
       </el-form-item>
 
       <el-form-item label="模版描述" prop="description">
-        <el-input
-          type="textarea"
-          v-model="formData.description"
-          placeholder="请输入模版描述"
-        />
+        <el-input v-model="formData.description" type="textarea" placeholder="请输入模版描述" />
       </el-form-item>
 
       <el-form-item label="数据项">
@@ -34,7 +25,7 @@
             </el-select>
             <el-button type="danger" icon="el-icon-delete" circle @click="removeItem(index)" />
           </div>
-          <el-button type="primary" @click="addItem">添加数据项</el-button>
+          <el-button type="primary" @click="addItem"> 添加数据项 </el-button>
         </div>
       </el-form-item>
     </el-form>
@@ -49,18 +40,18 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, reactive, computed } from 'vue'
+import { defineComponent, reactive, computed } from 'vue';
 
 interface DataItem {
-  name: string
-  type: string
+  name: string;
+  type: string;
 }
 
 interface FormData {
-  name: string
-  code: string
-  description: string
-  items: DataItem[]
+  name: string;
+  code: string;
+  description: string;
+  items: DataItem[];
 }
 
 export default defineComponent({
@@ -68,51 +59,52 @@ export default defineComponent({
   props: {
     visible: {
       type: Boolean,
-      default: false
+      default: false,
     },
     type: {
       type: String,
-      default: 'add'
+      default: 'add',
     },
     editData: {
       type: Object,
-      default: () => ({})
-    }
+      default: () => ({}),
+    },
   },
+  emits: ['update:visible'], // Declare the event for v-model:visible
   setup(props, { emit }) {
     const formData = reactive<FormData>({
       name: '',
       code: '',
       description: '',
-      items: []
-    })
+      items: [],
+    });
 
     const rules = {
       name: [{ required: true, message: '请输入模版名称', trigger: 'blur' }],
-      code: [{ required: true, message: '请输入模版编号', trigger: 'blur' }]
-    }
+      code: [{ required: true, message: '请输入模版编号', trigger: 'blur' }],
+    };
 
-    const dialogTitle = computed(() => props.type === 'add' ? '添加模版' : '编辑模版')
+    const dialogTitle = computed(() => (props.type === 'add' ? '添加模版' : '编辑模版'));
 
     const addItem = () => {
       formData.items.push({
         name: '',
-        type: 'text'
-      })
-    }
+        type: 'text',
+      });
+    };
 
     const removeItem = (index: number) => {
-      formData.items.splice(index, 1)
-    }
+      formData.items.splice(index, 1);
+    };
 
     const handleClose = () => {
-      emit('update:visible', false)
-    }
+      emit('update:visible', false);
+    };
 
     const handleSubmit = () => {
-      console.log('提交表单:', formData)
-      handleClose()
-    }
+      console.log('提交表单:', formData);
+      handleClose();
+    };
 
     return {
       formData,
@@ -121,10 +113,10 @@ export default defineComponent({
       addItem,
       removeItem,
       handleClose,
-      handleSubmit
-    }
-  }
-})
+      handleSubmit,
+    };
+  },
+});
 </script>
 
 <style scoped lang="scss">
@@ -144,4 +136,4 @@ export default defineComponent({
     }
   }
 }
-</style> 
+</style>

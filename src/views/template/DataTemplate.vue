@@ -39,8 +39,10 @@
           <el-table-column prop="description" label="模版描述" />
           <el-table-column label="操作" width="200" fixed="right">
             <template #default="scope">
-              <el-button size="small" @click="handleEdit(scope.row)">编辑</el-button>
-              <el-button size="small" type="danger" @click="handleDelete(scope.row)">删除</el-button>
+              <el-button size="small" @click="handleEdit(scope.row)"> 编辑 </el-button>
+              <el-button size="small" type="danger" @click="handleDelete(scope.row)">
+                删除
+              </el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -55,8 +57,10 @@
           <el-table-column prop="description" label="模版描述" />
           <el-table-column label="操作" width="200" fixed="right">
             <template #default="scope">
-              <el-button size="small" @click="handleEdit(scope.row)">编辑</el-button>
-              <el-button size="small" type="danger" @click="handleDelete(scope.row)">删除</el-button>
+              <el-button size="small" @click="handleEdit(scope.row)"> 编辑 </el-button>
+              <el-button size="small" type="danger" @click="handleDelete(scope.row)">
+                删除
+              </el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -64,12 +68,8 @@
     </div>
 
     <!-- 对话框 - 添加/编辑模板 -->
-    <el-dialog
-      :title="dialogTitle"
-      v-model="dialogVisible"
-      width="500px"
-    >
-      <el-form :model="formData" :rules="rules" ref="formRef" label-width="100px">
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="500px">
+      <el-form ref="formRef" :model="formData" :rules="rules" label-width="100px">
         <el-form-item label="模版名称" prop="name">
           <el-input v-model="formData.name" placeholder="请输入模版名称" />
         </el-form-item>
@@ -77,11 +77,7 @@
           <el-input v-model="formData.code" placeholder="请输入模版编号" />
         </el-form-item>
         <el-form-item label="模版描述" prop="description">
-          <el-input
-            type="textarea"
-            v-model="formData.description"
-            placeholder="请输入模版描述"
-          />
+          <el-input v-model="formData.description" type="textarea" placeholder="请输入模版描述" />
         </el-form-item>
         <el-form-item label="模板类型" prop="type">
           <el-select v-model="formData.type" placeholder="请选择模板类型">
@@ -101,141 +97,157 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed } from 'vue'
-import type { FormInstance, FormRules } from 'element-plus'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { 
-  dataTemplatesList, 
-  dataTemplatesCreate, 
-  dataTemplatesUpdate, 
-  dataTemplatesDelete 
-} from '../../api/dataTemplates'
+import { defineComponent, ref, computed } from 'vue';
+import type { FormInstance, FormRules } from 'element-plus';
+import { ElMessage, ElMessageBox } from 'element-plus';
+import {
+  dataTemplatesList,
+  dataTemplatesCreate,
+  dataTemplatesUpdate,
+  dataTemplatesDelete,
+} from '../../api/dataTemplates';
 
 interface TemplateItem {
-  id?: number
-  name: string
-  code: string
-  description: string
-  type: string
-  category_id?: number
-  used_n?: number
+  id?: number;
+  name: string;
+  code: string;
+  description: string;
+  type: string;
+  category_id?: number;
+  used_n?: number;
 }
 
 export default defineComponent({
   name: 'DataTemplate',
   setup() {
-    const searchKeyword = ref('')
-    const dialogVisible = ref(false)
-    const isEdit = ref(false)
-    const formRef = ref<FormInstance>()
+    const searchKeyword = ref('');
+    const dialogVisible = ref(false);
+    const isEdit = ref(false);
+    const formRef = ref<FormInstance>();
     const formData = ref<TemplateItem>({
       name: '',
       code: '',
       description: '',
-      type: 'basic'
-    })
-    const templateList = ref<TemplateItem[]>([])
+      type: 'basic',
+    });
+    const templateList = ref<TemplateItem[]>([]);
 
     // 静态数据中的 code 和 type 选项
     const codeOptions = [
-      'PR598754612', 'OP784548420', 'BL598495468', 'CH888468421', 'BG578481354',
-      'CR487121848', 'NX897823151', 'CC159756125', 'CT059789515', 'CT189756125'
-    ]
-    const typeOptions = ['basic', 'custom']
+      'PR598754612',
+      'OP784548420',
+      'BL598495468',
+      'CH888468421',
+      'BG578481354',
+      'CR487121848',
+      'NX897823151',
+      'CC159756125',
+      'CT059789515',
+      'CT189756125',
+    ];
+    const typeOptions = ['basic', 'custom'];
 
     // 随机选择函数
     const getRandomItem = (array: string[]) => {
-      return array[Math.floor(Math.random() * array.length)]
-    }
+      return array[Math.floor(Math.random() * array.length)];
+    };
 
     const rules: FormRules = {
       name: [{ required: true, message: '请输入模版名称', trigger: 'blur' }],
       code: [{ required: true, message: '请输入模版编号', trigger: 'blur' }],
       description: [{ required: true, message: '请输入模版描述', trigger: 'blur' }],
-      type: [{ required: true, message: '请选择模板类型', trigger: 'change' }]
-    }
+      type: [{ required: true, message: '请选择模板类型', trigger: 'change' }],
+    };
 
-    const dialogTitle = computed(() => isEdit.value ? '编辑模板' : '添加模板')
+    const dialogTitle = computed(() => (isEdit.value ? '编辑模板' : '添加模板'));
 
     const filteredBasicTemplates = computed(() => {
-      return templateList.value.filter(item => item.type === 'basic' && 
-        (item.name.includes(searchKeyword.value) || item.code.includes(searchKeyword.value)))
-    })
+      return templateList.value.filter(
+        (item) =>
+          item.type === 'basic' &&
+          (item.name.includes(searchKeyword.value) || item.code.includes(searchKeyword.value))
+      );
+    });
 
     const filteredCustomTemplates = computed(() => {
-      return templateList.value.filter(item => item.type === 'custom' && 
-        (item.name.includes(searchKeyword.value) || item.code.includes(searchKeyword.value)))
-    })
+      return templateList.value.filter(
+        (item) =>
+          item.type === 'custom' &&
+          (item.name.includes(searchKeyword.value) || item.code.includes(searchKeyword.value))
+      );
+    });
 
     const fetchTemplates = async () => {
       try {
-        const response = await dataTemplatesList({})
-        console.log(JSON.stringify(response.data.data))
+        const response = await dataTemplatesList({});
+        console.log(JSON.stringify(response.data.data));
         // 从后端数据中补充 code 和 type
-        templateList.value = (response.data.data.list || []).map((item: { code: any; type: any }) => ({
-          ...item,
-          code: item.code || getRandomItem(codeOptions), // 如果后端无 code，随机选择
-          type: item.type || getRandomItem(typeOptions)  // 如果后端无 type，随机选择
-        }))
+        templateList.value = (response.data.data.list || []).map(
+          (item: { code: any; type: any }) => ({
+            ...item,
+            code: item.code || getRandomItem(codeOptions), // 如果后端无 code，随机选择
+            type: item.type || getRandomItem(typeOptions), // 如果后端无 type，随机选择
+          })
+        );
       } catch (error) {
-        ElMessage.error('获取模板列表失败')
-        templateList.value = []
-        console.error(error)
+        ElMessage.error('获取模板列表失败');
+        templateList.value = [];
+        console.error(error);
       }
-    }
+    };
 
-    fetchTemplates()
+    fetchTemplates();
 
     const handleAddBasicTemplate = () => {
-      isEdit.value = false
+      isEdit.value = false;
       formData.value = {
         name: '',
         code: getRandomItem(codeOptions), // 默认随机 code
         description: '',
-        type: 'basic'
-      }
-      dialogVisible.value = true
-    }
+        type: 'basic',
+      };
+      dialogVisible.value = true;
+    };
 
     const handleAddCustomTemplate = () => {
-      isEdit.value = false
+      isEdit.value = false;
       formData.value = {
         name: '',
         code: getRandomItem(codeOptions), // 默认随机 code
         description: '',
-        type: 'custom'
-      }
-      dialogVisible.value = true
-    }
+        type: 'custom',
+      };
+      dialogVisible.value = true;
+    };
 
     const handleEdit = (row: TemplateItem) => {
-      isEdit.value = true
-      formData.value = { ...row }
-      dialogVisible.value = true
-    }
+      isEdit.value = true;
+      formData.value = { ...row };
+      dialogVisible.value = true;
+    };
 
     const handleDelete = async (row: TemplateItem) => {
       try {
         await ElMessageBox.confirm('确定要删除该模板吗？', '警告', {
           confirmButtonText: '确定',
           cancelButtonText: '取消',
-          type: 'warning'
-        })
-        
-        await dataTemplatesDelete({ id: row.id! })
-        templateList.value = templateList.value.filter(item => item.id !== row.id)
-        ElMessage.success('删除成功')
+          type: 'warning',
+        });
+
+        await dataTemplatesDelete({ id: row.id! });
+        templateList.value = templateList.value.filter((item) => item.id !== row.id);
+        ElMessage.success('删除成功');
       } catch (error) {
         if (error !== 'cancel') {
-          ElMessage.error('删除失败')
-          console.error(error)
+          ElMessage.error('删除失败');
+          console.error(error);
         }
       }
-    }
+    };
 
     const handleSubmit = async () => {
-      if (!formRef.value) return
-      
+      if (!formRef.value) return;
+
       await formRef.value.validate(async (valid) => {
         if (valid) {
           try {
@@ -243,29 +255,37 @@ export default defineComponent({
               const response = await dataTemplatesUpdate(
                 { id: formData.value.id! },
                 formData.value
-              )
-              const index = templateList.value.findIndex(item => item.id === formData.value.id)
+              );
+              const index = templateList.value.findIndex((item) => item.id === formData.value.id);
               if (index > -1) {
-                templateList.value[index] = { ...response.data, code: formData.value.code, type: formData.value.type }
+                templateList.value[index] = {
+                  ...response.data,
+                  code: formData.value.code,
+                  type: formData.value.type,
+                };
               }
-              ElMessage.success('编辑成功')
+              ElMessage.success('编辑成功');
             } else {
-              const response = await dataTemplatesCreate(formData.value)
-              templateList.value.push({ ...response.data, code: formData.value.code, type: formData.value.type })
-              ElMessage.success('添加成功')
+              const response = await dataTemplatesCreate(formData.value);
+              templateList.value.push({
+                ...response.data,
+                code: formData.value.code,
+                type: formData.value.type,
+              });
+              ElMessage.success('添加成功');
             }
-            dialogVisible.value = false
+            dialogVisible.value = false;
           } catch (error) {
-            ElMessage.error(isEdit.value ? '编辑失败' : '添加失败')
-            console.error(error)
+            ElMessage.error(isEdit.value ? '编辑失败' : '添加失败');
+            console.error(error);
           }
         }
-      })
-    }
+      });
+    };
 
     const filterTemplates = () => {
       // 本地过滤已通过 computed 属性实现
-    }
+    };
 
     return {
       searchKeyword,
@@ -282,10 +302,10 @@ export default defineComponent({
       handleEdit,
       handleDelete,
       handleSubmit,
-      filterTemplates
-    }
-  }
-})
+      filterTemplates,
+    };
+  },
+});
 </script>
 
 <style scoped lang="scss">
@@ -304,7 +324,7 @@ export default defineComponent({
 
 .template-container {
   padding: 20px;
-  background-color: #DEDCC7;
+  background-color: #dedcc7;
   min-height: 100vh;
 
   .template-header {

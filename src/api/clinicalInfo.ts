@@ -1,6 +1,6 @@
 // @ts-ignore
 /* eslint-disable */
-import request from "@/request";
+import request from '@/request';
 
 /** 此处后端没有提供注释 GET /clinical-info/ */
 export async function clinicalInfoList(
@@ -13,8 +13,8 @@ export async function clinicalInfoList(
     next?: string;
     previous?: string;
     results: API.ClinicalInfo[];
-  }>("/clinical-info/", {
-    method: "GET",
+  }>('/clinical-info/', {
+    method: 'GET',
     params: {
       ...params,
     },
@@ -23,14 +23,11 @@ export async function clinicalInfoList(
 }
 
 /** 此处后端没有提供注释 POST /clinical-info/ */
-export async function clinicalInfoCreate(
-  body: API.ClinicalInfo,
-  options?: { [key: string]: any }
-) {
-  return request<API.ClinicalInfo>("/clinical-info/", {
-    method: "POST",
+export async function clinicalInfoCreate(body: API.ClinicalInfo, options?: { [key: string]: any }) {
+  return request<API.ClinicalInfo>('/clinical-info/', {
+    method: 'POST',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     data: body,
     ...(options || {}),
@@ -45,7 +42,7 @@ export async function clinicalInfoRead(
 ) {
   const { id: param0, ...queryParams } = params;
   return request<API.ClinicalInfo>(`/clinical-info/${param0}/`, {
-    method: "GET",
+    method: 'GET',
     params: { ...queryParams },
     ...(options || {}),
   });
@@ -60,9 +57,9 @@ export async function clinicalInfoUpdate(
 ) {
   const { id: param0, ...queryParams } = params;
   return request<API.ClinicalInfo>(`/clinical-info/${param0}/`, {
-    method: "PUT",
+    method: 'PUT',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     params: { ...queryParams },
     data: body,
@@ -78,7 +75,7 @@ export async function clinicalInfoDelete(
 ) {
   const { id: param0, ...queryParams } = params;
   return request<any>(`/clinical-info/${param0}/`, {
-    method: "DELETE",
+    method: 'DELETE',
     params: { ...queryParams },
     ...(options || {}),
   });
@@ -93,9 +90,9 @@ export async function clinicalInfoPartialUpdate(
 ) {
   const { id: param0, ...queryParams } = params;
   return request<API.ClinicalInfo>(`/clinical-info/${param0}/`, {
-    method: "PATCH",
+    method: 'PATCH',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     params: { ...queryParams },
     data: body,
