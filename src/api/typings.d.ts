@@ -1,378 +1,330 @@
 declare namespace API {
-  type AnalysisSheet = {
-    /** Id */
+  type archiveDeleteParams = {
+    /** 档案编号 */
+    archive_code: string;
+  };
+
+  type ArchiveDetail = {
+    /** Id 档案id */
     id?: number;
-    /** Analysis table id */
-    analysis_table_id: number;
-    /** Sheet code */
-    sheet_code: string;
-    /** Sheet name */
-    sheet_name: string;
-    /** Remark */
-    remark?: string;
+    /** Archive code 档案编号（自动生成） */
+    archive_code?: string;
+    /** Archive name 档案名称 */
+    archive_name?: string;
+    /** Archive description 档案描述 */
+    archive_description?: string;
+    case_list?: CaseList[];
   };
 
-  type analysisSheetDeleteParams = {
-    /** A unique integer value identifying this analysis sheet. */
-    id: number;
-  };
-
-  type analysisSheetListParams = {
-    /** A page number within the paginated result set. */
-    page?: number;
-    /** Number of results to return per page. */
-    page_size?: number;
-  };
-
-  type analysisSheetPartialUpdateParams = {
-    /** A unique integer value identifying this analysis sheet. */
-    id: number;
-  };
-
-  type analysisSheetReadParams = {
-    /** A unique integer value identifying this analysis sheet. */
-    id: number;
-  };
-
-  type analysisSheetUpdateParams = {
-    /** A unique integer value identifying this analysis sheet. */
-    id: number;
-  };
-
-  type Archive = {
-    /** Id */
-    id: number;
-    /** Arcive id */
-    arcive_id: string;
-    /** Archive name */
+  type ArchiveList = {
+    /** Id 档案id */
+    id?: number;
+    /** Archive code 档案编号（自动生成） */
+    archive_code?: string;
+    /** Archive name 档案名称 */
     archive_name: string;
-    /** Description */
-    description?: string;
+    /** Case count 包含病例数 */
+    case_count?: number;
   };
 
-  type ArchiveCaseRelative = {
-    /** Id */
-    id: number;
-    /** Archive id */
-    archive_id: string;
-    /** Case id */
-    case_id: string;
-  };
-
-  type archiveCaseRelativesDeleteParams = {
-    /** A unique value identifying this archive case relative. */
-    id: number;
-  };
-
-  type archiveCaseRelativesListParams = {
+  type archiveListParams = {
     /** A page number within the paginated result set. */
     page?: number;
     /** Number of results to return per page. */
     page_size?: number;
   };
 
-  type archiveCaseRelativesPartialUpdateParams = {
-    /** A unique value identifying this archive case relative. */
-    id: number;
+  type archivePartialUpdateParams = {
+    /** 档案编号 */
+    archive_code: string;
   };
 
-  type archiveCaseRelativesReadParams = {
-    /** A unique value identifying this archive case relative. */
-    id: number;
+  type archiveReadParams = {
+    /** 档案编号 */
+    archive_code: string;
   };
 
-  type archiveCaseRelativesUpdateParams = {
-    /** A unique value identifying this archive case relative. */
-    id: number;
+  type archiveUpdateParams = {
+    /** 档案编号 */
+    archive_code: string;
   };
 
-  type archivesDeleteParams = {
-    /** A unique value identifying this archive. */
-    id: number;
-  };
-
-  type archivesListParams = {
-    /** A page number within the paginated result set. */
-    page?: number;
-    /** Number of results to return per page. */
-    page_size?: number;
-  };
-
-  type archivesPartialUpdateParams = {
-    /** A unique value identifying this archive. */
-    id: number;
-  };
-
-  type archivesReadParams = {
-    /** A unique value identifying this archive. */
-    id: number;
-  };
-
-  type archivesUpdateParams = {
-    /** A unique value identifying this archive. */
-    id: number;
-  };
-
-  type BaseInfo = {
-    /** Id */
-    id: number;
-    /** Case id */
-    case_id: string;
-    /** Name */
-    name: string;
-    /** Name code */
-    name_code: string;
-    /** Category */
-    category: string;
-    /** Category code */
-    category_code: string;
-    /** Type */
-    type: string;
-    /** Type code */
-    type_code: string;
-    /** Value */
-    value: string;
-  };
-
-  type baseInfoDeleteParams = {
-    /** A unique value identifying this base info. */
-    id: number;
-  };
-
-  type baseInfoListParams = {
-    /** A page number within the paginated result set. */
-    page?: number;
-    /** Number of results to return per page. */
-    page_size?: number;
-  };
-
-  type baseInfoPartialUpdateParams = {
-    /** A unique value identifying this base info. */
-    id: number;
-  };
-
-  type baseInfoReadParams = {
-    /** A unique value identifying this base info. */
-    id: number;
-  };
-
-  type baseInfoUpdateParams = {
-    /** A unique value identifying this base info. */
-    id: number;
-  };
-
-  type Cases = {
-    /** Id */
-    id?: string;
-    /** Case id */
-    case_id: string;
-    /** Identity id */
-    identity_id: string;
-    /** Inhospital id */
-    inhospital_id?: string;
-  };
-
-  type casesDeleteParams = {
-    /** A unique value identifying this cases. */
-    id: number;
-  };
-
-  type casesListParams = {
-    /** A page number within the paginated result set. */
-    page?: number;
-    /** Number of results to return per page. */
-    page_size?: number;
-  };
-
-  type casesPartialUpdateParams = {
-    /** A unique value identifying this cases. */
-    id: number;
-  };
-
-  type casesReadParams = {
-    /** A unique value identifying this cases. */
-    id: number;
-  };
-
-  type casesUpdateParams = {
-    /** A unique value identifying this cases. */
-    id: number;
-  };
-
-  type categoriesDeleteParams = {
-    /** A unique value identifying this data template category. */
-    id: number;
-  };
-
-  type categoriesListParams = {
-    /** A page number within the paginated result set. */
-    page?: number;
-    /** Number of results to return per page. */
-    page_size?: number;
-  };
-
-  type categoriesPartialUpdateParams = {
-    /** A unique value identifying this data template category. */
-    id: number;
-  };
-
-  type categoriesReadParams = {
-    /** A unique value identifying this data template category. */
-    id: number;
-  };
-
-  type categoriesUpdateParams = {
-    /** A unique value identifying this data template category. */
-    id: number;
-  };
-
-  type ClinicalInfo = {
-    /** ID */
+  type Case = {
+    /** Id 病例id */
     id?: number;
-    /** Name */
+    /** Case code 病例编号（自动生成） */
+    case_code?: string;
+    /** Identity 身份证号 */
+    identity: string;
+    /** Identity name */
+    identity_name?: string;
+    /** Opd id 门诊号 */
+    opd_id?: string;
+    /** Inhospital id 住院号 */
+    inhospital_id?: string;
+    /** Name 姓名 */
     name: string;
-    /** Name code */
-    name_code: string;
-    /** Case id */
-    case_id: string;
+    /** Gender 性别 0-女 1-男 */
+    gender: 0 | 1;
+    /** Birth date 出生年月日 */
+    birth_date: string;
+    /** Phone number 联系电话 */
+    phone_number?: string;
+    /** Home address 家庭住址 */
+    home_address?: string;
+    /** Blood type 血型 */
+    blood_type?: string;
+    /** Main diagnosis 主要诊断 */
+    main_diagnosis?: string;
+    /** Has transplant surgery 是否行移植手术,示例 是(2025-5-27) */
+    has_transplant_surgery?: string;
+    /** Is in transplant queue 是否存在移植排队 */
+    is_in_transplant_queue?: string;
+    /** 档案编号列表 */
+    archive_codes?: string[];
+    /** 关联的档案列表 */
+    archives?: number[];
+    /** Age 年龄 */
+    age?: string;
   };
 
-  type clinicalInfoDeleteParams = {
-    /** A unique integer value identifying this clinical info. */
-    id: number;
+  type caseDeleteParams = {
+    /** 病例编号 */
+    case_code: string;
   };
 
-  type clinicalInfoListParams = {
+  type CaseDetail = {
+    /** Id 病例id */
+    id?: number;
+    /** Case code 病例编号（自动生成） */
+    case_code?: string;
+    /** Identity 身份证号 */
+    identity: string;
+    /** Identity name */
+    identity_name?: string;
+    /** Opd id 门诊号 */
+    opd_id?: string;
+    /** Inhospital id 住院号 */
+    inhospital_id?: string;
+    /** Name 姓名 */
+    name: string;
+    /** Gender 性别 0-女 1-男 */
+    gender: 0 | 1;
+    /** Birth date 出生年月日 */
+    birth_date: string;
+    /** Phone number 联系电话 */
+    phone_number?: string;
+    /** Home address 家庭住址 */
+    home_address?: string;
+    /** Blood type 血型 */
+    blood_type?: string;
+    /** Main diagnosis 主要诊断 */
+    main_diagnosis?: string;
+    /** Has transplant surgery 是否行移植手术,示例 是(2025-5-27) */
+    has_transplant_surgery?: string;
+    /** Is in transplant queue 是否存在移植排队 */
+    is_in_transplant_queue?: string;
+    /** Archive codes 关联的档案编号列表 */
+    archive_codes?: string;
+    /** 关联的档案列表 */
+    archives?: number[];
+    /** Age 年龄 */
+    age?: string;
+  };
+
+  type caseIdentityCasesParams = {
+    /** A page number within the paginated result set. */
+    page?: number;
+    /** Number of results to return per page. */
+    page_size?: number;
+    /** 身份证号 */
+    identity_id: string;
+  };
+
+  type CaseList = {
+    /** Id 病例id */
+    id?: number;
+    /** Case code 病例编号（自动生成） */
+    case_code?: string;
+    /** Identity 身份证号 */
+    identity: string;
+    /** Identity name */
+    identity_name?: string;
+    /** Opd id 门诊号 */
+    opd_id?: string;
+    /** Inhospital id 住院号 */
+    inhospital_id?: string;
+    /** Name 姓名 */
+    name: string;
+    /** Gender 性别 0-女 1-男 */
+    gender: 0 | 1;
+    /** Birth date 出生年月日 */
+    birth_date: string;
+    /** Phone number 联系电话 */
+    phone_number?: string;
+    /** Home address 家庭住址 */
+    home_address?: string;
+    /** Blood type 血型 */
+    blood_type?: string;
+    /** Main diagnosis 主要诊断 */
+    main_diagnosis?: string;
+    /** Has transplant surgery 是否行移植手术,示例 是(2025-5-27) */
+    has_transplant_surgery?: string;
+    /** Is in transplant queue 是否存在移植排队 */
+    is_in_transplant_queue?: string;
+    /** Archive codes 关联的档案编号列表 */
+    archive_codes?: string;
+    /** Age 年龄 */
+    age?: string;
+  };
+
+  type caseListParams = {
     /** A page number within the paginated result set. */
     page?: number;
     /** Number of results to return per page. */
     page_size?: number;
   };
 
-  type clinicalInfoPartialUpdateParams = {
-    /** A unique integer value identifying this clinical info. */
+  type casePartialUpdateParams = {
+    /** 病例编号 */
+    case_code: string;
+  };
+
+  type caseReadParams = {
+    /** 病例编号 */
+    case_code: string;
+  };
+
+  type caseUpdateParams = {
+    /** 病例编号 */
+    case_code: string;
+  };
+
+  type dataDeleteParams = {
+    /** 自增id */
     id: number;
   };
 
-  type clinicalInfoReadParams = {
-    /** A unique integer value identifying this clinical info. */
+  type dataListParams = {
+    /** A page number within the paginated result set. */
+    page?: number;
+    /** Number of results to return per page. */
+    page_size?: number;
+  };
+
+  type dataPartialUpdateParams = {
+    /** 自增id */
     id: number;
   };
 
-  type clinicalInfoUpdateParams = {
-    /** A unique integer value identifying this clinical info. */
+  type dataReadParams = {
+    /** 自增id */
     id: number;
   };
 
   type DataTable = {
-    /** Id */
-    id: number;
-    /** Case id */
-    case_id: number;
-    /** Table name */
-    table_name: string;
-    /** Data template id */
-    data_template_id: number;
+    /** Case code 病例编号 */
+    case_code: string;
+    /** Template code 模板编号 */
+    template_code: string;
+    /** Word code 词条编号 */
+    word_code: string;
+    /** Check time 检查时间 */
+    check_time: string;
+    /** Value 检查值 */
+    value: string;
   };
 
-  type dataTablesDeleteParams = {
-    /** A unique value identifying this data table. */
-    id: number;
+  type DataTableDetail = {
+    /** Id 自增id */
+    id?: number;
+    /** Case code */
+    case_code?: string;
+    /** Template category */
+    template_category?: string;
+    /** Template name */
+    template_name?: string;
+    /** Word name */
+    word_name?: string;
+    /** Value 值 */
+    value: string;
+    /** Check time 检查时间 */
+    check_time: string;
   };
 
-  type dataTablesListParams = {
-    /** A page number within the paginated result set. */
-    page?: number;
-    /** Number of results to return per page. */
-    page_size?: number;
-  };
-
-  type dataTablesPartialUpdateParams = {
-    /** A unique value identifying this data table. */
-    id: number;
-  };
-
-  type dataTablesReadParams = {
-    /** A unique value identifying this data table. */
-    id: number;
-  };
-
-  type dataTablesUpdateParams = {
-    /** A unique value identifying this data table. */
-    id: number;
-  };
-
-  type DataTemplateCategory = {
-    /** Id */
-    id: number;
-    /** Name */
-    name: string;
-  };
-
-  type DataTemplates = {
-    /** Id */
-    id?: string;
-    /** Name */
-    name: string;
-    /** Description */
-    description?: string;
-    /** Category id */
-    category_id: number;
+  type DataTemplate = {
+    /** Id 数据模板id */
+    id?: number;
+    /** Template code 模板编号（自动生成） */
+    template_code?: string;
+    /** Template name 模板名称 */
+    template_name: string;
+    /** Template description 模板描述 */
+    template_description?: string;
+    /** Category 模板分类id */
+    category: number;
     /** Category name */
     category_name?: string;
-    /** Used n */
-    used_n?: number;
+    dictionaries?: number[];
+    dictionary_list?: Dictionary[];
   };
 
-  type dataTemplatesDeleteParams = {
-    /** A unique value identifying this data template. */
-    id: number;
+  type dataTemplateDeleteParams = {
+    /** 模板编号 */
+    template_code: string;
   };
 
-  type dataTemplatesListParams = {
+  type dataTemplateListParams = {
     /** A page number within the paginated result set. */
     page?: number;
     /** Number of results to return per page. */
     page_size?: number;
   };
 
-  type dataTemplatesPartialUpdateParams = {
-    /** A unique value identifying this data template. */
-    id: number;
+  type dataTemplatePartialUpdateParams = {
+    /** 模板编号 */
+    template_code: string;
   };
 
-  type dataTemplatesReadParams = {
-    /** A unique value identifying this data template. */
-    id: number;
+  type dataTemplateReadParams = {
+    /** 模板编号 */
+    template_code: string;
   };
 
-  type dataTemplatesUpdateParams = {
-    /** A unique value identifying this data template. */
+  type dataTemplateUpdateParams = {
+    /** 模板编号 */
+    template_code: string;
+  };
+
+  type dataUpdateParams = {
+    /** 自增id */
     id: number;
   };
 
   type Dictionary = {
-    /** Id */
+    /** Id 词条id */
     id?: number;
-    /** Word code */
-    word_code: string;
-    /** Word name */
+    /** Word code 词条编号 (自动生成) */
+    word_code?: string;
+    /** Word name 中文名称 */
     word_name: string;
-    /** Word eng */
+    /** Word eng 英文名称 */
     word_eng?: string;
-    /** Word short */
+    /** Word short 英文缩写 */
     word_short?: string;
-    /** Word class */
+    /** Word class 词条类型 */
     word_class: string;
-    /** Word apply */
+    /** Word apply 词条应用 */
     word_apply: string;
-    /** Word belong */
+    /** Word belong 从属别名 */
     word_belong?: string;
+    /** Data type 数据类型，如数值类型、文本类型 */
+    data_type?: string;
   };
 
   type dictionaryDeleteParams = {
-    /** A unique integer value identifying this dictionary. */
-    id: number;
+    /** 词条编号 */
+    word_code: string;
   };
 
   type dictionaryListParams = {
@@ -383,284 +335,33 @@ declare namespace API {
   };
 
   type dictionaryPartialUpdateParams = {
-    /** A unique integer value identifying this dictionary. */
-    id: number;
+    /** 词条编号 */
+    word_code: string;
   };
 
   type dictionaryReadParams = {
-    /** A unique integer value identifying this dictionary. */
-    id: number;
+    /** 词条编号 */
+    word_code: string;
   };
 
   type dictionaryUpdateParams = {
-    /** A unique integer value identifying this dictionary. */
-    id: number;
-  };
-
-  type DocumentChart = {
-    /** Id */
-    id: number;
-    /** Document id */
-    document_id: number;
-    /** Chart id */
-    chart_id: number;
-    /** X */
-    x: number;
-    /** Y */
-    y: number;
-    /** Height */
-    height: number;
-    /** Width */
-    width: number;
-  };
-
-  type documentChartsDeleteParams = {
-    /** A unique value identifying this document chart. */
-    id: number;
-  };
-
-  type documentChartsListParams = {
-    /** A page number within the paginated result set. */
-    page?: number;
-    /** Number of results to return per page. */
-    page_size?: number;
-  };
-
-  type documentChartsPartialUpdateParams = {
-    /** A unique value identifying this document chart. */
-    id: number;
-  };
-
-  type documentChartsReadParams = {
-    /** A unique value identifying this document chart. */
-    id: number;
-  };
-
-  type documentChartsUpdateParams = {
-    /** A unique value identifying this document chart. */
-    id: number;
-  };
-
-  type Documents = {
-    /** Id */
-    id: number;
-    /** Title */
-    title: string;
-    /** Author */
-    author?: string;
-    /** Description */
-    description?: string;
-    /** Properties */
-    properties: string;
-  };
-
-  type documentsDeleteParams = {
-    /** A unique value identifying this documents. */
-    id: number;
-  };
-
-  type documentsListParams = {
-    /** A page number within the paginated result set. */
-    page?: number;
-    /** Number of results to return per page. */
-    page_size?: number;
-  };
-
-  type documentsPartialUpdateParams = {
-    /** A unique value identifying this documents. */
-    id: number;
-  };
-
-  type documentsReadParams = {
-    /** A unique value identifying this documents. */
-    id: number;
-  };
-
-  type documentsUpdateParams = {
-    /** A unique value identifying this documents. */
-    id: number;
-  };
-
-  type ExaminationImages = {
-    /** Id */
-    id: number;
-    /** Examination sheet id */
-    examination_sheet_id: number;
-    /** Url */
-    url: string;
-    /** Remark */
-    remark?: string;
-  };
-
-  type examinationImagesDeleteParams = {
-    /** A unique value identifying this examination images. */
-    id: number;
-  };
-
-  type examinationImagesListParams = {
-    /** A page number within the paginated result set. */
-    page?: number;
-    /** Number of results to return per page. */
-    page_size?: number;
-  };
-
-  type examinationImagesPartialUpdateParams = {
-    /** A unique value identifying this examination images. */
-    id: number;
-  };
-
-  type examinationImagesReadParams = {
-    /** A unique value identifying this examination images. */
-    id: number;
-  };
-
-  type examinationImagesUpdateParams = {
-    /** A unique value identifying this examination images. */
-    id: number;
-  };
-
-  type ExaminationSheet = {
-    /** Id */
-    id: number;
-    /** Data table id */
-    data_table_id: number;
-    /** Case id */
-    case_id?: number;
-    /** Name */
-    name: string;
-    /** Name code */
-    name_code: string;
-    /** Category */
-    category: string;
-    /** Category code */
-    category_code: string;
-    /** Diagnosis */
-    diagnosis: string;
-    /** Description */
-    description?: string;
-    /** Exam date */
-    exam_date: string;
-    /** Inspector */
-    inspector?: string;
-  };
-
-  type examinationSheetsDeleteParams = {
-    /** A unique value identifying this examination sheet. */
-    id: number;
-  };
-
-  type examinationSheetsListParams = {
-    /** A page number within the paginated result set. */
-    page?: number;
-    /** Number of results to return per page. */
-    page_size?: number;
-  };
-
-  type examinationSheetsPartialUpdateParams = {
-    /** A unique value identifying this examination sheet. */
-    id: number;
-  };
-
-  type examinationSheetsReadParams = {
-    /** A unique value identifying this examination sheet. */
-    id: number;
-  };
-
-  type examinationSheetsUpdateParams = {
-    /** A unique value identifying this examination sheet. */
-    id: number;
+    /** 词条编号 */
+    word_code: string;
   };
 
   type Identity = {
-    /** Id */
-    id: number;
-    /** Identity id */
+    /** Identity id 身份证号 */
     identity_id: string;
-    /** True name */
-    true_name: string;
-    /** Gender */
-    gender: number;
-    /** Birth date */
+    /** Name 姓名 */
+    name: string;
+    /** Gender 性别 0-女 1-男 */
+    gender: 0 | 1;
+    /** Birth date 出生年月日 */
     birth_date: string;
-  };
-
-  type identityDeleteParams = {
-    /** A unique value identifying this identity. */
-    id: number;
-  };
-
-  type identityListParams = {
-    /** A page number within the paginated result set. */
-    page?: number;
-    /** Number of results to return per page. */
-    page_size?: number;
-  };
-
-  type identityPartialUpdateParams = {
-    /** A unique value identifying this identity. */
-    id: number;
-  };
-
-  type identityReadParams = {
-    /** A unique value identifying this identity. */
-    id: number;
-  };
-
-  type identityUpdateParams = {
-    /** A unique value identifying this identity. */
-    id: number;
-  };
-
-  type Image = {
-    /** Id */
-    id: number;
-    /** Document id */
-    document_id: number;
-    /** Url */
-    url: string;
-    /** Remark */
-    remark?: string;
-    /** X */
-    x: number;
-    /** Y */
-    y: number;
-    /** Height */
-    height: number;
-    /** Width */
-    width: number;
-    /** Is stroke */
-    is_stroke: number;
-    /** Stroke weight */
-    stroke_weight: number;
-    /** Stroke color */
-    stroke_color: string;
-  };
-
-  type imagesDeleteParams = {
-    /** A unique value identifying this image. */
-    id: number;
-  };
-
-  type imagesListParams = {
-    /** A page number within the paginated result set. */
-    page?: number;
-    /** Number of results to return per page. */
-    page_size?: number;
-  };
-
-  type imagesPartialUpdateParams = {
-    /** A unique value identifying this image. */
-    id: number;
-  };
-
-  type imagesReadParams = {
-    /** A unique value identifying this image. */
-    id: number;
-  };
-
-  type imagesUpdateParams = {
-    /** A unique value identifying this image. */
-    id: number;
+    /** Case count 关联的病例数 */
+    case_count?: string;
+    /** Age 年龄 */
+    age?: string;
   };
 
   type Login = {
@@ -670,168 +371,45 @@ declare namespace API {
     password: string;
   };
 
-  type Shape = {
-    /** Id */
-    id: number;
-    /** Document id */
-    document_id: number;
-    /** X */
-    x: number;
-    /** Y */
-    y: number;
-    /** Height */
-    height: number;
-    /** Width */
-    width: number;
-    /** Is fill */
-    is_fill: number;
-    /** Fill color */
-    fill_color: string;
-    /** Is stroke */
-    is_stroke: number;
-    /** Stroke color */
-    stroke_color: string;
-    /** Path */
-    path: string;
+  type patientCaseDataParams = {
+    /** 身份证号 */
+    identity_id: string;
   };
 
-  type shapesDeleteParams = {
-    /** A unique value identifying this shape. */
-    id: number;
-  };
-
-  type shapesListParams = {
-    /** A page number within the paginated result set. */
-    page?: number;
-    /** Number of results to return per page. */
-    page_size?: number;
-  };
-
-  type shapesPartialUpdateParams = {
-    /** A unique value identifying this shape. */
-    id: number;
-  };
-
-  type shapesReadParams = {
-    /** A unique value identifying this shape. */
-    id: number;
-  };
-
-  type shapesUpdateParams = {
-    /** A unique value identifying this shape. */
-    id: number;
-  };
-
-  type TestingSheet = {
-    /** Id */
-    id: number;
-    /** Data table id */
-    data_table_id: number;
-    /** Case id */
-    case_id?: number;
-    /** Name */
+  type PatientDetail = {
+    /** Identity id 身份证号 */
+    identity_id: string;
+    /** Name 姓名 */
     name: string;
-    /** Name code */
-    name_code: string;
-    /** Name eng */
-    name_eng: string;
-    /** Name short */
-    name_short: string;
-    /** Category */
-    category: string;
-    /** Category code */
-    category_code: string;
-    /** Type */
-    type: string;
-    /** Type code */
-    type_code: string;
-    /** Value */
-    value: string;
-    /** Test date */
-    test_date: string;
-    /** Inspector */
-    inspector?: string;
+    /** Gender 性别 0-女 1-男 */
+    gender: 0 | 1;
+    /** Birth date 出生年月日 */
+    birth_date: string;
+    /** Age 年龄 */
+    age?: string;
+    case_list?: CaseList[];
   };
 
-  type testingSheetsDeleteParams = {
-    /** A unique value identifying this testing sheet. */
-    id: number;
-  };
-
-  type testingSheetsListParams = {
+  type patientListParams = {
     /** A page number within the paginated result set. */
     page?: number;
     /** Number of results to return per page. */
     page_size?: number;
   };
 
-  type testingSheetsPartialUpdateParams = {
-    /** A unique value identifying this testing sheet. */
-    id: number;
+  type patientPartialUpdateParams = {
+    /** 身份证号 */
+    identity_id: string;
   };
 
-  type testingSheetsReadParams = {
-    /** A unique value identifying this testing sheet. */
-    id: number;
+  type patientReadParams = {
+    /** 身份证号 */
+    identity_id: string;
   };
 
-  type testingSheetsUpdateParams = {
-    /** A unique value identifying this testing sheet. */
-    id: number;
-  };
-
-  type Text = {
-    /** Id */
-    id: number;
-    /** Document id */
-    document_id: number;
-    /** X */
-    x: number;
-    /** Y */
-    y: number;
-    /** Height */
-    height: number;
-    /** Width */
-    width: number;
-    /** Family */
-    family: string;
-    /** Size */
-    size: number;
-    /** Color */
-    color: string;
-    /** Weight */
-    weight: number;
-    /** Underline */
-    underline: number;
-    /** Slope */
-    slope: number;
-  };
-
-  type textsDeleteParams = {
-    /** A unique value identifying this text. */
-    id: number;
-  };
-
-  type textsListParams = {
-    /** A page number within the paginated result set. */
-    page?: number;
-    /** Number of results to return per page. */
-    page_size?: number;
-  };
-
-  type textsPartialUpdateParams = {
-    /** A unique value identifying this text. */
-    id: number;
-  };
-
-  type textsReadParams = {
-    /** A unique value identifying this text. */
-    id: number;
-  };
-
-  type textsUpdateParams = {
-    /** A unique value identifying this text. */
-    id: number;
+  type patientUpdateParams = {
+    /** 身份证号 */
+    identity_id: string;
   };
 
   type TokenObtainPair = {

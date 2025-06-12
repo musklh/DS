@@ -21,7 +21,7 @@ const routes = [
   {
     path: '/dashboard',
     component: Layout,
-    redirect: '/dashboard/template',
+    redirect: '/dashboard/help',
     children: [
       {
         path: 'help',
@@ -46,7 +46,7 @@ const routes = [
         name: 'DataTemplate',
         component: DataTemplate,
         meta: {
-          title: '数据模板',
+          title: '临床模板',
           requiresAuth: true,
         },
       },

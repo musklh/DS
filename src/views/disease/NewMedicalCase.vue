@@ -50,10 +50,10 @@
       <el-form-item label="出生年月">
         <el-date-picker
           v-model="form.birthDate"
-          type="month"
-          placeholder="选择年月"
-          format="YYYY-MM"
-          value-format="YYYY-MM"
+          type="date"
+          placeholder="选择日期"
+          format="YYYY-MM-DD"
+          value-format="YYYY-MM-DD"
         />
         <span class="ml-2">{{ calcAge(form.birthDate) }} 岁</span>
       </el-form-item>
@@ -79,6 +79,19 @@
         <el-input v-model="form.diagnosis" />
       </el-form-item>
 
+      <el-form-item label="是否做过移植手术" prop="hasTransplantSurgery">
+        <el-select v-model="form.hasTransplantSurgery" placeholder="请选择">
+          <el-option label="是" value="1" />
+          <el-option label="否" value="0" />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="是否在移植队列" prop="isInTransplantQueue">
+        <el-select v-model="form.isInTransplantQueue" placeholder="请选择">
+          <el-option label="是" value="1" />
+          <el-option label="否" value="0" />
+        </el-select>
+      </el-form-item>
+
       <el-form-item>
         <el-button type="primary" @click="submitForm"> 添加 </el-button>
       </el-form-item>
@@ -89,6 +102,26 @@
 <script lang="ts">
 import { defineComponent, reactive, ref } from 'vue';
 import { ElMessage } from 'element-plus';
+import { caseCreate } from '../../api/openApiCase'; // 路径根据实际位置调整
+
+// 示例：你可以放在 script 顶部，正式项目中应使用统一的类型声明文件
+interface Case {
+  caseId: string;
+  recordId: string;
+  idCard: string;
+  outpatientId: string;
+  inpatientId: string;
+  name: string;
+  gender: string;
+  birthDate: string;
+  phone: string;
+  address: string;
+  bloodType: string;
+  diagnosis: string;
+  hasTransplantSurgery: string;
+  isInTransplantQueue: string;
+}
+
 
 export default defineComponent({
   name: 'NewMedicalCase',
@@ -107,6 +140,8 @@ export default defineComponent({
       address: '',
       bloodType: '',
       diagnosis: '',
+      hasTransplantSurgery: '',
+      isInTransplantQueue: '',
     });
 
     const rules = {
@@ -114,9 +149,13 @@ export default defineComponent({
       idCard: [{ required: true, message: '请输入身份证号', trigger: 'blur' }],
       name: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
       gender: [{ required: true, message: '请选择性别', trigger: 'change' }],
+      hasTransplantSurgery: [{ required: true, message: '请选择是否做过移植手术', trigger: 'change' }],
+      isInTransplantQueue: [{ required: true, message: '请选择是否在移植队列', trigger: 'change' }],
     };
 
-    const recordOptions = ['DA001001', 'DA001002', 'DA001003']; // 示例数据
+    const recordOptions = JSON.parse(localStorage.getItem('archiveCodes') || '[]');
+    console.log('读取缓存中的档案编号:', recordOptions);
+
 
     const generateCaseId = () => {
       const num = Math.floor(10000000 + Math.random() * 90000000);
@@ -133,14 +172,35 @@ export default defineComponent({
     };
 
     const submitForm = () => {
-      formRef.value.validate((valid: boolean) => {
+      formRef.value.validate(async (valid: boolean) => {
         if (valid) {
-          ElMessage.success('病例添加成功！');
-          console.log('提交表单数据：', { ...form });
-          // TODO: 发起后端提交请求
+          try {
+            const payload = {
+              identity: form.idCard,
+              opd_id: form.outpatientId,
+              inhospital_id: form.inpatientId,
+              name: form.name,
+              gender: form.gender === '男' ? 1 : 0,
+              birth_date: form.birthDate,
+              phone_number: form.phone,
+              home_address: form.address,
+              blood_type: form.bloodType,
+              main_diagnosis: form.diagnosis,
+              has_transplant_surgery: form.hasTransplantSurgery,
+              is_in_transplant_queue: form.isInTransplantQueue,
+            } as API.Case;
+            const response = await caseCreate(payload);
+            ElMessage.success('病例添加成功！');
+            console.log('提交成功，返回数据：', response);
+            // 你可以在这里清空表单或跳转页面等
+          } catch (error) {
+            console.error('提交失败：', error);
+            ElMessage.error('提交失败，请稍后重试。');
+          }
         }
       });
     };
+
 
     // 自动生成初始病例号
     generateCaseId();
@@ -155,6 +215,8 @@ export default defineComponent({
       calcAge,
     };
   },
+
+  
 });
 </script>
 

@@ -6,7 +6,7 @@
     </div>
     <div class="right-menu">
       <img src="@/assets/m.png" class="menu-icon" />
-      <span class="username">{{ username }}</span>
+      <!--       <span class="username">{{ username }}</span> -->
       <img src="@/assets/out.png" class="menu-icon" @click="logout" />
     </div>
   </header>
