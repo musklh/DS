@@ -3,7 +3,7 @@ import Login from '../views/Login.vue';
 import Layout from '../layout/index.vue';
 import DataTemplate from '../views/template/DataTemplate.vue';
 import ChartAnalysis from '../views/chart/ChartAnalysis.vue';
-
+////
 const routes = [
   {
     path: '/',

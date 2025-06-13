@@ -9,11 +9,9 @@
     "build-pure": "vite build",
     "preview": "vite preview",
     "openapi": "node openapi.config.js",
-    "test": "vitest",
-    "test:ui": "vitest --ui",
     "coverage": "vitest run --coverage",
     "lint": "eslint . --ext .vue,.js,.ts,.jsx,.tsx --fix",
-    "format": "prettier --write \"src/**/*.{vue,ts,js,json,md}\""
+    "format": "prettier --write \"src/**/*.{vue,ts,js,json,md}\"",
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.1",
