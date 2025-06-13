@@ -90,12 +90,15 @@ export default defineComponent({
             generateCode(); // Generate a new code for the next entry
             console.log('创建成功的档案数据：', response.data);
           } else {
+            console.log(response.data)
             // Backend returned an error (e.g., 400 validation error, 500 server error)
             // The response.data in your error example is a string, so check that.
             let errorMessage = '档案添加失败，请重试。';
+            
             if (response && response.msg) {
               errorMessage = response.msg;
             }
+
             if (response && response.data && typeof response.data === 'string') {
               // Parse the stringified error detail if it exists
               try {
@@ -114,6 +117,7 @@ export default defineComponent({
             }
 
             ElMessage.error(errorMessage);
+            console.log(errorMessage)
           }
         } catch (error) {
           // Catch any network errors or uncaught exceptions during the API call

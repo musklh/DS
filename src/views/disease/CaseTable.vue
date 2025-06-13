@@ -28,18 +28,50 @@ const fetchData = async () => {
   try {
     loading.value = true;
     const res = await caseList({});
-    console.log('caseList 返回结果:', res); // 👈 添加这一行 // 可以传入分页参数等
-    tableData.value = res.results.map((item: { archive_code: any; case_code: any; identity_id: any; opd_id: any; inhospital_id: any; name: any; gender: number; birth_date: string | undefined; main_diagnosis: any; }) => ({
-      recordId: item.archive_code || '-',      // 档案编号
-      caseId: item.case_code || '-',           // 病例编号
-      idNumber: item.identity_id || '-',       // 身份证号
-      outpatientId: item.opd_id || '-',        // 门诊号
-      inpatientId: item.inhospital_id || '-',  // 住院号
-      name: item.name || '-',
-      gender: item.gender === 1 ? '男' : '女',
-      age: getAgeFromBirth(item.birth_date),
-      diagnosis: item.main_diagnosis || '-',
-    }));
+    console.log('caseList 返回结果:', res);
+
+    if (!res.data?.data?.list || !Array.isArray(res.data.data.list)) {
+      throw new Error('返回数据格式错误：res.data.data.list 应为数组');
+    }
+
+    // 处理 archive_codes 为数组的情况
+    tableData.value = res.data.data.list.flatMap((item: {
+      archive_codes: string[];
+      case_code: string;
+      identity: string;
+      opd_id: string;
+      inhospital_id: string;
+      name: string;
+      gender: number;
+      birth_date?: string;
+      main_diagnosis: string;
+    }) => {
+      if (!item.archive_codes || item.archive_codes.length === 0) {
+        return [{
+          recordId: '-',
+          caseId: item.case_code || '-',
+          idNumber: item.identity || '-',
+          outpatientId: item.opd_id || '-',
+          inpatientId: item.inhospital_id || '-',
+          name: item.name || '-',
+          gender: item.gender === 1 ? '男' : '女',
+          age: getAgeFromBirth(item.birth_date),
+          diagnosis: item.main_diagnosis || '-',
+        }];
+      }
+
+      return item.archive_codes.map(code => ({
+        recordId: code || '-',
+        caseId: item.case_code || '-',
+        idNumber: item.identity || '-',
+        outpatientId: item.opd_id || '-',
+        inpatientId: item.inhospital_id || '-',
+        name: item.name || '-',
+        gender: item.gender === 1 ? '男' : '女',
+        age: getAgeFromBirth(item.birth_date),
+        diagnosis: item.main_diagnosis || '-',
+      }));
+    });
   } catch (error) {
     ElMessage.error('获取病例数据失败');
     console.error(error);
@@ -47,6 +79,9 @@ const fetchData = async () => {
     loading.value = false;
   }
 };
+
+
+
 
 // 出生日期转年龄
 function getAgeFromBirth(birthDateStr?: string): number | '-' {
