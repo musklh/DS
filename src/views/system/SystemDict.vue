@@ -107,7 +107,7 @@ import { defineComponent, ref, computed, onMounted } from 'vue'
 import { Plus, Search } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { dictionaryList, dictionaryCreate, dictionaryUpdate, dictionaryDelete } from '@/api/dictionary'
-
+//
 interface DictItem {
   word_name: string     // 中文名称
   word_eng?: string     // 英文名称

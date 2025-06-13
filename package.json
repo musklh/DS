@@ -9,7 +9,6 @@
     "build-pure": "vite build",
     "preview": "vite preview",
     "openapi": "node openapi.config.js",
-    "test": "vitest",
     "coverage": "vitest run --coverage",
     "lint": "eslint . --ext .vue,.js,.ts,.jsx,.tsx --fix",
     "format": "prettier --write \"src/**/*.{vue,ts,js,json,md}\"",

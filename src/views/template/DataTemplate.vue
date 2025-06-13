@@ -125,7 +125,7 @@ import { Search } from '@element-plus/icons-vue'; // Import the specific icon
 //   dataTemplateUpdate,
 //   dataTemplateDelete,
 // } from '../../api/dataTemplates';
-//
+////
 interface TemplateItem {
   id?: number;
   name: string;
