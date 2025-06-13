@@ -11,17 +11,17 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
-import Header from '../components/common/Header.vue'
-import Sidebar from '../components/common/Sidebar.vue'
+import { defineComponent } from 'vue';
+import Header from '../components/common/Header.vue';
+import Sidebar from '../components/common/Sidebar.vue';
 
 export default defineComponent({
   name: 'Layout',
   components: {
     Header,
-    Sidebar
-  }
-})
+    Sidebar,
+  },
+});
 </script>
 
 <style scoped lang="scss">
@@ -47,4 +47,4 @@ export default defineComponent({
     }
   }
 }
-</style> 
+</style>

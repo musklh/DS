@@ -8,5 +8,12 @@
     "strict": true,
     "types": ["node"]
   },
-  "include": ["vite.config.ts"]
+  "include": [
+    "vite.config.ts",
+    "vitest.config.ts",
+    "eslint.config.js",
+    "openapi.config.js"
+    // Add .prettierrc.cjs if you want TS to be aware of it, though usually not necessary.
+    // Add any other root-level TS/JS config files here.
+  ]
 }

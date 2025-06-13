@@ -28,8 +28,8 @@
       <el-table-column prop="formula" label="公式" />
       <el-table-column label="操作" width="200" fixed="right">
         <template #default="{ row }">
-          <el-button size="small" @click="handleView(row)">查看</el-button>
-          <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
+          <el-button size="small" @click="handleView(row)"> 查看 </el-button>
+          <el-button size="small" type="danger" @click="handleDelete(row)"> 删除 </el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -45,12 +45,8 @@
     />
 
     <!-- 添加计算属性对话框 -->
-    <el-dialog
-      :title="dialogTitle"
-      v-model="dialogVisible"
-      width="600px"
-    >
-      <el-form :model="formData" ref="formRef" label-width="100px">
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="600px">
+      <el-form ref="formRef" :model="formData" label-width="100px">
         <el-form-item label="计算属性名称" prop="name">
           <el-input v-model="formData.name" />
         </el-form-item>
@@ -59,7 +55,7 @@
         <el-form-item label="公式" prop="formula">
           <div class="formula-builder">
             <!-- 已构建的公式展示 -->
-            <div class="formula-display" v-if="formulaParts.length > 0">
+            <div v-if="formulaParts.length > 0" class="formula-display">
               <span v-for="(part, index) in formulaParts" :key="index">
                 {{ part }}
               </span>
@@ -75,18 +71,22 @@
                 />
               </el-select>
               <!-- 选择操作符 -->
-              <el-select v-model="currentOperator" placeholder="选择操作符" style="margin-left: 10px;">
+              <el-select
+                v-model="currentOperator"
+                placeholder="选择操作符"
+                style="margin-left: 10px"
+              >
                 <el-option label="+" value="+" />
                 <el-option label="-" value="-" />
                 <el-option label="*" value="*" />
                 <el-option label="/" value="/" />
               </el-select>
               <!-- 添加到公式 -->
-              <el-button type="primary" @click="addToFormula" style="margin-left: 10px;">
+              <el-button type="primary" style="margin-left: 10px" @click="addToFormula">
                 添加
               </el-button>
               <!-- 清空公式 -->
-              <el-button type="danger" @click="clearFormula" style="margin-left: 10px;">
+              <el-button type="danger" style="margin-left: 10px" @click="clearFormula">
                 清空
               </el-button>
             </div>
@@ -95,8 +95,8 @@
 
         <el-form-item label="备注" prop="remarks">
           <el-input
-            type="textarea"
             v-model="formData.remarks"
+            type="textarea"
             :rows="3"
             placeholder="请输入备注信息"
           />
@@ -114,46 +114,51 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, onMounted } from 'vue'
-import { dictionaryList, dictionaryCreate, dictionaryUpdate, dictionaryDelete } from '../../api/dictionary'
+import { defineComponent, ref, computed, onMounted } from 'vue';
+import {
+  dictionaryList,
+  dictionaryCreate,
+  dictionaryUpdate,
+  dictionaryDelete,
+} from '../../api/dictionary';
 
 interface DictItem {
-  id?: number
-  word_name: string
-  word_eng: string
-  word_short: string
-  word_code: string
-  word_class: string
-  word_apply: string
-  word_belong: string
+  id?: number;
+  word_name: string;
+  word_eng: string;
+  word_short: string;
+  word_code: string;
+  word_class: string;
+  word_apply: string;
+  word_belong: string;
 }
 
 export default defineComponent({
   name: 'ChartCreate',
   setup() {
-    const searchKeyword = ref('')
-    const currentPage = ref(1)
-    const pageSize = ref(10)
-    const total = ref(0)
-    const dialogVisible = ref(false)
-    const dialogTitle = ref('添加计算属性')
+    const searchKeyword = ref('');
+    const currentPage = ref(1);
+    const pageSize = ref(10);
+    const total = ref(0);
+    const dialogVisible = ref(false);
+    const dialogTitle = ref('添加计算属性');
 
     const formData = ref({
       name: '',
       formula: '',
       remarks: '',
-    })
+    });
 
     const attributes = ref([
       { name: '属性1', formula: 'A+B', remarks: '备注1' },
       { name: '属性2', formula: 'C-D', remarks: '备注2' },
-    ])
+    ]);
 
     // 词条相关数据
-    const dictionaryItems = ref<DictItem[]>([])
-    const currentWord = ref('')
-    const currentOperator = ref('')
-    const formulaParts = ref<string[]>([])
+    const dictionaryItems = ref<DictItem[]>([]);
+    const currentWord = ref('');
+    const currentOperator = ref('');
+    const formulaParts = ref<string[]>([]);
 
     // 加载词条数据
     const loadDictionary = async () => {
@@ -161,77 +166,75 @@ export default defineComponent({
         const params = {
           page: 1,
           page_size: 10,
-        }
-        const response = await dictionaryList(params)
-        console.log(response.data)
+        };
+        const response = await dictionaryList(params);
+        console.log(response.data);
         // 从 response.data.results 中提取词条数据
-        dictionaryItems.value = response.data.data.results || []
+        dictionaryItems.value = response.data.data.results || [];
       } catch (error) {
-        console.error('获取词条失败:', error)
+        console.error('获取词条失败:', error);
       }
-    }
+    };
 
     // 页面加载时获取词条
     onMounted(() => {
-      loadDictionary()
-    })
+      loadDictionary();
+    });
 
     // 过滤计算属性
     const filteredAttributes = computed(() => {
-      return attributes.value.filter(attr =>
-        attr.name.includes(searchKeyword.value)
-      )
-    })
+      return attributes.value.filter((attr) => attr.name.includes(searchKeyword.value));
+    });
 
     // 添加计算属性
     const handleAdd = () => {
-      dialogVisible.value = true
-      formulaParts.value = [] // 清空公式
-      formData.value = { name: '', formula: '', remarks: '' } // 重置表单
-    }
+      dialogVisible.value = true;
+      formulaParts.value = []; // 清空公式
+      formData.value = { name: '', formula: '', remarks: '' }; // 重置表单
+    };
 
     // 添加到公式
     const addToFormula = () => {
       if (currentWord.value) {
-        formulaParts.value.push(currentWord.value)
+        formulaParts.value.push(currentWord.value);
         if (currentOperator.value) {
-          formulaParts.value.push(currentOperator.value)
+          formulaParts.value.push(currentOperator.value);
         }
-        formData.value.formula = formulaParts.value.join(' ')
-        currentWord.value = ''
-        currentOperator.value = ''
+        formData.value.formula = formulaParts.value.join(' ');
+        currentWord.value = '';
+        currentOperator.value = '';
       }
-    }
+    };
 
     // 清空公式
     const clearFormula = () => {
-      formulaParts.value = []
-      formData.value.formula = ''
-      currentWord.value = ''
-      currentOperator.value = ''
-    }
+      formulaParts.value = [];
+      formData.value.formula = '';
+      currentWord.value = '';
+      currentOperator.value = '';
+    };
 
     // 提交表单
     const handleSubmit = () => {
       if (formData.value.name && formData.value.formula) {
-        attributes.value.push({ ...formData.value })
-        dialogVisible.value = false
-        formData.value = { name: '', formula: '', remarks: '' }
-        formulaParts.value = []
+        attributes.value.push({ ...formData.value });
+        dialogVisible.value = false;
+        formData.value = { name: '', formula: '', remarks: '' };
+        formulaParts.value = [];
       } else {
-        (window as any).$message?.error('请填写计算属性名称和公式')
+        (window as any).$message?.error('请填写计算属性名称和公式');
       }
-    }
+    };
 
     // 删除计算属性
     const handleDelete = (attribute: any) => {
-      attributes.value = attributes.value.filter(attr => attr !== attribute)
-    }
+      attributes.value = attributes.value.filter((attr) => attr !== attribute);
+    };
 
     // 查看计算属性
     const handleView = (attribute: { name: any }) => {
-      (window as any).$message?.info(`查看 ${attribute.name}`)
-    }
+      (window as any).$message?.info(`查看 ${attribute.name}`);
+    };
 
     return {
       searchKeyword,
@@ -253,15 +256,15 @@ export default defineComponent({
       handleView,
       addToFormula,
       clearFormula,
-    }
+    };
   },
-})
+});
 </script>
 
 <style scoped lang="scss">
 .attribute-container {
   padding: 20px;
-  color: #DEDCC7;
+  color: #dedcc7;
 
   .attribute-header {
     display: flex;
