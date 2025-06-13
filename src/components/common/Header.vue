@@ -15,7 +15,7 @@
 <script lang="ts">
 import { defineComponent, computed } from 'vue'; // Import computed
 import { useRouter } from 'vue-router';
-import { useLoginUserStore } from '@/stores/LoginStore.ts'; // 确保路径正确
+import { useLoginUserStore } from '../../stores/LoginStore.ts'; // 确保路径正确
 
 export default defineComponent({
   name: 'Header',

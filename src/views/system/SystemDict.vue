@@ -1,7 +1,7 @@
 <template>
   <div class="dict-container">
 
-    <!-- 内容区域 -->
+    <!-- 内容区域1 -->
     <div class="content">
       <!-- 右侧主内容 -->
       <div class="main-content">
