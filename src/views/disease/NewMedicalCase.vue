@@ -176,6 +176,7 @@ export default defineComponent({
         if (valid) {
           try {
             const payload = {
+              archive_code: form.recordId,
               identity: form.idCard,
               opd_id: form.outpatientId,
               inhospital_id: form.inpatientId,
