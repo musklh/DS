@@ -16,9 +16,9 @@ export default defineConfig({
   server: {
     port: 5371,
     proxy: {
-      // 使用 Vite 标准 proxy 配置
+      // 开发环境代理配置
       '/api': {
-        target: 'http://127.0.0.1:8000',
+        target: process.env.VITE_API_URL || 'http://127.0.0.1:8000',
         changeOrigin: true,
       },
     },
