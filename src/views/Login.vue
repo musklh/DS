@@ -88,7 +88,7 @@ export default defineComponent({
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: url('../assets/hello.png') no-repeat center center;
+  background: url('../assets/hello.jpg') no-repeat center center;
   background-size: cover;
   justify-content: center;
   align-items: center;
