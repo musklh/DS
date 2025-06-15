@@ -44,6 +44,7 @@
           </el-table-column>
           <el-table-column prop="word_apply" label="词条应用" width="120" />
           <el-table-column prop="word_belong" label="从属别名" width="120" />
+          <el-table-column prop="data_type" label="数据类型" width="120" />
           <el-table-column prop="actions" label="操作" width="200" fixed="right">
             <template #default="{ row }">
               <el-button size="small" @click="handleEdit(row)">编辑</el-button>
@@ -67,9 +68,6 @@
             <el-form-item label="英文缩写" prop="word_short">
               <el-input v-model="formData.word_short" placeholder="请输入英文缩写" />
             </el-form-item>
-            <el-form-item label="词条编号" prop="word_code">
-              <el-input v-model="formData.word_code" placeholder="请输入词条编号" />
-            </el-form-item>
             <el-form-item label="词条类型" prop="word_class">
               <el-select v-model="formData.word_class" placeholder="请选择词条类型">
                 <el-option label="数据类型" value="数据类型" />
@@ -90,6 +88,11 @@
             <el-form-item label="从属别名" prop="word_belong">
               <el-input v-model="formData.word_belong" placeholder="请输入从属别名" />
             </el-form-item>
+            <el-form-item label="是否数值类型" prop="data_type">
+              <el-select v-model="formData.data_type" placeholder="否就不用选择">
+                <el-option label="是" value="数值类型" />
+              </el-select>
+            </el-form-item>
           </el-form>
           <template #footer>
             <span class="dialog-footer">
@@ -106,7 +109,7 @@
 import { defineComponent, ref, computed, onMounted } from 'vue'
 import { Plus, Search } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { dictionaryList, dictionaryCreate, dictionaryUpdate, dictionaryDelete } from '@/api/dictionary'
+import { dictionaryList, dictionaryCreate, dictionaryUpdate, dictionaryDelete } from '../../api/dictionary'
 //
 interface DictItem {
   word_name: string     // 中文名称
@@ -116,7 +119,7 @@ interface DictItem {
   word_class: string    // 词条类型
   word_apply: string    // 词条应用
   word_belong?: string  // 从属别名
-  data_type?: string    // 数据类型
+  data_type?: string | null // 新增：数据类型
 }
 const generateWordCode = (): string => {
   const randomDigits = Math.floor(Math.random() * 1_000_000) // 0 ~ 999999
@@ -155,7 +158,8 @@ export default defineComponent({
       word_code: '',
       word_class: '',
       word_apply: '',
-      word_belong: ''
+      word_belong: '',
+      data_type: null // 默认值设为 null
     })
 
     // 表单验证规则
@@ -175,7 +179,8 @@ export default defineComponent({
         item.word_eng?.toLowerCase().includes(keyword) ||
         item.word_short?.toLowerCase().includes(keyword) ||
         item.word_code?.toLowerCase().includes(keyword) ||
-        item.word_belong?.toLowerCase().includes(keyword)
+        item.word_belong?.toLowerCase().includes(keyword) ||
+        item.data_type?.toLowerCase().includes(keyword) // 搜索也包括 data_type
       )
     })
 
@@ -187,7 +192,10 @@ export default defineComponent({
           page_size: 100
         })
         if (res?.data?.code === 200 && res.data?.data.list) {
-          dictList.value = res.data.data.list
+          dictList.value = res.data.data.list.map((item: any) => ({
+            ...item,
+            data_type: item.data_type === null ? '否' : '是' // 在列表中显示"是"或"否"
+          }))
           console.log(dictList.value)
         } else {
           dictList.value = []
@@ -208,7 +216,8 @@ export default defineComponent({
         word_code: generateWordCode(),
         word_class: '',
         word_apply: '',
-        word_belong: ''
+        word_belong: '',
+        data_type: null // 默认值设为 null
       }
       dialogVisible.value = true
     }
@@ -216,7 +225,8 @@ export default defineComponent({
     // 编辑词条
     const handleEdit = (row: DictItem) => {
       isEdit.value = true
-      formData.value = { ...row }
+      // 确保 data_type 转换回后端期望的 '数值类型' 或 null
+      formData.value = { ...row, data_type: row.data_type === '是' ? '数值类型' : null }
       dialogVisible.value = true
     }
 
@@ -249,11 +259,11 @@ export default defineComponent({
             const submitData = { ...formData.value }
 
             if (isEdit.value && submitData.word_code) {
-              await dictionaryUpdate({ word_code: submitData.word_code }, submitData)
+              await dictionaryUpdate({ word_code: submitData.word_code }, submitData as API.Dictionary)
               ElMessage.success('编辑成功')
             } else {
-              delete submitData.word_code
-              await dictionaryCreate(submitData)
+              delete submitData.word_code // 新增时不需要 word_code
+              await dictionaryCreate(submitData as API.Dictionary)
               ElMessage.success('添加成功')
             }
 

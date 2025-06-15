@@ -9,39 +9,35 @@
 
     <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
       <el-form-item label="病例号">
-        <el-input v-model="form.caseId" disabled />
+        <el-input v-model="form.caseId" disabled style="width: 300px;" />
         <el-link type="primary" class="ml-2" @click="generateCaseId"> 自动生成 </el-link>
       </el-form-item>
 
       <el-form-item label="档案号" prop="recordId">
-        <el-select v-model="form.recordId" placeholder="请选择">
+        <el-select v-model="form.recordId" placeholder="请选择" style="width: 300px;">
           <el-option v-for="item in recordOptions" :key="item" :label="item" :value="item" />
         </el-select>
       </el-form-item>
 
       <el-form-item label="身份证号" prop="idCard">
-        <el-input v-model="form.idCard" placeholder="请输入身份证号" />
-        <el-icon class="ml-2">
-          <el-tooltip content="首次录入的身份证会自动创建患者资料">
-            <i class="el-icon-info" />
-          </el-tooltip>
-        </el-icon>
+        <el-input v-model="form.idCard" placeholder="请输入身份证号" style="width: 300px;" />
+        <span class="ml-2 tip-text">首次录入的身份证会自动创建患者资料</span>
       </el-form-item>
 
       <el-form-item label="门诊号">
-        <el-input v-model="form.outpatientId" />
+        <el-input v-model="form.outpatientId" style="width: 300px;" />
       </el-form-item>
 
       <el-form-item label="住院号">
-        <el-input v-model="form.inpatientId" />
+        <el-input v-model="form.inpatientId" style="width: 300px;" />
       </el-form-item>
 
       <el-form-item label="姓名" prop="name">
-        <el-input v-model="form.name" />
+        <el-input v-model="form.name" style="width: 300px;" />
       </el-form-item>
 
       <el-form-item label="性别" prop="gender">
-        <el-select v-model="form.gender" placeholder="请选择">
+        <el-select v-model="form.gender" placeholder="请选择" style="width: 300px;">
           <el-option label="男" value="男" />
           <el-option label="女" value="女" />
         </el-select>
@@ -54,20 +50,21 @@
           placeholder="选择日期"
           format="YYYY-MM-DD"
           value-format="YYYY-MM-DD"
+          style="width: 300px;"
         />
         <span class="ml-2">{{ calcAge(form.birthDate) }} 岁</span>
       </el-form-item>
 
       <el-form-item label="联系电话">
-        <el-input v-model="form.phone" />
+        <el-input v-model="form.phone" style="width: 300px;" />
       </el-form-item>
 
       <el-form-item label="家庭地址">
-        <el-input v-model="form.address" />
+        <el-input v-model="form.address" style="width: 300px;" />
       </el-form-item>
 
       <el-form-item label="血型">
-        <el-select v-model="form.bloodType" placeholder="请选择">
+        <el-select v-model="form.bloodType" placeholder="请选择" style="width: 300px;">
           <el-option label="A型" value="A" />
           <el-option label="B型" value="B" />
           <el-option label="AB型" value="AB" />
@@ -76,19 +73,28 @@
       </el-form-item>
 
       <el-form-item label="主要诊断">
-        <el-input v-model="form.diagnosis" />
+        <el-input v-model="form.diagnosis" style="width: 300px;" />
       </el-form-item>
 
       <el-form-item label="是否做过移植手术" prop="hasTransplantSurgery">
-        <el-select v-model="form.hasTransplantSurgery" placeholder="请选择">
-          <el-option label="是" value="1" />
-          <el-option label="否" value="0" />
+        <el-select v-model="form.hasTransplantSurgery" placeholder="请选择" style="width: 100px; margin-right: 10px;">
+          <el-option label="是" value="是" />
+          <el-option label="否" value="否" />
         </el-select>
+        <el-date-picker
+          v-model="form.hasTransplantSurgeryDate"
+          type="date"
+          placeholder="选择日期"
+          format="YYYY-MM-DD"
+          value-format="YYYY-MM-DD"
+          @change="updateHasTransplantSurgery"
+          style="width: 190px;"
+        />
       </el-form-item>
       <el-form-item label="是否在移植队列" prop="isInTransplantQueue">
-        <el-select v-model="form.isInTransplantQueue" placeholder="请选择">
-          <el-option label="是" value="1" />
-          <el-option label="否" value="0" />
+        <el-select v-model="form.isInTransplantQueue" placeholder="请选择" style="width: 300px;">
+          <el-option label="是" value="是" />
+          <el-option label="否" value="否" />
         </el-select>
       </el-form-item>
 
@@ -140,8 +146,9 @@ export default defineComponent({
       address: '',
       bloodType: '',
       diagnosis: '',
-      hasTransplantSurgery: '',
-      isInTransplantQueue: '',
+      hasTransplantSurgery: '未填写',
+      hasTransplantSurgeryDate: '',
+      isInTransplantQueue: '未填写',
     });
 
     const rules = {
@@ -171,12 +178,20 @@ export default defineComponent({
       return age;
     };
 
+    const updateHasTransplantSurgery = () => {
+      if (form.hasTransplantSurgery === '否') {
+        form.hasTransplantSurgery = '否';
+      } else if (form.hasTransplantSurgery === '是' && form.hasTransplantSurgeryDate) {
+        form.hasTransplantSurgery = `是(${form.hasTransplantSurgeryDate})`;
+      }
+    };
+
     const submitForm = () => {
       formRef.value.validate(async (valid: boolean) => {
         if (valid) {
           try {
             const payload = {
-              archive_code: form.recordId,
+              archive_codes: [form.recordId],
               identity: form.idCard,
               opd_id: form.outpatientId,
               inhospital_id: form.inpatientId,
@@ -190,6 +205,7 @@ export default defineComponent({
               has_transplant_surgery: form.hasTransplantSurgery,
               is_in_transplant_queue: form.isInTransplantQueue,
             } as API.Case;
+            console.log("提交的payload:", payload);
             const response = await caseCreate(payload);
             ElMessage.success('病例添加成功！');
             console.log('提交成功，返回数据：', response);
@@ -214,6 +230,7 @@ export default defineComponent({
       generateCaseId,
       submitForm,
       calcAge,
+      updateHasTransplantSurgery,
     };
   },
 
@@ -227,5 +244,9 @@ export default defineComponent({
 }
 .mb-4 {
   margin-bottom: 20px;
+}
+.tip-text {
+  font-size: 14px;
+  color: #909399;
 }
 </style>

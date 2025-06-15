@@ -1,6 +1,6 @@
 <template>
   <el-select
-    v-model="selectedCase"
+    v-model="selectedCaseCode"
     placeholder="请选择专病档案"
     filterable
     clearable
@@ -10,28 +10,75 @@
   >
     <el-option
       v-for="item in caseOptions"
-      :key="item.value"
-      :label="item.label"
-      :value="item.value"
+      :key="item.archive_code"
+      :label="`${item.archive_name}（${item.archive_code}）`"
+      :value="item.archive_code"
     />
   </el-select>
 </template>
 
-<script setup>
-import { ref } from 'vue';
+<script setup lang="ts">
+import { ref, onMounted, watch } from 'vue'; // Import watch
+import { archiveList } from '@/api/archive';
+import { ElSelect, ElOption } from 'element-plus'; // Explicitly import Element Plus components
+
+interface ArchiveItem {
+  id: number;
+  archive_code: string;
+  archive_name: string;
+  archive_description?: string;
+  case_count: number;
+}
 
 const emit = defineEmits(['caseSelected']);
 
-const selectedCase = ref('');
-const caseOptions = [
-  { value: 'liver-transplant', label: '肝移植手术档案' },
-  { value: 'kidney-transplant', label: '肾移植手术档案' },
-  { value: 'cardiac-case', label: '心脏病病例档案' },
-];
+const selectedCaseCode = ref<string | null>(null); // Change v-model to bind to string (archive_code)
+const caseOptions = ref<ArchiveItem[]>([]
+);
 
-const handleChange = (value) => {
-  emit('caseSelected', value);
+const fetchArchives = async () => {
+  try {
+    const response = await archiveList({});
+    const resData = response.data;
+
+    if (resData.code === 200 && resData.data && Array.isArray(resData.data.list)) {
+      caseOptions.value = resData.data.list;
+    } else {
+      console.error('数据结构错误:', resData);
+    }
+  } catch (error) {
+    console.error('获取档案列表失败:', error);
+  }
 };
+
+const handleChange = (code: string) => {
+  // Find the full archive item based on the selected code
+  const selectedArchive = caseOptions.value.find(item => item.archive_code === code);
+  if (selectedArchive) {
+    emit('caseSelected', {
+      archive_code: selectedArchive.archive_code,
+      archive_name: selectedArchive.archive_name,
+    });
+  } else {
+    // Handle case where selection is cleared
+    emit('caseSelected', { archive_code: '', archive_name: '' });
+  }
+};
+
+// Optional: If you need to set an initial selection based on a prop or external change
+// You can use a watch here to update selectedCaseCode if an initial value needs to be set
+/*
+const props = defineProps<{ initialSelectedCode?: string }>();
+watch(() => props.initialSelectedCode, (newCode) => {
+  if (newCode) {
+    selectedCaseCode.value = newCode;
+  }
+}, { immediate: true });
+*/
+
+onMounted(() => {
+  fetchArchives();
+});
 </script>
 
 <style scoped>

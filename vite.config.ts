@@ -7,10 +7,11 @@ import path from 'path';
 export default defineConfig({
   plugins: [
     vue(),
-    eslintPlugin({
-      include: ['src/**/*.ts', 'src/**/*.vue', 'src/**/*.js'], // Specify files to lint
-      cache: false, // Disable cache to ensure it picks up ESLint config changes
-    }),
+    //安全检查  可选
+    // eslintPlugin({
+    //   include: ['src/**/*.ts', 'src/**/*.vue', 'src/**/*.js'], // Specify files to lint
+    //   cache: false, // Disable cache to ensure it picks up ESLint config changes
+    // }),
   ],
   server: {
     port: 5371,

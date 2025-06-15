@@ -24,24 +24,24 @@
     <el-card class="mb-4">
       <div class="patient-info-grid">
         <p><strong>当前患者: </strong>{{ patient.name }}</p>
-        <p><strong>性别: </strong>{{ patient.gender }}</p>
+        <p><strong>性别: </strong>{{ patient.gender === 1 ? '男' : '女' }}</p>
+
         <p><strong>年龄: </strong>{{ patient.age }}</p>
         <p><strong>身份证号: </strong>{{ patient.idCard }}</p>
-        <p><strong>病例: </strong>{{ patient.caseId1 }}</p>
-        <p><strong>病例: </strong>{{ patient.caseId2 }}</p>
+        <p v-for="item in patient.allCases" :key="item.case_code"><strong>病例号: </strong>{{ item.case_code }}</p>
       </div>
       <el-divider />
       <div class="patient-contact-info-grid">
-        <p><strong>联系电话: </strong>{{ patient.phone }}</p>
-        <p><strong>家庭住址: </strong>{{ patient.address }}</p>
+        <p><strong>联系电话: </strong>{{ patient.phone_number }}</p>
+        <p><strong>家庭住址: </strong>{{ patient.home_address }}</p>
       </div>
       <div class="patient-medical-info-grid">
-        <p><strong>血型: </strong>{{ patient.bloodType }}</p>
-        <p><strong>RH: </strong>{{ patient.rh }}</p>
-        <p><strong>是否行肝移植手术: </strong>{{ patient.transplanted }}</p>
-        <p><strong>是否在移植排队: </strong>{{ patient.waiting }}</p>
+        <p><strong>血型: </strong>{{ patient.blood_type }}</p>
+        <p><strong>RH: </strong>{{ patient.rh||"阴性" }}</p>
+        <p><strong>是否行肝移植手术: </strong>{{ patient.has_transplant_surgery }}</p>
+        <p><strong>是否在移植排队: </strong>{{ patient.is_in_transplant_queue }}</p>
       </div>
-      <p><strong>主要诊断: </strong>{{ patient.diagnosis }}</p>
+      <p><strong>主要诊断: </strong>{{ patient.main_diagnosis }}</p>
     </el-card>
 
     <div v-if="viewMode === 'table'">
@@ -113,12 +113,15 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, computed } from 'vue';
 import { ElMessage } from 'element-plus';
 
 const props = defineProps({
-  patient: Object,
+  patient: {
+    type: Object,
+    required: true
+  },
 });
 
 const viewMode = ref('table'); // 'table' or 'timeline'
@@ -131,96 +134,80 @@ const editForm = reactive({
   phone: '',
 });
 
-// Mock patient data based on the image
-const patient = reactive({
-  name: '王XXX',
-  gender: '女',
-  age: '52岁',
-  idCard: 'XXXXXXXXXXXXXXXXX',
-  caseId1: 'XA568942',
-  caseId2: 'XA584523',
-  phone: '18956142356',
-  address: '家庭住址: 福建省厦门市XXXXXXXXXXXXXXX',
-  bloodType: 'O型',
-  rh: '阴性',
-  transplanted: '是 (2024-XX-XX)',
-  waiting: '否',
-  diagnosis: '主要诊断: XXXXXXXXXXXXXXXXXXXXXX',
-});
+const emit = defineEmits(['back']);
 
 // Open edit dialog
 const openEditDialog = () => {
-  Object.assign(editForm, patient); // Assign current patient data to edit form
+  Object.assign(editForm, props.patient); // Assign current patient data to edit form
   editDialogVisible.value = true;
 };
 
 // Save edited information
 const saveEdit = () => {
   // In a real application, you'd send this data to a backend
-  Object.assign(patient, editForm); // Update patient data with edited form
+  Object.assign(props.patient, editForm); // Update patient data with edited form
   ElMessage.success('已保存');
   editDialogVisible.value = false;
 };
 
 // Go back to list
 const goBack = () => {
-  ElMessage.info('返回列表');
+  emit('back');
 };
 
 // Data for the sections, categorized as left and right based on the image layout
 const leftSections = [
-  {
-    title: '临床检验',
-    items: [
-      { label: '血常规', time: '2024-XX-XX 12:21' },
-      { label: '凝血四项', time: '2024-XX-XX 12:25' },
-      { label: '血气分析', time: '2024-XX-XX 13:33' },
-      { label: '术前免疫', time: '2024-XX-XX 13:40' },
-    ],
-  },
-  {
-    title: '临床记录',
-    items: [
-      { label: '病史采集', time: '2024-XX-XX 09:21' },
-      { label: '专家诊疗意见', time: '2024-XX-XX 11:22' },
-    ],
-  },
-  {
-    title: '随访',
-    items: [
-      { label: '当前治疗情况', time: '2024-XX-XX 13:30' },
-      { label: '移植后随访', time: '2024-XX-XX 18:23' },
-    ],
-  },
-];
-
-const rightSections = [
-  {
-    title: '辅助检查',
-    items: [
-      { label: '胸部CT', time: '2024-XX-XX 09:02' },
-      { label: '腹部CT', time: '2024-XX-XX 10:29' },
-      { label: '心脏彩超', time: '2024-XX-XX 11:33' },
-    ],
-  },
-  {
-    title: '评分',
-    items: [
-      { label: 'Child-pugh评分', time: '2024-XX-XX 10:11' },
-      { label: 'MELD评分', time: '2024-XX-XX 12:32' },
-      { label: 'CLIF-CAD评分', time: '2024-XX-XX 18:45' },
-      { label: 'EASL-ACLF评分', time: '2024-XX-XX 18:48' },
-      { label: 'MELD评分 (移植后)', time: '2024-XX-XX 16:28' },
-    ],
-  },
-];
-
+    {
+      title: '临床检验',
+      items: [
+        { label: '血常规', time: '2024-XX-XX 12:21' },
+        { label: '凝血四项', time: '2024-XX-XX 12:25' },
+        { label: '血气分析', time: '2024-XX-XX 13:33' },
+        { label: '术前免疫', time: '2024-XX-XX 13:40' },
+      ],
+    },
+    {
+      title: '临床记录',
+      items: [
+        { label: '病史采集', time: '2024-XX-XX 09:21' },
+        { label: '专家诊疗意见', time: '2024-XX-XX 11:22' },
+      ],
+    },
+    {
+      title: '随访',
+      items: [
+        { label: '当前治疗情况', time: '2024-XX-XX 13:30' },
+        { label: '移植后随访', time: '2024-XX-XX 18:23' },
+      ],
+    },
+  ];
+  
+ const rightSections = [
+    {
+      title: '辅助检查',
+      items: [
+        { label: '胸部CT', time: '2024-XX-XX 09:02' },
+        { label: '腹部CT', time: '2024-XX-XX 10:29' },
+        { label: '心脏彩超', time: '2024-XX-XX 11:33' },
+      ],
+    },
+    {
+      title: '评分',
+      items: [
+        { label: 'Child-pugh评分', time: '2024-XX-XX 10:11' },
+        { label: 'MELD评分', time: '2024-XX-XX 12:32' },
+        { label: 'CLIF-CAD评分', time: '2024-XX-XX 18:45' },
+        { label: 'EASL-ACLF评分', time: '2024-XX-XX 18:48' },
+        { label: 'MELD评分 (移植后)', time: '2024-XX-XX 16:28' },
+      ],
+    },
+  ];
 // Combine all sections for timeline view
 const allSections = computed(() => [...leftSections, ...rightSections]);
 
 // Assemble timeline data
 const timelineData = computed(() => {
-  const data = [];
+  const data: any[] = [];
   allSections.value.forEach((section) => {
     section.items.forEach((item) => {
       const found = data.find((t) => t.date === item.time);
@@ -239,64 +226,100 @@ const timelineData = computed(() => {
 
 <style scoped>
 .patient-detail {
-  padding: 24px;
-  max-width: 1100px;
-  margin: auto;
+  padding: 32px;
+  width: 100vw;
+  max-width: 100vw;
+  min-width: 0;
+  margin: 0;
+  box-sizing: border-box;
 }
 
 .toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 24px;
 }
 
 .right-toolbar {
   display: flex;
   align-items: center;
-  gap: 10px; /* Space between "编辑信息" and view switch */
+  gap: 16px;
 }
 
 .view-switch {
   display: flex;
-  gap: 8px;
+  gap: 12px;
 }
 
 .mb-4 {
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 }
 
-/* Basic Info Grid Layout */
+/* 默认3列 */
 .patient-info-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr); /* 3 columns for name, gender, age, ID, case IDs */
-  gap: 10px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  font-size: 20px;
 }
 
-.patient-contact-info-grid {
-  display: grid;
-  grid-template-columns: 1.5fr 3fr; /* phone and address, adjust ratio as needed */
-  gap: 10px;
-  margin-top: 10px; /* Space after divider */
-}
-
+/* 默认4列 */
 .patient-medical-info-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr); /* blood type, RH, transplanted, waiting */
-  gap: 10px;
-  margin-top: 10px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-top: 16px;
+  font-size: 18px;
 }
 
-/* Style for patient info paragraphs to make them compact */
+/* 默认2列 */
+.patient-contact-info-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 3fr;
+  gap: 20px;
+  margin-top: 16px;
+  font-size: 18px;
+}
+
+/* 平板及以下：2列 */
+@media (max-width: 900px) {
+  .patient-info-grid {
+    grid-template-columns: repeat(2, 1fr);
+    font-size: 18px;
+  }
+  .patient-medical-info-grid {
+    grid-template-columns: repeat(2, 1fr);
+    font-size: 16px;
+  }
+}
+
+/* 手机：1列 */
+@media (max-width: 600px) {
+  .patient-detail {
+    padding: 8px;
+  }
+  .patient-info-grid,
+  .patient-medical-info-grid,
+  .patient-contact-info-grid {
+    grid-template-columns: 1fr;
+    font-size: 15px;
+    gap: 10px;
+  }
+  .mb-4 {
+    margin-bottom: 16px;
+  }
+}
+
 .patient-info-grid p,
 .patient-contact-info-grid p,
 .patient-medical-info-grid p {
-  margin: 0; /* Remove default paragraph margin */
+  margin: 0;
   padding: 0;
 }
 
 .el-divider {
-  margin-top: 10px;
-  margin-bottom: 10px;
+  margin-top: 16px;
+  margin-bottom: 16px;
 }
 </style>
