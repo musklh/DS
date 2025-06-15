@@ -9,16 +9,16 @@
 
     <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
       <el-form-item label="档案号">
-        <el-input v-model="form.code" disabled />
+        <el-input v-model="form.code" disabled style="width: 300px;" />
         <el-link type="primary" class="ml-2" @click="generateCode"> 自动生成 </el-link>
       </el-form-item>
 
       <el-form-item label="档案名称" prop="name">
-        <el-input v-model="form.name" placeholder="请输入" />
+        <el-input v-model="form.name" placeholder="请输入" style="width: 300px;" />
       </el-form-item>
 
       <el-form-item label="档案描述" prop="desc">
-        <el-input v-model="form.desc" type="textarea" placeholder="请输入" :rows="4" />
+        <el-input v-model="form.desc" type="textarea" placeholder="请输入" :rows="4" style="width: 300px;" />
       </el-form-item>
 
       <el-form-item>
@@ -82,7 +82,7 @@ export default defineComponent({
           const response = await archiveCreate(requestBody);
 
           // Check the response from your backend
-          if (response && response.code === 200) {
+          if (response && response.data.code === 200) {
             ElMessage.success('档案添加成功！');
             // Optionally, reset the form or navigate away
             formRef.value.resetFields(); // Resets validated fields

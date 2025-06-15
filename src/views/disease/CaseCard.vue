@@ -7,6 +7,8 @@
     >
       <div>
         <div class="card-title">{{ archive.archive_name }}</div>
+        <!-- ✅ 添加档案编号显示 -->
+        <div class="card-code">档案号：{{ archive.archive_code }}</div>
         <div class="card-desc">
           {{ archive.archive_description || '暂无详细描述。' }}
         </div>
@@ -22,9 +24,10 @@
   </div>
 </template>
 
+
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { archiveList } from '@/api/archive'; // ✅ 根据你的路径调整
+import { archiveList } from '@/api/archive'; // 
 //
 interface ArchiveItem {
   id: number;
@@ -66,6 +69,13 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
+
+.card-code {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
 .case-panel-card {
   background: #fff;
   border-radius: 10px;
