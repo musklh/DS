@@ -18,6 +18,8 @@
 <script setup>
 import { ElAlert, ElButton, ElCard } from 'element-plus';
 
+import {patientList,patientRead,patientCaseData} from '../../api/patient';
+
 const emit = defineEmits(['patient-case-selected']);
 
 const simulateSelection = () => {

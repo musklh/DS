@@ -7,19 +7,19 @@
       class="mb-4"
     />
 
-    <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
+    <el-form ref="formRef" :model="form" :rules="rules" label-width="80px" label-position="left" hide-required-asterisk>
       <el-form-item label="病例号">
         <el-input v-model="form.caseId" disabled style="width: 300px;" />
         <el-link type="primary" class="ml-2" @click="generateCaseId"> 自动生成 </el-link>
       </el-form-item>
 
-      <el-form-item label="档案号" prop="recordId">
+      <el-form-item label="档案号 *" prop="recordId">
         <el-select v-model="form.recordId" placeholder="请选择" style="width: 300px;">
           <el-option v-for="item in recordOptions" :key="item" :label="item" :value="item" />
         </el-select>
       </el-form-item>
 
-      <el-form-item label="身份证号" prop="idCard">
+      <el-form-item label="身份证号 *" prop="idCard">
         <el-input v-model="form.idCard" placeholder="请输入身份证号" style="width: 300px;" />
         <span class="ml-2 tip-text">首次录入的身份证会自动创建患者资料</span>
       </el-form-item>
@@ -32,11 +32,11 @@
         <el-input v-model="form.inpatientId" style="width: 300px;" />
       </el-form-item>
 
-      <el-form-item label="姓名" prop="name">
+      <el-form-item label="姓名 *" prop="name">
         <el-input v-model="form.name" style="width: 300px;" />
       </el-form-item>
 
-      <el-form-item label="性别" prop="gender">
+      <el-form-item label="性别 *" prop="gender">
         <el-select v-model="form.gender" placeholder="请选择" style="width: 300px;">
           <el-option label="男" value="男" />
           <el-option label="女" value="女" />
@@ -76,7 +76,7 @@
         <el-input v-model="form.diagnosis" style="width: 300px;" />
       </el-form-item>
 
-      <el-form-item label="是否做过移植手术" prop="hasTransplantSurgery">
+      <el-form-item label="是否做过移植手术 *" prop="hasTransplantSurgery">
         <el-select v-model="form.hasTransplantSurgery" placeholder="请选择" style="width: 100px; margin-right: 10px;">
           <el-option label="是" value="是" />
           <el-option label="否" value="否" />
@@ -91,7 +91,7 @@
           style="width: 190px;"
         />
       </el-form-item>
-      <el-form-item label="是否在移植队列" prop="isInTransplantQueue">
+      <el-form-item label="是否在移植队列 *" prop="isInTransplantQueue">
         <el-select v-model="form.isInTransplantQueue" placeholder="请选择" style="width: 300px;">
           <el-option label="是" value="是" />
           <el-option label="否" value="否" />
