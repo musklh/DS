@@ -269,6 +269,15 @@ declare namespace API {
     dictionary_list?: Dictionary[];
   };
 
+  type DataTemplateCategory = {
+    /** Id 模板分类id */
+    id?: number;
+    /** Name 模板分类名称 */
+    name: string;
+    /** Template count 该分类下的模板数量 */
+    template_count?: string;
+  };
+
   type dataTemplateDeleteParams = {
     /** 模板编号 */
     template_code: string;
@@ -410,6 +419,33 @@ declare namespace API {
   type patientUpdateParams = {
     /** 身份证号 */
     identity_id: string;
+  };
+
+  type templateCategoryDeleteParams = {
+    /** 模板分类id */
+    id: number;
+  };
+
+  type templateCategoryListParams = {
+    /** A page number within the paginated result set. */
+    page?: number;
+    /** Number of results to return per page. */
+    page_size?: number;
+  };
+
+  type templateCategoryPartialUpdateParams = {
+    /** 模板分类id */
+    id: number;
+  };
+
+  type templateCategoryReadParams = {
+    /** 模板分类id */
+    id: number;
+  };
+
+  type templateCategoryUpdateParams = {
+    /** 模板分类id */
+    id: number;
   };
 
   type TokenObtainPair = {

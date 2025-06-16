@@ -10,6 +10,7 @@ import * as dictionary from './dictionary';
 import * as login from './login';
 import * as patient from './patient';
 import * as register from './register';
+import * as templateCategory from './templateCategory';
 import * as token from './token';
 export default {
   archive,
@@ -20,5 +21,6 @@ export default {
   login,
   patient,
   register,
+  templateCategory,
   token,
 };

@@ -89,8 +89,9 @@
               <el-input v-model="formData.word_belong" placeholder="请输入从属别名" />
             </el-form-item>
             <el-form-item label="是否数值类型" prop="data_type">
-              <el-select v-model="formData.data_type" placeholder="否就不用选择">
+              <el-select v-model="formData.data_type" :placeholder="formData.data_type === '' ? '否' : '请选择'">
                 <el-option label="是" value="数值类型" />
+                <el-option label="否" value="" />
               </el-select>
             </el-form-item>
           </el-form>
@@ -126,18 +127,6 @@ const generateWordCode = (): string => {
   return 'I' + randomDigits.toString().padStart(6, '0')
 }
 
-// 词条类型选项数组
-const wordClassOptions = ref([
-  { label: '数据类型', value: '数据类型' },
-  { label: '字典词条', value: '字典词条' },
-  { label: '模板类别', value: '模板类别' },
-  { label: '临床信息', value: '临床信息' },
-  { label: '信息类型', value: '信息类型' },
-  { label: '检验类型', value: '检验类型' },
-  { label: '信息名称', value: '信息名称' },
-  { label: '检验名称', value: '检验名称' },
-  { label: '检查名称', value: '检查名称' }
-])
 
 export default defineComponent({
   name: 'SystemDict',
@@ -194,7 +183,7 @@ export default defineComponent({
         if (res?.data?.code === 200 && res.data?.data.list) {
           dictList.value = res.data.data.list.map((item: any) => ({
             ...item,
-            data_type: item.data_type === null ? '否' : '是' // 在列表中显示"是"或"否"
+            data_type: item.data_type === '数值类型' ? '是' : '否' // 修改显示逻辑
           }))
           console.log(dictList.value)
         } else {
@@ -217,7 +206,7 @@ export default defineComponent({
         word_class: '',
         word_apply: '',
         word_belong: '',
-        data_type: null // 默认值设为 null
+        data_type: '' // 默认值设为 null
       }
       dialogVisible.value = true
     }
@@ -225,8 +214,8 @@ export default defineComponent({
     // 编辑词条
     const handleEdit = (row: DictItem) => {
       isEdit.value = true
-      // 确保 data_type 转换回后端期望的 '数值类型' 或 null
-      formData.value = { ...row, data_type: row.data_type === '是' ? '数值类型' : null }
+      // 确保 data_type 转换回后端期望的 '数值类型' 或 ""
+      formData.value = { ...row, data_type: row.data_type === '是' ? '数值类型' : "" }
       dialogVisible.value = true
     }
 
@@ -256,7 +245,10 @@ export default defineComponent({
       try {
         await formRef.value.validate(async (valid: boolean) => {
           if (valid) {
-            const submitData = { ...formData.value }
+            const submitData = { 
+              ...formData.value,
+              data_type: formData.value.data_type || "" // 确保 data_type 为 null 或 undefined 时传空字符串
+            }
 
             if (isEdit.value && submitData.word_code) {
               await dictionaryUpdate({ word_code: submitData.word_code }, submitData as API.Dictionary)

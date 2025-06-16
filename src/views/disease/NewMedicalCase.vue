@@ -20,7 +20,7 @@
       </el-form-item>
 
       <el-form-item label="身份证号 *" prop="idCard">
-        <el-input v-model="form.idCard" placeholder="请输入身份证号" style="width: 300px;" />
+        <el-input v-model="form.idCard" placeholder="请输入身份证号" style="width: 300px;" @change="handleIdCardChange" />
         <span class="ml-2 tip-text">首次录入的身份证会自动创建患者资料</span>
       </el-form-item>
 
@@ -55,7 +55,7 @@
         <span class="ml-2">{{ calcAge(form.birthDate) }} 岁</span>
       </el-form-item>
 
-      <el-form-item label="联系电话">
+      <el-form-item label="联系电话" prop="phone">
         <el-input v-model="form.phone" style="width: 300px;" />
       </el-form-item>
 
@@ -82,6 +82,7 @@
           <el-option label="否" value="否" />
         </el-select>
         <el-date-picker
+          v-if="form.hasTransplantSurgery === '是'"
           v-model="form.hasTransplantSurgeryDate"
           type="date"
           placeholder="选择日期"
@@ -91,6 +92,7 @@
           style="width: 190px;"
         />
       </el-form-item>
+
       <el-form-item label="是否在移植队列 *" prop="isInTransplantQueue">
         <el-select v-model="form.isInTransplantQueue" placeholder="请选择" style="width: 300px;">
           <el-option label="是" value="是" />
@@ -146,18 +148,54 @@ export default defineComponent({
       address: '',
       bloodType: '',
       diagnosis: '',
-      hasTransplantSurgery: '未填写',
+      hasTransplantSurgery: '',
       hasTransplantSurgeryDate: '',
-      isInTransplantQueue: '未填写',
+      isInTransplantQueue: '',
     });
 
     const rules = {
       recordId: [{ required: true, message: '请选择档案号', trigger: 'change' }],
-      idCard: [{ required: true, message: '请输入身份证号', trigger: 'blur' }],
+      idCard: [
+        { required: true, message: '请输入身份证号', trigger: 'blur' },
+        { 
+          validator: (_rule: any, value: string, callback: any) => {
+            if (value && value.length !== 18) {
+              callback(new Error('身份证号必须是18位'));
+              return;
+            }
+            // 验证前17位是否都是数字
+            const reg = /^\d{17}[\dXx]$/;
+            if (!reg.test(value)) {
+              callback(new Error('身份证号格式不正确'));
+              return;
+            }
+            callback();
+          },
+          trigger: 'blur'
+        }
+      ],
       name: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
       gender: [{ required: true, message: '请选择性别', trigger: 'change' }],
       hasTransplantSurgery: [{ required: true, message: '请选择是否做过移植手术', trigger: 'change' }],
       isInTransplantQueue: [{ required: true, message: '请选择是否在移植队列', trigger: 'change' }],
+      phone: [
+        {
+          validator: (_rule: any, value: string, callback: any) => {
+            if (value && value.length !== 11) {
+              callback(new Error('手机号必须是11位'));
+              return;
+            }
+            // 验证是否都是数字
+            const reg = /^1[3-9]\d{9}$/;
+            if (!reg.test(value)) {
+              callback(new Error('手机号格式不正确'));
+              return;
+            }
+            callback();
+          },
+          trigger: 'blur'
+        }
+      ],
     };
 
     const recordOptions = JSON.parse(localStorage.getItem('archiveCodes') || '[]');
@@ -180,9 +218,7 @@ export default defineComponent({
 
     const updateHasTransplantSurgery = () => {
       if (form.hasTransplantSurgery === '否') {
-        form.hasTransplantSurgery = '否';
-      } else if (form.hasTransplantSurgery === '是' && form.hasTransplantSurgeryDate) {
-        form.hasTransplantSurgery = `是(${form.hasTransplantSurgeryDate})`;
+        form.hasTransplantSurgeryDate = '';
       }
     };
 
@@ -207,9 +243,18 @@ export default defineComponent({
             } as API.Case;
             console.log("提交的payload:", payload);
             const response = await caseCreate(payload);
-            ElMessage.success('病例添加成功！');
-            console.log('提交成功，返回数据：', response);
-            // 你可以在这里清空表单或跳转页面等
+            
+            // 根据响应结果判断是否真正成功
+            if (response?.data?.code === 200) {
+              ElMessage.success('病例添加成功！');
+              console.log('提交成功，返回数据：', response);
+              // 清空表单
+              formRef.value.resetFields();
+              // 可以在这里添加其他成功后的操作，比如跳转页面等
+            } else {
+              ElMessage.error(response?.data?.msg || '病例添加失败，请检查数据后重试');
+              console.error('提交失败，返回数据：', response);
+            }
           } catch (error) {
             console.error('提交失败：', error);
             ElMessage.error('提交失败，请稍后重试。');
@@ -218,6 +263,20 @@ export default defineComponent({
       });
     };
 
+    // 监听身份证号变化
+    const handleIdCardChange = (value: string) => {
+      if (value && value.length === 18) {
+        // 验证身份证号格式
+        const reg = /^\d{17}[\dXx]$/;
+        if (reg.test(value)) {
+          // 从身份证号中提取出生年月日
+          const year = value.substring(6, 10);
+          const month = value.substring(10, 12);
+          const day = value.substring(12, 14);
+          form.birthDate = `${year}-${month}-${day}`;
+        }
+      }
+    };
 
     // 自动生成初始病例号
     generateCaseId();
@@ -231,6 +290,7 @@ export default defineComponent({
       submitForm,
       calcAge,
       updateHasTransplantSurgery,
+      handleIdCardChange,
     };
   },
 
