@@ -1,369 +1,368 @@
 <template>
   <div class="template-container">
-    <div class="template-header">
-      <div class="header-left">
-        <el-button-group class="custom-button-group">
-          <el-button type="primary" plain>
-            <img src="@/assets/2-1.png" class="button-icon" alt="All Templates Icon" />
-            全部临床模版
-          </el-button>
-          <el-button @click="handleAddCustomTemplate">
-            <img src="@/assets/2-2.png" class="button-icon" alt="Add Custom Template Icon" />
-            添加自定义临床模版
-          </el-button>
-        </el-button-group>
-      </div>
-      <div class="header-right">
-        <el-input
-          v-model="searchKeyword"
-          placeholder="请输入模版名称关键字"
-          :prefix-icon="Search"
-          @input="filterTemplates"
-        />
-      </div>
+    <!-- 头部区域：包含按钮和搜索框 -->
+    <TemplateHeader
+      v-model:search-keyword="searchKeyword"
+      @add-template="handleAddCustomTemplate"
+      @show-all="handleShowAll"
+    />
+
+    <!-- 编辑表单区域 -->
+    <div v-if="showEditForm" class="edit-form-section">
+      <TemplateEditDialog
+        :dialog-title="dialogTitle"
+        :form-data="formData"
+        :rules="rules"
+        @submit-form="handleSubmit"
+        @cancel="handleCancel"
+      />
     </div>
 
-    <div class="template-content">
+    <!-- 模板列表区域 -->
+    <div v-else class="template-content">
       <el-collapse v-model="activeNames">
-        <el-collapse-item title="基础临床模板" name="1">
-          <el-table :data="filteredBasicTemplates" style="width: 100%" border stripe>
-            <el-table-column prop="name" label="模版名称" width="200" />
-            <el-table-column prop="code" label="模版编号" width="200" />
-            <el-table-column prop="description" label="模版描述" />
-          </el-table>
-        </el-collapse-item>
+        <!-- 基础临床模板 -->
+        <TemplateCollapseSection
+          section-title="基础临床模板"
+          section-name="1"
+          :table-data="filteredBasicTemplates"
+        />
 
-        <el-collapse-item title="临床检验模版" name="2">
-          <el-table :data="filteredLabTemplates" style="width: 100%" border stripe>
-            <el-table-column prop="name" label="模版名称" width="200" />
-            <el-table-column prop="code" label="模版编号" width="200" />
-            <el-table-column prop="description" label="模版描述" />
-          </el-table>
-        </el-collapse-item>
+        <!-- 临床检验模版 -->
+        <TemplateCollapseSection
+          section-title="临床检验模版"
+          section-name="2"
+          :table-data="filteredLabTemplates"
+        />
 
-        <el-collapse-item title="评分模版" name="3">
-          <el-table :data="filteredScoreTemplates" style="width: 100%" border stripe>
-            <el-table-column prop="name" label="模版名称" width="200" />
-            <el-table-column prop="code" label="模版编号" width="200" />
-            <el-table-column prop="description" label="模版描述" />
-          </el-table>
-        </el-collapse-item>
+        <!-- 评分模版 -->
+        <TemplateCollapseSection
+          section-title="评分模版"
+          section-name="3"
+          :table-data="filteredScoreTemplates"
+        />
 
-        <el-collapse-item title="临床随访模版" name="4">
-          <el-table :data="filteredFollowUpTemplates" style="width: 100%" border stripe>
-            <el-table-column prop="name" label="模版名称" width="200" />
-            <el-table-column prop="code" label="模版编号" width="200" />
-            <el-table-column prop="description" label="模版描述" />
-          </el-table>
-        </el-collapse-item>
+        <!-- 临床随访模版 -->
+        <TemplateCollapseSection
+          section-title="临床随访模版"
+          section-name="4"
+          :table-data="filteredFollowUpTemplates"
+        />
 
-        <el-collapse-item title="辅助检查模版" name="6">
-          <el-table :data="filteredAuxiliaryTemplates" style="width: 100%" border stripe>
-            <el-table-column prop="name" label="模版名称" width="200" />
-            <el-table-column prop="code" label="模版编号" width="200" />
-            <el-table-column prop="description" label="模版描述" />
-          </el-table>
-        </el-collapse-item>
+        <!-- 辅助检查模版 -->
+        <TemplateCollapseSection
+          section-title="辅助检查模版"
+          section-name="6"
+          :table-data="filteredAuxiliaryTemplates"
+        />
 
-        <el-collapse-item title="自定义临床模版" name="5">
-          <el-table :data="filteredCustomTemplates" style="width: 100%" border stripe>
-            <el-table-column prop="name" label="模版名称" width="200" />
-            <el-table-column prop="code" label="模版编号" width="200" />
-            <el-table-column prop="description" label="模版描述" />
-            <el-table-column label="操作" width="200" fixed="right">
-              <template #default="scope">
-                <el-button size="small" @click="handleEdit(scope.row)"> 编辑 </el-button>
-                <el-button size="small" type="danger" @click="handleDelete(scope.row)">
-                  删除
-                </el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-        </el-collapse-item>
-
+        <!-- 自定义临床模版 (显示操作按钮) -->
+        <TemplateCollapseSection
+          section-title="自定义临床模版"
+          section-name="5"
+          :table-data="filteredCustomTemplates"
+          :show-actions="true"
+          @edit-template="handleEdit"
+          @delete-template="handleDelete"
+        />
       </el-collapse>
     </div>
-
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="500px">
-      <el-form ref="formRef" :model="formData" :rules="rules" label-width="100px">
-        <el-form-item label="模版名称" prop="name">
-          <el-input v-model="formData.name" placeholder="请输入模版名称" />
-        </el-form-item>
-        <el-form-item label="模版编号" prop="code">
-          <el-input v-model="formData.code" placeholder="请输入模版编号" />
-        </el-form-item>
-        <el-form-item label="模版描述" prop="description">
-          <el-input v-model="formData.description" type="textarea" placeholder="请输入模版描述" />
-        </el-form-item>
-        <el-form-item label="模板类型" prop="type">
-          <el-select v-model="formData.type" placeholder="请选择模板类型">
-            <el-option label="基础临床模板" value="basic" />
-            <el-option label="自定义模板" value="custom" />
-          </el-select>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleSubmit">确定</el-button>
-        </span>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref, computed, reactive } from 'vue';
+<script setup lang="ts">
+import { ref, computed, reactive, onMounted } from 'vue';
 import type { FormInstance, FormRules } from 'element-plus';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { Search } from '@element-plus/icons-vue'; // Import the specific icon
 
-// Assuming these API imports are correct for your project structure
-// import {
-//   dataTemplateList,
-//   dataTemplateCreate,
-//   dataTemplateUpdate,
-//   dataTemplateDelete,
-// } from '../../api/dataTemplates';
-////
+// 导入拆分后的组件
+import TemplateHeader from './TemplateHeader.vue';
+import TemplateCollapseSection from './TemplateCollapseSection.vue';
+import TemplateEditDialog from './TemplateEditDialog.vue';
+
+import {
+    dataTemplateList,
+    dataTemplateCreate,
+    dataTemplateUpdate,
+    dataTemplateDelete,
+} from '../../api/dataTemplate';
+
+
+// 定义 TemplateItem 接口，用于模板数据类型
+// 与 TemplateEditDialog.vue 中的 TemplateItem 保持一致，并与后端 API.DataTemplate 类型对齐
 interface TemplateItem {
-  id?: number;
-  name: string;
-  code: string;
-  description: string;
-  type: string;
-  category_id?: number;
-  used_n?: number;
+  template_name: string;
+  template_code: string; // 模版编号，可以是可选的，但为了和编辑、删除的 API 保持一致，这里先定义为 string
+  template_description: string;
+  category: number; // 0 for basic, 1 for custom, etc.
+  dictionaries: number[];
+  type: string; // Frontend type for dropdown (e.g., 'basic', 'custom')
 }
 
-export default defineComponent({
-  name: 'TemplateComponent',
-  setup() {
-    const searchKeyword = ref('');
-    // Initialize activeNames with all panel names to have them expanded by default
-    const activeNames = ref(['1', '2', '3', '4', '5', '6']);
+// 搜索关键字
+const searchKeyword = ref('');
+// 展开的折叠面板名称，默认全部展开
+const activeNames = ref<string[]>(['1', '2', '3', '4', '5', '6']); // 初始时默认展开所有面板
 
-    // Mock Data based on provided images
-    const basicTemplates = ref<TemplateItem[]>([
-      { name: '一般情况', code: 'PRS98754612', description: '记录疾病一般情况，包括年龄、性别、体重、身高、血型等信息', type: 'basic', id: 1 },
-    ]);
+// 模拟的模板数据 (这些数据通常从后端获取，现在我们将尝试从 API 获取自定义模板)
+// 为了与新的 TemplateItem 接口兼容，这里将 'type' 改为 'category'
+const basicTemplates = ref<TemplateItem[]>([
+  { template_name: '一般情况', template_code: 'PRS98754612', template_description: '记录疾病一般情况，包括年龄、性别、体重、身高、血型等信息', category: 0, dictionaries: [], type: 'basic' },
+]);
 
-    const labTemplates = ref<TemplateItem[]>([
-      { name: '血常规', code: 'BL598495468', description: '包括白细胞、红细胞、中性粒细胞、血红蛋白等常规项目', type: 'basic', id: 2 },
-      { name: '生化', code: 'CH888468421', description: '记录肝功能蛋白、总胆红素、转氨酶等肝功能指标', type: 'basic', id: 3 },
-      { name: '血气分析', code: 'BG578481354', description: '记录动脉血分析情况', type: 'basic', id: 4 },
-      { name: '传染病', code: 'CR487121848', description: '记录乙肝表面抗原、抗体、丙肝、艾滋病等情况', type: 'basic', id: 5 },
-      { name: '凝血', code: 'NX897823151', description: '记录凝血酶原时间、活动部分凝血活酶时间、国际标准化比值等', type: 'basic', id: 6 },
-    ]);
+const labTemplates = ref<TemplateItem[]>([
+  { template_name: '血常规', template_code: 'BL598495468', template_description: '包括白细胞、红细胞、中性粒细胞、血红蛋白等常规项目', category: 0, dictionaries: [], type: 'basic'  },
+  { template_name: '生化', template_code: 'CH888468421', template_description: '记录肝功能蛋白、总胆红素、转氨酶等肝功能指标', category: 0, dictionaries: [], type: 'basic'  },
+  { template_name: '血气分析', template_code: 'BG578481354', template_description: '记录动脉血分析情况', category: 0, dictionaries: [], type: 'basic'  },
+  { template_name: '传染病', template_code: 'CR487121848', template_description: '记录乙肝表面抗原、抗体、丙肝、艾滋病等情况', category: 0, dictionaries: [], type: 'basic'  },
+  { template_name: '凝血', template_code: 'NX897823151', template_description: '记录凝血酶原时间、活动部分凝血活酶时间、国际标准化比值等', category: 0, dictionaries: [], type: 'basic'  },
+]);
 
-    const auxiliaryTemplates = ref<TemplateItem[]>([
-      { name: '心肺彩超', code: 'CC159756125', description: '记录辅助检查信息，心肺彩超情况', type: 'basic', id: 7 },
-      { name: '胸部CT', code: 'CT059789515', description: '记录辅助检查信息，胸部CT检查情况', type: 'basic', id: 8 },
-      { name: '腹部CT', code: 'CT189756125', description: '记录辅助检查信息，腹部CT检查情况', type: 'basic', id: 9 },
-    ]);
+const auxiliaryTemplates = ref<TemplateItem[]>([
+  { template_name: '心肺彩超', template_code: 'CC159756125', template_description: '记录辅助检查信息，心肺彩超情况', category: 0, dictionaries: [], type: 'basic'  },
+  { template_name: '胸部CT', template_code: 'CT059789515', template_description: '记录辅助检查信息，胸部CT检查情况', category: 0, dictionaries: [], type: 'basic'  },
+  { template_name: '腹部CT', template_code: 'CT189756125', template_description: '记录辅助检查信息，腹部CT检查情况', category: 0, dictionaries: [], type: 'basic'  },
+]);
 
-    const scoreTemplates = ref<TemplateItem[]>([
-      { name: 'Child-pugh评分', code: 'PFS89486251', description: '对肝硬化患者的肝功能储备进行量化评估的分级', type: 'basic', id: 10 },
-      { name: 'MELD评分', code: 'PIK294856245', description: '对终末期肝病的严重程度的评分', type: 'basic', id: 11 },
-      { name: 'CLIF-CAD评分', code: 'PPS84896523', description: '用于评估慢加急性肝衰竭（ACLF）患者预后', type: 'basic', id: 12 },
-      { name: 'EASL-ACLF评分', code: 'PR158946598', description: '评估慢加急性肝衰竭（ACLF）患者病情严重程度和预后', type: 'basic', id: 13 },
-    ]);
+const scoreTemplates = ref<TemplateItem[]>([
+  { template_name: 'Child-pugh评分', template_code: 'PFS89486251', template_description: '对肝硬化患者的肝功能储备进行量化评估的分级', category: 0, dictionaries: [], type: 'basic'  },
+  { template_name: 'MELD评分', template_code: 'PIK294856245', template_description: '对终末期肝病的严重程度的评分', category: 0, dictionaries: [], type: 'basic'  },
+  { template_name: 'CLIF-CAD评分', template_code: 'PPS84896523', template_description: '用于评估慢加急性肝衰竭（ACLF）患者预后', category: 0, dictionaries: [], type: 'basic'  },
+  { template_name: 'EASL-ACLF评分', template_code: 'PR158946598', template_description: '评估慢加急性肝衰竭（ACLF）患者病情严重程度和预后', category: 0, dictionaries: [], type: 'basic'  },
+]);
 
-    const followUpTemplates = ref<TemplateItem[]>([
-      { name: '目前治疗情况', code: 'IOS894785214', description: '记录患者治疗过程的情况，如介入、化疗、放疗等', type: 'basic', id: 14 },
-    ]);
+const followUpTemplates = ref<TemplateItem[]>([
+  { template_name: '目前治疗情况', template_code: 'IOS894785214', template_description: '记录患者治疗过程的情况，如介入、化疗、放疗等', category: 0, dictionaries: [], type: 'basic'  },
+]);
 
-    // Custom templates can be added via the dialog
-    const customTemplates = ref<TemplateItem[]>([]);
+// 自定义模板列表 (可以由用户添加和管理，现在将从 API 获取)
+const customTemplates = ref<TemplateItem[]>([]);
 
-    // Filtered template lists based on search keyword
-    const filteredBasicTemplates = computed(() =>
-      basicTemplates.value.filter((template) =>
-        template.name.toLowerCase().includes(searchKeyword.value.toLowerCase())
-      )
-    );
+// 根据搜索关键字过滤模板列表的计算属性
+const filterTemplates = (templates: TemplateItem[]) => {
+  if (!searchKeyword.value) return templates;
+  const keyword = searchKeyword.value.toLowerCase();
+  return templates.filter(
+    (template) =>
+      template.template_name.toLowerCase().includes(keyword) ||
+      template.template_code.toLowerCase().includes(keyword) ||
+      template.template_description.toLowerCase().includes(keyword)
+  );
+};
 
-    const filteredLabTemplates = computed(() =>
-      labTemplates.value.filter((template) =>
-        template.name.toLowerCase().includes(searchKeyword.value.toLowerCase())
-      )
-    );
+const filteredBasicTemplates = computed(() => filterTemplates(basicTemplates.value));
+const filteredLabTemplates = computed(() => filterTemplates(labTemplates.value));
+const filteredAuxiliaryTemplates = computed(() => filterTemplates(auxiliaryTemplates.value));
+const filteredScoreTemplates = computed(() => filterTemplates(scoreTemplates.value));
+const filteredFollowUpTemplates = computed(() => filterTemplates(followUpTemplates.value));
+const filteredCustomTemplates = computed(() => filterTemplates(customTemplates.value));
 
-    const filteredAuxiliaryTemplates = computed(() =>
-      auxiliaryTemplates.value.filter((template) =>
-        template.name.toLowerCase().includes(searchKeyword.value.toLowerCase())
-      )
-    );
+// 替换 dialogVisible 为 showEditForm
+const showEditForm = ref(false);
+const dialogTitle = ref('');
+// 用于弹窗表单的数据，初始化为空或默认值
+const formData = reactive<TemplateItem>({
+  template_name: '',
+  template_code: '',
+  template_description: '',
+  category: 1, // 默认自定义模板 (category: 1)
+  dictionaries: [],
+  type: 'custom', // 默认前端显示类型为 'custom'
+});
+// 表单引用，用于表单验证
+const formRef = ref<FormInstance>();
 
-    const filteredScoreTemplates = computed(() =>
-      scoreTemplates.value.filter((template) =>
-        template.name.toLowerCase().includes(searchKeyword.value.toLowerCase())
-      )
-    );
+// 表单验证规则
+const rules = reactive<FormRules>({
+  template_name: [{ required: true, message: '请输入模版名称', trigger: 'blur' }],
+  template_code: [{ required: true, message: '请输入模版编号', trigger: 'blur' }],
+  template_description: [{ required: true, message: '请输入模版描述', trigger: 'blur' }],
+  category: [{ required: true, message: '请选择模板类型', trigger: 'change' }],
+  type: [{ required: true, message: '请选择模板类型', trigger: 'change' }],
+});
 
-    const filteredFollowUpTemplates = computed(() =>
-      followUpTemplates.value.filter((template) =>
-        template.name.toLowerCase().includes(searchKeyword.value.toLowerCase())
-      )
-    );
+/**
+ * 处理添加自定义模板的点击事件
+ */
+const handleAddCustomTemplate = () => {
+  dialogTitle.value = '添加自定义临床模版';
+  // 重置表单数据为初始状态
+  Object.assign(formData, { template_name: '', template_code: '', template_description: '', category: 1, dictionaries: [], type: 'custom' });
+  showEditForm.value = true;
+};
 
-    const filteredCustomTemplates = computed(() =>
-      customTemplates.value.filter((template) =>
-        template.name.toLowerCase().includes(searchKeyword.value.toLowerCase())
-      )
-    );
+/**
+ * 处理编辑模板的点击事件
+ * @param row 被编辑的模板数据
+ */
+const handleEdit = (row: TemplateItem) => {
+  dialogTitle.value = '编辑模版';
+  // 复制当前行数据到表单，以便在弹窗中编辑
+  Object.assign(formData, row);
+  showEditForm.value = true;
+};
 
-    // Dialog and form management
-    const dialogVisible = ref(false);
-    const dialogTitle = ref('');
-    const formData = ref<TemplateItem>({
-      name: '',
-      code: '',
-      description: '',
-      type: 'custom', // Default type for new additions
+/**
+ * 处理取消编辑
+ */
+const handleCancel = () => {
+  showEditForm.value = false;
+  // 重置表单数据
+  Object.assign(formData, { template_name: '', template_code: '', template_description: '', category: 1, dictionaries: [], type: 'custom' });
+};
+
+/**
+ * 处理删除模板的点击事件
+ * @param row 被删除的模板数据
+ */
+const handleDelete = (row: TemplateItem) => {
+  ElMessageBox.confirm(`确定删除模版 "${row.template_name}" 吗?`, '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  })
+    .then(async () => {
+      if (row.template_code) { // 使用 template_code 作为唯一标识
+        // 在实际应用中，这里会调用 API 删除后端数据
+        await dataTemplateDelete({ template_code: row.template_code }); // API 需要 template_code
+        customTemplates.value = customTemplates.value.filter(
+          (item) => item.template_code !== row.template_code
+        );
+        ElMessage.success(`模版 "${row.template_name}" 删除成功!`);
+      } else {
+        ElMessage.error('无法删除，模版编号不存在。');
+      }
+    })
+    .catch(() => {
+      ElMessage.info('已取消删除');
     });
-    const formRef = ref<FormInstance>();
-    const rules = reactive<FormRules>({
-      name: [{ required: true, message: '请输入模版名称', trigger: 'blur' }],
-      code: [{ required: true, message: '请输入模版编号', trigger: 'blur' }],
-      description: [{ required: true, message: '请输入模版描述', trigger: 'blur' }],
-      type: [{ required: true, message: '请选择模板类型', trigger: 'change' }],
-    });
+};
 
-    const handleAddCustomTemplate = () => {
-      dialogTitle.value = '添加自定义临床模版';
-      formData.value = { name: '', code: '', description: '', type: 'custom' };
-      dialogVisible.value = true;
-    };
+/**
+ * 处理表单提交（添加或编辑）
+ * @param data 从 TemplateEditDialog 组件传递过来的表单数据
+ */
+const handleSubmit = async (data: TemplateItem) => {
+  try {
+    if (data.template_code) { // 如果有 template_code，则为编辑现有模板
+      // 编辑现有模板
+      // 确保发送给后端的 data 是符合 API.DataTemplate 类型的
+      const apiData: API.DataTemplate = {
+        template_name: data.template_name,
+        template_code: data.template_code,
+        template_description: data.template_description,
+        category: data.category,
+        dictionaries: data.dictionaries,
+      };
+      await dataTemplateUpdate({ template_code: data.template_code }, apiData);
+      const index = customTemplates.value.findIndex((item) => item.template_code === data.template_code);
+      if (index !== -1) {
+        customTemplates.value[index] = { ...data }; // 更新本地数据
+        ElMessage.success('模版更新成功!');
+      }
+    } else {
+      // 添加新模板
+      // 确保发送给后端的 data 是符合 API.DataTemplate 类型的
+      const apiData: API.DataTemplate = {
+        template_name: data.template_name,
+        template_description: data.template_description,
+        category: data.category,
+        dictionaries: data.dictionaries,
+        // template_code 由后端自动生成，所以这里不传
+      };
+      await dataTemplateCreate(apiData);
+      // 在成功创建后，重新获取模板列表以刷新数据
+      await fetchTemplates();
+      ElMessage.success('自定义模版添加成功!');
+    }
+    showEditForm.value = false;
+    // 提交成功后，重置表单
+    Object.assign(formData, { template_name: '', template_code: '', template_description: '', category: 1, dictionaries: [], type: 'custom' });
+  } catch (error) {
+    ElMessage.error('操作失败');
+    console.error('表单提交失败:', error);
+  }
+};
 
-    const handleEdit = (row: TemplateItem) => {
-      dialogTitle.value = '编辑模版';
-      formData.value = { ...row }; // Copy row data to form
-      dialogVisible.value = true;
-    };
+/**
+ * 处理显示全部模板的点击事件
+ */
+const handleShowAll = () => {
+  showEditForm.value = false;
+  // 重置表单数据
+  Object.assign(formData, { template_name: '', template_code: '', template_description: '', category: 1, dictionaries: [], type: 'custom' });
+};
 
-    const handleDelete = (row: TemplateItem) => {
-      ElMessageBox.confirm('确定删除该模版吗?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning',
-      })
-        .then(() => {
-          // In a real application, you would call your API here to delete
-          customTemplates.value = customTemplates.value.filter(
-            (item) => item.id !== row.id
-          );
-          ElMessage({
-            type: 'success',
-            message: `模版 "${row.name}" 删除成功!`,
-          });
-        })
-        .catch(() => {
-          ElMessage({
-            type: 'info',
-            message: '已取消删除',
-          });
-        });
-    };
+// 新增函数，用于获取模板列表
+const fetchTemplates = async () => {
+  try {
+    const res = await dataTemplateList({});
 
-    const handleSubmit = () => {
-      formRef.value?.validate((valid) => {
-        if (valid) {
-          if (formData.value.id) {
-            // Update existing custom template
-            const index = customTemplates.value.findIndex((item) => item.id === formData.value.id);
-            if (index !== -1) {
-              customTemplates.value[index] = { ...formData.value };
-              ElMessage.success('模版更新成功!');
-            }
-          } else {
-            // Add new custom template
-            const newItem = { ...formData.value, id: Date.now() }; // Assign a unique ID for mock purposes
-            customTemplates.value.push(newItem);
-            ElMessage.success('自定义模版添加成功!');
-          }
-          dialogVisible.value = false;
-          // Reset form after submission
-          formData.value = { name: '', code: '', description: '', type: 'custom' };
-        } else {
-          return false;
-        }
-      });
-    };
+    // 检查 res.code 是否为 200 且 res.data.list 存在且是数组
+    if (res?.data?.code === 200 && res.data?.data?.list) {
+      // 假设 category 1 是自定义模板
+      const fetchedCustomTemplates = res.data.data.list // <-- 主要修复点：从 res.data.list 获取
+        .filter((apiItem: any) => apiItem.category === 1) // 使用 any 避免 API.DataTemplate 未知类型错误，或者确保 API.DataTemplate 包含 category
+        .map((apiItem: any) => ({
+          template_name: apiItem.template_name,
+          template_code: apiItem.template_code || '',
+          template_description: apiItem.template_description || '',
+          category: apiItem.category,
+          dictionaries: apiItem.dictionary_list || [], // <-- 注意：这里是 dictionary_list 而不是 dictionaries
+          type: apiItem.category === 1 ? 'custom' : 'basic',
+        }));
+      customTemplates.value = fetchedCustomTemplates;
+      
+      // console.log('Filtered custom templates from API:', fetchedCustomTemplates);
+      // console.log('customTemplates.value after assignment:', customTemplates.value);
 
-    const filterTemplates = () => {
-      // Filtering is handled automatically by computed properties as `searchKeyword` changes.
-    };
+      // 如果需要从 API 获取其他分类的模板，可以继续在这里进行过滤和赋值
+      // 比如，初始化 basicTemplates 等
+      // 注意：目前你的 basicTemplates, labTemplates 等是本地模拟数据，
+      // 如果你也想从 API 获取这些，需要类似地过滤并赋值
+      // const fetchedBasicTemplates = res.data.list
+      //   .filter((apiItem: any) => apiItem.category === 0) // 假设 category 0 是基础临床模板
+      //   .map((apiItem: any) => ({
+      //     template_name: apiItem.template_name,
+      //     template_code: apiItem.template_code || '',
+      //     template_description: apiItem.template_description || '',
+      //     category: apiItem.category,
+      //     dictionaries: apiItem.dictionary_list || [],
+      //     type: 'basic',
+      //   }));
+      // 这里你需要将这些数据赋值给对应的 ref，例如：
+      // basicTemplates.value = fetchedBasicTemplates;
+      // ... 类似地处理其他 category
 
-    return {
-      searchKeyword,
-      activeNames,
-      filteredBasicTemplates,
-      filteredLabTemplates,
-      filteredAuxiliaryTemplates,
-      filteredScoreTemplates,
-      filteredFollowUpTemplates,
-      filteredCustomTemplates,
-      dialogVisible,
-      dialogTitle,
-      formData,
-      formRef,
-      rules,
-      handleAddCustomTemplate,
-      handleEdit,
-      handleDelete,
-      handleSubmit,
-      filterTemplates,
-      Search, // Make the imported icon available in the template
-    };
-  },
+    } else {
+      customTemplates.value = [];
+      console.log('API response does not contain valid template data or list is empty.', res);
+    }
+  } catch (error) {
+    console.error('获取模板列表失败:', error);
+    customTemplates.value = [];
+  }
+};
+
+onMounted(async () => {
+  // 在组件挂载时获取初始数据
+  await fetchTemplates();
 });
 </script>
 
 <style scoped lang="scss">
-.custom-button-group {
-  .el-button {
-    display: flex;
-    align-items: center;
-    padding: 8px 15px; // Adjust padding to match visual
-    height: 40px; // Standard button height
-  }
-
-  .button-icon {
-    width: 20px; // Smaller icon size
-    height: 20px;
-    margin-right: 6px; // Adjust margin
-  }
-}
-
 .template-container {
   padding: 20px;
   background-color: #f5f7fa; /* Light grey background */
   min-height: 100vh;
   box-sizing: border-box; /* Include padding in element's total width and height */
 
-  .template-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    background: #fff; /* White header background */
-    padding: 10px 20px;
-    border-bottom: 1px solid #e9e9e9;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Subtle shadow for depth */
-    border-radius: 4px; /* Rounded corners for the header */
-
-    .header-left {
-      display: flex; /* Ensure button group is aligned */
-      align-items: center;
-    }
-
-    .header-right {
-      width: 300px;
-      .el-input {
-        --el-input-height: 40px; // Match button height
-      }
-    }
+  .edit-form-section {
+    max-width: 800px;
+    margin: 20px auto;
+    background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   }
 
   .template-content {
@@ -375,54 +374,30 @@ export default defineComponent({
     border: 1px solid #e9e9e9;
     border-radius: 4px;
     margin-bottom: 20px; /* Space below the entire collapse component */
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); /* Shadow for the content area */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 
-    .el-collapse-item {
+    :deep(.el-collapse-item) {
       border-bottom: 1px solid #e9e9e9;
 
       &:last-child {
-        border-bottom: none; /* No border for the last item */
+        border-bottom: none;
       }
 
-      .el-collapse-item__header {
+      :deep(.el-collapse-item__header) {
         font-size: 16px;
         color: #333;
         padding: 15px 20px;
-        background-color: #f9f9f9; // Light background for headers
+        background-color: #f9f9f9;
         border-bottom: 1px solid #e9e9e9;
-        font-weight: bold; // Make header titles bold
+        font-weight: bold;
 
         .el-collapse-item__arrow {
-            margin-right: 8px; // Space between arrow and title
+            margin-right: 8px;
         }
       }
 
-      .el-collapse-item__content {
-        padding: 15px 20px; // Padding inside the collapsed content
-      }
-    }
-  }
-
-  .el-table {
-    background: #fff;
-    border-radius: 4px;
-    border: 1px solid #e9e9e9; // Border for the table
-    // margin-bottom: 15px; // This margin is now handled by the el-collapse-item__content padding
-
-    /* Ensure table cells are aligned and have consistent padding */
-    :deep(.el-table__cell) {
-      padding: 10px 12px;
-      font-size: 14px;
-      color: #606266;
-    }
-
-    :deep(.el-table__header-wrapper) {
-      .el-table__header {
-        .el-table__cell {
-          background-color: #f5f7fa; /* Header background for table */
-          color: #303133;
-          font-weight: bold;
-        }
+      :deep(.el-collapse-item__content) {
+        padding: 15px 20px;
       }
     }
   }
