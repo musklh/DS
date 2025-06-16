@@ -10,8 +10,12 @@
         </el-form-item>
         <el-form-item label="模板类型" prop="type">
           <el-select v-model="formData.type" placeholder="请选择模板类型" style="width: 300px;">
-            <el-option label="基础临床模板" value="basic" />
-            <el-option label="自定义模板" value="custom" />
+            <el-option
+              v-for="item in categoryList"
+              :key="item.id"
+              :label="item.name"
+              :value="item.id"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="词条选择" prop="dictionaries">
@@ -46,6 +50,7 @@
   import type { FormInstance, FormRules } from 'element-plus';
   import { dictionaryList } from '../../api/dictionary';
   import { ElMessage } from 'element-plus'; // 引入 ElMessage 用于提示
+  import { templateCategoryList } from '../../api/templateCategory';
   
   // 假设这些 API 导入是正确的，如果你的项目结构需要调整路径，请自行修改
   import {
@@ -68,6 +73,7 @@
   const formRef = ref<FormInstance>();
   const dictionaryItems = ref<API.Dictionary[]>([]);
   const searchKeyword = ref('');
+  const categoryList = ref<API.DataTemplateCategory[]>([]);
   
   // 过滤后的词条列表
   const filteredDictionaryItems = computed(() => {
@@ -100,58 +106,60 @@
     }
   };
   
+  // 获取分类列表
+  const fetchCategoryList = async () => {
+    try {
+      const res = await templateCategoryList({});
+      if (res?.data?.code === 200 && res.data?.data?.list) {
+        categoryList.value = res.data.data.list;
+      } else {
+        console.log('获取分类列表失败:', res);
+        categoryList.value = [];
+      }
+    } catch (error) {
+      console.error('获取分类列表失败:', error);
+      categoryList.value = [];
+    }
+  };
+  
   const handleSubmit = async () => {
     if (!formRef.value) return;
-  
-    const valid = await formRef.value.validate();
-    if (valid) {
-      // 确保 category 为 1
+
+    try {
+      await formRef.value.validate();
+      console.log('表单验证通过，提交数据:', props.formData);
+      
+      // 准备提交的数据
       const submitData = {
         ...props.formData,
-        category: 1 // 确保 category 始终为 1
+        template_description: props.formData.template_description || '',
+        dictionary_list: props.formData.dictionary_list || [],
       };
-  
-      try {
-        let res;
-        // 根据 isEdit prop 判断是创建还是更新
-        // 如果你的后端创建和更新都使用同一个接口，或者你只想演示创建，则只保留 dataTemplateCreate
-        if (props.isEdit && submitData.id) { // 假设编辑模式下 formData 会有 id
-          // res = await dataTemplateUpdate(submitData); // 如果是编辑，调用更新接口
-          // console.log('更新模板响应:', res);
-          // ElMessage.success('模板更新成功！');
-          // emit('success'); // 通知父组件操作成功
-        } else {
-          res = await dataTemplateCreate(submitData); // 创建新模板
-          console.log('创建模板响应:', res);
 
-          if (res?.data?.code === 200) {
-            ElMessage.success('模板创建成功！');
-            emit('success'); // 通知父组件操作成功，可以关闭弹窗或刷新列表
-            emit('cancel'); // 通常创建成功后会关闭弹窗
-          } else {
-            ElMessage.error(res.msg || '模板创建失败，请重试。');
-          }
-        }
-      } catch (error) {
-        console.error('操作模板失败:', error);
-        ElMessage.error('操作失败，请检查网络或联系管理员。');
-      }
+      // 发送提交事件给父组件
+      emit('submit-form', submitData);
+    } catch (error) {
+      console.error('表单验证失败:', error);
+      ElMessage.error('请检查表单填写是否正确');
     }
   };
   
   interface TemplateItem {
-    id?: number; // 如果是编辑模式，可能需要 id
+    id?: number;
     template_name: string;
-    template_code?: string; // 暂时注释掉，如果需要请取消注释
-    template_description: string;
-    type: string;
-    category?: number;
-    dictionaries: number[];
+    template_code?: string;
+    template_description?: string;
+    category: number;
+    category_name?: string;
+    dictionary_list?: API.Dictionary[];
+    dictionaries?: number[];
+    type?: string;
   }
   
-  // 在组件挂载时获取词条列表
+  // 在组件挂载时获取词条列表和分类列表
   onMounted(() => {
     fetchDictionaryList();
+    fetchCategoryList();
   });
   </script>
   

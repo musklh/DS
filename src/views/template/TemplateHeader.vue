@@ -10,6 +10,10 @@
             <img src="@/assets/2-2.png" class="button-icon" alt="Add Custom Template Icon" />
             添加自定义临床模版
           </el-button>
+          <el-button @click="$emit('add-category')">
+            <img src="@/assets/2-2.png" class="button-icon" alt="Add Category Icon" />
+            添加模板分类
+          </el-button>
         </el-button-group>
       </div>
       <div class="header-right">
@@ -37,7 +41,8 @@
   // update:searchKeyword: 用于 v-model 的更新事件
   // add-template: 点击"添加自定义临床模版"按钮时触发
   // show-all: 点击"全部临床模版"按钮时触发
-  const emit = defineEmits(['update:searchKeyword', 'add-template', 'show-all']);
+  // add-category: 点击"添加模板分类"按钮时触发
+  const emit = defineEmits(['update:searchKeyword', 'add-template', 'show-all', 'add-category']);
   </script>
   
   <style scoped lang="scss">
