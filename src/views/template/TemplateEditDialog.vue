@@ -34,7 +34,7 @@
                   />
                 </div>
                 <div class="dictionary-items">
-                  <el-checkbox-group v-model="formData.dictionaries">
+                  <el-checkbox-group v-model="selectedDictionaries">
                     <div v-for="item in filteredDictionaryItems" :key="item.id" class="dictionary-item">
                       <el-checkbox :value="item.id"> {{ item.word_name }}</el-checkbox>
                     </div>
@@ -53,16 +53,13 @@
   </template>
   
   <script setup lang="ts">
-  import { ref, computed, onMounted } from 'vue';
+  import { ref, computed, onMounted, watch } from 'vue';
   import type { FormInstance, FormRules } from 'element-plus';
   import { dictionaryList } from '../../api/dictionary';
   import { ElMessage } from 'element-plus'; // 引入 ElMessage 用于提示
   import { templateCategoryList } from '../../api/templateCategory';
   
   // 假设这些 API 导入是正确的，如果你的项目结构需要调整路径，请自行修改
-  import {
-    dataTemplateCreate, // 引入创建模板的API
-  } from '../../api/dataTemplate';
   
   interface Props {
     dialogTitle: string;
@@ -78,6 +75,20 @@
   const dictionaryItems = ref<API.Dictionary[]>([]);
   const searchKeyword = ref('');
   const categoryList = ref<API.DataTemplateCategory[]>([]);
+  
+  // 使用本地状态来管理选中的词条
+  const selectedDictionaries = ref<number[]>([]);
+
+  // 监听 props.formData 的变化，初始化选中的词条
+  watch(() => props.formData, (newVal) => {
+    if (newVal.dictionaries) {
+      selectedDictionaries.value = newVal.dictionaries.map(id => Number(id));
+    } else if (newVal.dictionary_list) {
+      selectedDictionaries.value = newVal.dictionary_list.map(item => Number(item.id));
+    } else {
+      selectedDictionaries.value = [];
+    }
+  }, { immediate: true, deep: true });
   
   // 过滤后的词条列表
   const filteredDictionaryItems = computed(() => {
@@ -143,10 +154,11 @@
       const submitData = {
         ...props.formData,
         template_description: props.formData.template_description || '',
-        dictionary_list: props.formData.dictionary_list || [],
-        category: props.formData.category, // 确保category被正确传递
+        dictionaries: selectedDictionaries.value,
+        category: props.formData.category,
       };
 
+      console.log('提交的数据:', submitData);
       // 发送提交事件给父组件
       emit('submit-form', submitData);
     } catch (error) {
