@@ -52,7 +52,13 @@
               <strong>{{ section.title }}</strong>
             </template>
             <el-table :data="section.items" border stripe size="small" :show-header="false">
-              <el-table-column prop="label" label="项目" width="180" />
+              <el-table-column prop="label" label="项目" width="180">
+                <template #default="{ row }">
+                  <el-button type="primary" link @click="openTemplateDetailDialog(row.template_code)">
+                    {{ row.label }}
+                  </el-button>
+                </template>
+              </el-table-column>
               <el-table-column prop="time" label="检查时间" />
             </el-table>
           </el-card>
@@ -63,7 +69,13 @@
               <strong>{{ section.title }}</strong>
             </template>
             <el-table :data="section.items" border stripe size="small" :show-header="false">
-              <el-table-column prop="label" label="项目" width="180" />
+              <el-table-column prop="label" label="项目" width="180">
+                <template #default="{ row }">
+                  <el-button type="primary" link @click="openTemplateDetailDialog(row.template_code)">
+                    {{ row.label }}
+                  </el-button>
+                </template>
+              </el-table-column>
               <el-table-column prop="time" label="检查时间" />
             </el-table>
           </el-card>
@@ -110,16 +122,89 @@
         <el-button type="primary" @click="saveEdit"> 保存 </el-button>
       </template>
     </el-dialog>
+
+    <!-- 模板详情对话框 -->
+    <el-dialog v-model="templateDetailDialogVisible" title="模板详情" width="600px">
+      <div v-if="currentTemplateDetail">
+        <p><strong>模板名称: </strong>{{ currentTemplateDetail.template_name }}</p>
+        <p><strong>检查时间: </strong>{{ currentTemplateDetail.check_time }}</p>
+        <el-divider />
+        <el-table :data="currentTemplateDetail.items" border stripe size="small">
+          <el-table-column prop="word_name" label="词条名称" />
+          <el-table-column prop="value" label="值" />
+        </el-table>
+      </div>
+      <div v-else>
+        <el-alert type="info" :closable="false"> 暂无模板详情数据 </el-alert>
+      </div>
+      <template #footer>
+        <el-button @click="templateDetailDialogVisible = false"> 关闭 </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue';
-import { ElMessage } from 'element-plus';
+import { ref, reactive, computed, onMounted, PropType } from 'vue';
+import { ElMessage, ElButton, ElDialog, ElTable, ElTableColumn, ElDivider, ElAlert } from 'element-plus';
+import { caseTemplateSummaryCreate } from '../../api/caseTemplateSummary';
+import { caseTemplateDetailCreate } from '../../api/caseTemplateDetail';
+import type { AxiosResponse } from 'axios';
+
+// 定义接口以解决类型错误
+interface TemplateItem {
+  template_name: string;
+  template_code: string; // 确保这里包含 template_code
+  check_time: string;
+}
+
+interface TemplateCategoryData {
+  template_category: string;
+  templates: TemplateItem[];
+}
+
+interface TemplateDetailItem {
+  word_code: string;
+  word_name: string;
+  value: string;
+}
+
+interface TemplateDetailData {
+  template_name: string;
+  check_time: string;
+  items: TemplateDetailItem[];
+}
+
+interface ApiResponse<T> {
+  code: number;
+  msg: string;
+  data: T;
+}
+
+interface PatientCase {
+  case_code: string;
+  // ... 其他病例属性
+}
+
+interface Patient {
+  name: string;
+  gender: number;
+  age: number;
+  idCard: string;
+  phone_number: string;
+  home_address: string;
+  blood_type: string;
+  rh: string;
+  has_transplant_surgery: string;
+  is_in_transplant_queue: string;
+  main_diagnosis: string;
+  allCases?: PatientCase[]; // 确保这里是 PatientCase 数组
+  // ... 其他患者属性
+}
 
 const props = defineProps({
   patient: {
-    type: Object,
+    type: Object as PropType<Patient>,
     required: true
   },
 });
@@ -135,17 +220,72 @@ const editForm = reactive({
 });
 
 const emit = defineEmits(['back']);
+const templateData = ref<TemplateCategoryData[]>([]);
+
+const templateDetailDialogVisible = ref(false);
+const currentTemplateDetail = ref<TemplateDetailData | null>(null);
+
+// 获取模板数据
+const fetchTemplateData = async () => {
+  try {
+    if (!props.patient.allCases?.length) return;
+    
+    const caseCodes = props.patient.allCases.map((case_: PatientCase) => case_.case_code);
+    const res = await caseTemplateSummaryCreate({ case_codes: caseCodes });
+    
+    // 明确类型断言以解决 linter 错误
+    const apiResponse = res.data as ApiResponse<TemplateCategoryData[]>;
+    if (apiResponse?.code === 200) {
+      templateData.value = apiResponse.data;
+    } else {
+      ElMessage.error('获取模板数据失败');
+    }
+  } catch (error) {
+    console.error('获取模板数据失败:', error);
+    ElMessage.error('获取模板数据失败');
+  }
+};
+
+// 将模板数据转换为左右两栏的格式
+const leftSections = computed(() => {
+  if (!templateData.value.length) return [];
+  
+  // 将数据分成左右两栏
+  const midPoint = Math.ceil(templateData.value.length / 2);
+  return templateData.value.slice(0, midPoint).map((category: TemplateCategoryData) => ({
+    title: category.template_category,
+    items: category.templates.map((template: TemplateItem) => ({
+      label: template.template_name,
+      time: template.check_time,
+      template_code: template.template_code // 传递 template_code
+    }))
+  }));
+});
+
+const rightSections = computed(() => {
+  if (!templateData.value.length) return [];
+  
+  // 将数据分成左右两栏
+  const midPoint = Math.ceil(templateData.value.length / 2);
+  return templateData.value.slice(midPoint).map((category: TemplateCategoryData) => ({
+    title: category.template_category,
+    items: category.templates.map((template: TemplateItem) => ({
+      label: template.template_name,
+      time: template.check_time,
+      template_code: template.template_code // 传递 template_code
+    }))
+  }));
+});
 
 // Open edit dialog
 const openEditDialog = () => {
-  Object.assign(editForm, props.patient); // Assign current patient data to edit form
+  Object.assign(editForm, props.patient);
   editDialogVisible.value = true;
 };
 
 // Save edited information
 const saveEdit = () => {
-  // In a real application, you'd send this data to a backend
-  Object.assign(props.patient, editForm); // Update patient data with edited form
+  Object.assign(props.patient, editForm);
   ElMessage.success('已保存');
   editDialogVisible.value = false;
 };
@@ -155,61 +295,42 @@ const goBack = () => {
   emit('back');
 };
 
-// Data for the sections, categorized as left and right based on the image layout
-const leftSections = [
-    {
-      title: '临床检验',
-      items: [
-        { label: '血常规', time: '2024-XX-XX 12:21' },
-        { label: '凝血四项', time: '2024-XX-XX 12:25' },
-        { label: '血气分析', time: '2024-XX-XX 13:33' },
-        { label: '术前免疫', time: '2024-XX-XX 13:40' },
-      ],
-    },
-    {
-      title: '临床记录',
-      items: [
-        { label: '病史采集', time: '2024-XX-XX 09:21' },
-        { label: '专家诊疗意见', time: '2024-XX-XX 11:22' },
-      ],
-    },
-    {
-      title: '随访',
-      items: [
-        { label: '当前治疗情况', time: '2024-XX-XX 13:30' },
-        { label: '移植后随访', time: '2024-XX-XX 18:23' },
-      ],
-    },
-  ];
+// 新增：打开模板详情对话框
+const openTemplateDetailDialog = async (templateCode: string) => {
+  if (!props.patient.allCases || props.patient.allCases.length === 0) {
+    ElMessage.warning('该患者没有病例信息，无法获取模板详情。');
+    return;
+  }
+  const caseCode = props.patient.allCases[0].case_code; // 假设使用第一个病例编号
   
- const rightSections = [
-    {
-      title: '辅助检查',
-      items: [
-        { label: '胸部CT', time: '2024-XX-XX 09:02' },
-        { label: '腹部CT', time: '2024-XX-XX 10:29' },
-        { label: '心脏彩超', time: '2024-XX-XX 11:33' },
-      ],
-    },
-    {
-      title: '评分',
-      items: [
-        { label: 'Child-pugh评分', time: '2024-XX-XX 10:11' },
-        { label: 'MELD评分', time: '2024-XX-XX 12:32' },
-        { label: 'CLIF-CAD评分', time: '2024-XX-XX 18:45' },
-        { label: 'EASL-ACLF评分', time: '2024-XX-XX 18:48' },
-        { label: 'MELD评分 (移植后)', time: '2024-XX-XX 16:28' },
-      ],
-    },
-  ];
+  try {
+    const res = await caseTemplateDetailCreate({
+      case_code: caseCode,
+      template_code: templateCode
+    });
+
+    // 明确类型断言以解决 linter 错误
+    const apiResponse = res.data as ApiResponse<TemplateDetailData>;
+    if (apiResponse?.code === 200) {
+      currentTemplateDetail.value = apiResponse.data;
+      templateDetailDialogVisible.value = true;
+    } else {
+      ElMessage.error('获取模板详情失败');
+    }
+  } catch (error) {
+    console.error('获取模板详情失败:', error);
+    ElMessage.error('获取模板详情失败');
+  }
+};
+
 // Combine all sections for timeline view
-const allSections = computed(() => [...leftSections, ...rightSections]);
+const allSections = computed(() => [...leftSections.value, ...rightSections.value]);
 
 // Assemble timeline data
 const timelineData = computed(() => {
-  const data: any[] = [];
+  const data: { date: string; items: { label: string; time: string }[] }[] = [];
   allSections.value.forEach((section) => {
-    section.items.forEach((item) => {
+    section.items.forEach((item: { label: string; time: string }) => {
       const found = data.find((t) => t.date === item.time);
       if (found) {
         found.items.push(item);
@@ -218,9 +339,30 @@ const timelineData = computed(() => {
       }
     });
   });
-  // Sort timeline data by date (latest first, as per typical timeline display)
-  data.sort((a, b) => new Date(b.date) - new Date(a.date));
-  return data;
+  // Sort timeline data by date (latest first)
+  data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  // 格式化时间轴日期，如果是今天则显示"今天"
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return data.map(entry => {
+    const entryDate = new Date(entry.date);
+    entryDate.setHours(0, 0, 0, 0);
+    let formattedDate = entry.date; // 默认使用完整日期
+
+    if (entryDate.getTime() === today.getTime()) {
+      formattedDate = '今天';
+    } else {
+      formattedDate = new Date(entry.date).toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' });
+    }
+    return { ...entry, date: formattedDate };
+  });
+});
+
+// 组件挂载时获取数据
+onMounted(() => {
+  fetchTemplateData();
 });
 </script>
 
