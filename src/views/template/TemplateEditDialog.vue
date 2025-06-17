@@ -1,46 +1,53 @@
 <template>
     <div class="template-form">
       <h2 class="form-title">{{ dialogTitle }}</h2>
-      <el-form ref="formRef" :model="formData" :rules="rules" label-width="100px" label-position="left">
-        <el-form-item label="模版名称" prop="template_name">
-          <el-input v-model="formData.template_name" placeholder="请输入模版名称" style="width: 300px;" />
-        </el-form-item>
-        <el-form-item label="模版描述" prop="template_description">
-          <el-input v-model="formData.template_description" type="textarea" placeholder="请输入模版描述" style="width: 300px;" />
-        </el-form-item>
-        <el-form-item label="模板类型" prop="type">
-          <el-select v-model="formData.type" placeholder="请选择模板类型" style="width: 300px;">
-            <el-option
-              v-for="item in categoryList"
-              :key="item.id"
-              :label="item.name"
-              :value="item.id"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="词条选择" prop="dictionaries">
-          <div class="dictionary-list">
-            <div class="dictionary-search">
-              <el-input
-                v-model="searchKeyword"
-                placeholder="搜索词条"
-                style="width: 200px;"
-              />
-            </div>
-            <div class="dictionary-items">
-              <el-checkbox-group v-model="formData.dictionaries">
-                <div v-for="item in filteredDictionaryItems" :key="item.id" class="dictionary-item">
-                  <el-checkbox :value="item.id"> {{ item.word_name }}
-                  </el-checkbox>
-                </div>
-              </el-checkbox-group>
-            </div>
+      <el-form ref="formRef" :model="formData" :rules="rules" label-width="120px" label-position="left">
+        <div class="form-content">
+          <div class="form-left">
+            <el-form-item label="模版名称" prop="template_name">
+              <el-input v-model="formData.template_name" placeholder="请输入模版名称" style="width: 400px;" />
+            </el-form-item>
+            <el-form-item label="模版描述" prop="template_description">
+              <el-input v-model="formData.template_description" type="textarea" placeholder="请输入模版描述" style="width: 400px;" :rows="4" />
+            </el-form-item>
+            <el-form-item label="模板类型" prop="category">
+              <el-select v-model="formData.category" placeholder="请选择模板类型" style="width: 400px;">
+                <el-option
+                  v-for="item in categoryList"
+                  :key="item.id"
+                  :label="item.name"
+                  :value="item.id"
+                />
+              </el-select>
+            </el-form-item>
           </div>
-        </el-form-item>
-        <el-form-item>
+          <div class="form-right">
+            <el-form-item label="词条选择" prop="dictionaries" class="dictionary-form-item">
+              <div class="dictionary-list">
+                <div class="dictionary-search">
+                  <el-input
+                    v-model="searchKeyword"
+                    placeholder="搜索词条"
+                    prefix-icon="Search"
+                    clearable
+                    style="width: 100%;"
+                  />
+                </div>
+                <div class="dictionary-items">
+                  <el-checkbox-group v-model="formData.dictionaries">
+                    <div v-for="item in filteredDictionaryItems" :key="item.id" class="dictionary-item">
+                      <el-checkbox :value="item.id"> {{ item.word_name }}</el-checkbox>
+                    </div>
+                  </el-checkbox-group>
+                </div>
+              </div>
+            </el-form-item>
+          </div>
+        </div>
+        <div class="form-footer">
           <el-button @click="$emit('cancel')">取消</el-button>
           <el-button type="primary" @click="handleSubmit">确定</el-button>
-        </el-form-item>
+        </div>
       </el-form>
     </div>
   </template>
@@ -55,9 +62,6 @@
   // 假设这些 API 导入是正确的，如果你的项目结构需要调整路径，请自行修改
   import {
     dataTemplateCreate, // 引入创建模板的API
-    // dataTemplateList, // 如果不需要列表API，可以不引入以减少打包体积
-    // dataTemplateUpdate,
-    // dataTemplateDelete,
   } from '../../api/dataTemplate';
   
   interface Props {
@@ -90,7 +94,10 @@
   // 获取词条列表
   const fetchDictionaryList = async () => {
     try {
-      const res = await dictionaryList({});
+      const res = await dictionaryList({
+        page: 1,
+        page_size: 9999  // 设置一个足够大的数值以获取所有数据
+      });
       console.log('API响应数据:', res);
       // 确保 res.data 存在，res.data.list 是数组且有数据
       if (res?.data?.code === 200 && res.data?.data.list) {
@@ -109,7 +116,10 @@
   // 获取分类列表
   const fetchCategoryList = async () => {
     try {
-      const res = await templateCategoryList({});
+      const res = await templateCategoryList({
+        page: 1,
+        page_size: 9999  // 设置一个足够大的数值以获取所有数据
+      });
       if (res?.data?.code === 200 && res.data?.data?.list) {
         categoryList.value = res.data.data.list;
       } else {
@@ -134,6 +144,7 @@
         ...props.formData,
         template_description: props.formData.template_description || '',
         dictionary_list: props.formData.dictionary_list || [],
+        category: props.formData.category, // 确保category被正确传递
       };
 
       // 发送提交事件给父组件
@@ -165,49 +176,114 @@
   
   <style scoped>
   .template-form {
-    padding: 20px;
+    padding: 24px;
     background-color: #fff;
-    border-radius: 4px;
+    border-radius: 8px;
     box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+    min-width: 1000px;
   }
   
   .form-title {
-    margin-bottom: 20px;
-    font-size: 18px;
-    font-weight: 500;
+    margin-bottom: 24px;
+    font-size: 20px;
+    font-weight: 600;
     color: #303133;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #ebeef5;
+  }
+  
+  .form-content {
+    display: flex;
+    gap: 40px;
+  }
+  
+  .form-left {
+    flex: 1;
+    min-width: 500px;
+  }
+  
+  .form-right {
+    flex: 1;
+    min-width: 500px;
   }
   
   .dictionary-list {
     border: 1px solid #dcdfe6;
-    border-radius: 4px;
-    padding: 10px;
-    width: 300px;
+    border-radius: 8px;
+    padding: 16px;
+    background-color: #f8f9fa;
   }
   
   .dictionary-search {
-    margin-bottom: 10px;
+    margin-bottom: 16px;
   }
   
   .dictionary-items {
-    max-height: 300px;
+    max-height: 500px;
     overflow-y: auto;
+    padding-right: 8px;
+  }
+  
+  .dictionary-items::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .dictionary-items::-webkit-scrollbar-thumb {
+    background-color: #c0c4cc;
+    border-radius: 3px;
+  }
+  
+  .dictionary-items::-webkit-scrollbar-track {
+    background-color: #f5f7fa;
   }
   
   .dictionary-item {
-    padding: 8px 0;
+    padding: 12px 8px;
     border-bottom: 1px solid #ebeef5;
+    transition: background-color 0.3s;
+  }
+  
+  .dictionary-item:hover {
+    background-color: #f5f7fa;
   }
   
   .dictionary-item:last-child {
     border-bottom: none;
   }
   
-  .el-form-item:last-child {
-    margin-bottom: 0;
+  .form-footer {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid #ebeef5;
+    text-align: right;
   }
   
   .el-button {
-    margin-right: 10px;
+    padding: 12px 24px;
+    font-size: 14px;
+  }
+  
+  .el-form-item {
+    margin-bottom: 24px;
+  }
+  
+  .dictionary-form-item {
+    margin-bottom: 0;
+  }
+  
+  :deep(.el-form-item__label) {
+    font-weight: 500;
+  }
+  
+  :deep(.el-input__wrapper) {
+    box-shadow: 0 0 0 1px #dcdfe6 inset;
+  }
+  
+  :deep(.el-input__wrapper:hover) {
+    box-shadow: 0 0 0 1px #c0c4cc inset;
+  }
+  
+  :deep(.el-input__wrapper.is-focus) {
+    box-shadow: 0 0 0 1px #409eff inset;
   }
   </style>

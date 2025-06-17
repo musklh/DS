@@ -113,23 +113,17 @@ import { ElMessage } from 'element-plus';
 import { caseCreate } from '../../api/openApiCase'; // 路径根据实际位置调整
 ////
 // 示例：你可以放在 script 顶部，正式项目中应使用统一的类型声明文件
-interface Case {
-  caseId: string;
-  recordId: string;
-  idCard: string;
-  outpatientId: string;
-  inpatientId: string;
-  name: string;
-  gender: string;
-  birthDate: string;
-  phone: string;
-  address: string;
-  bloodType: string;
-  diagnosis: string;
-  hasTransplantSurgery: string;
-  isInTransplantQueue: string;
-}
 
+
+interface Case {
+  archive_codes: string[];
+  identity: string;
+  opd_id: string;
+  inhospital_id: string;
+  main_diagnosis: string;
+  has_transplant_surgery: string;
+  is_in_transplant_queue: string;
+}
 
 export default defineComponent({
   name: 'NewMedicalCase',
@@ -226,31 +220,33 @@ export default defineComponent({
       formRef.value.validate(async (valid: boolean) => {
         if (valid) {
           try {
+            // 处理移植手术信息，如果有日期则拼接
+            const transplantSurgeryInfo = form.hasTransplantSurgery === '是' && form.hasTransplantSurgeryDate 
+              ? `${form.hasTransplantSurgery}(${form.hasTransplantSurgeryDate})`
+              : form.hasTransplantSurgery;
+
             const payload = {
               archive_codes: [form.recordId],
               identity: form.idCard,
               opd_id: form.outpatientId,
               inhospital_id: form.inpatientId,
               name: form.name,
-              gender: form.gender === '男' ? 1 : 0,
+              gender: form.gender === '男' ? 1 : 0 as 0 | 1,
               birth_date: form.birthDate,
               phone_number: form.phone,
               home_address: form.address,
               blood_type: form.bloodType,
               main_diagnosis: form.diagnosis,
-              has_transplant_surgery: form.hasTransplantSurgery,
+              has_transplant_surgery: transplantSurgeryInfo,
               is_in_transplant_queue: form.isInTransplantQueue,
-            } as API.Case;
+            } as unknown as API.Case;
             console.log("提交的payload:", payload);
             const response = await caseCreate(payload);
             
-            // 根据响应结果判断是否真正成功
             if (response?.data?.code === 200) {
               ElMessage.success('病例添加成功！');
               console.log('提交成功，返回数据：', response);
-              // 清空表单
               formRef.value.resetFields();
-              // 可以在这里添加其他成功后的操作，比如跳转页面等
             } else {
               ElMessage.error(response?.data?.msg || '病例添加失败，请检查数据后重试');
               console.error('提交失败，返回数据：', response);

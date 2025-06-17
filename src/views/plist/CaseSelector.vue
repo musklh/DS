@@ -38,7 +38,9 @@ const caseOptions = ref<ArchiveItem[]>([]
 
 const fetchArchives = async () => {
   try {
-    const response = await archiveList({});
+    const response = await archiveList({
+      page: 1,
+      page_size: 9999});
     const resData = response.data;
 
     if (resData.code === 200 && resData.data && Array.isArray(resData.data.list)) {
