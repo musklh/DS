@@ -11,92 +11,100 @@ import request from '@/request';
 
 ### 1. 单条数据录入
 POST /api/data/
+
+请求参数说明：
+- case_code: 病例编号
+- template_code: 模板编号
+- word_code: 词条编号
+- check_time: 检查时间，格式：YYYY-MM-DD HH:MM:SS
+- value: 数据值
+
+请求示例：
 ```json
 {
-    "case_code": "C000001",        // 病例编号
-    "template_code": "T000001",    // 模板编号
-    "word_code": "A000001",        // 词条编号
-    "check_time": "2025-05-25",    // 检查时间，格式：YYYY-MM-DD
-    "value": "检查值"              // 数据值
+    "case_code": "C000001",
+    "template_code": "T000001",
+    "word_code": "A000001",
+    "check_time": "2025-05-25 14:30:00",
+    "value": "检查值"
 }
 ```
 
-### 2. 批量数据录入
-POST /api/data/
-```json
-{
-    "case_code": "C000001",        // 病例编号
-    "template_code": "T000001",    // 模板编号
-    "data_list": [
-        {
-            "word_code": "A000001",     // 词条编号
-            "check_time": "2025-05-25", // 检查时间
-            "value": "值1"              // 数据值
-        },
-        {
-            "word_code": "A000002",
-            "check_time": "2025-05-25",
-            "value": "值2"
-        }
-    ]
-}
-```
-  ### 3. 数据列表查询
-GET /api/data/[?page=1&page_size=10][&case_code=C000001]
-
-响应格式：
-```json
-{
-    "code": 200,                    // 状态码
-    "msg": "操作成功",              // 响应消息
-    "data": {
-        "list": [                   // 数据列表
-            {
-                "id": 1,
-                "case_code": "C000001",
-                "template_category": "分类1",
-                "template_name": "测试",
-                "word_name": "string",
-                "value": "检查值",
-                "check_time": "2025-05-25T00:00:00"
-            }
-        ],
-        "total": 4,                // 总记录数
-        "page": 1,                 // 当前页码
-        "page_size": 10            // 每页记录数
-    }
-}
-```
-  ### 4. 查询单条数据详情
-GET /api/data/{id}/
-
-响应格式：
+响应示例：
 ```json
 {
     "code": 200,
     "msg": "操作成功",
     "data": {
-        "id": 1,
+        "id": 123,
         "case_code": "C000001",
         "template_category": "分类1",
         "template_name": "测试",
         "word_name": "string",
         "value": "检查值",
-        "check_time": "2025-05-25T00:00:00"
+        "check_time": "2025-05-25 14:30:00"
     }
 }
 ```
 
-## 错误响应示例
+### 2. 批量数据录入
+POST /api/data/
+
+请求参数说明：
+- case_code: 病例编号
+- template_code: 模板编号
+- data_list: 数据列表，每项包含：
+    - word_code: 词条编号
+    - check_time: 检查时间，格式：YYYY-MM-DD HH:MM:SS
+    - value: 数据值
+
+请求示例：
 ```json
 {
-    "code": 400,
-    "msg": "请求参数错误",
+    "case_code": "C000001",
+    "template_code": "T000001",
+    "data_list": [
+        {
+            "word_code": "A000001",
+            "check_time": "2025-05-25 14:30:00",
+            "value": "值1"
+        },
+        {
+            "word_code": "A000002",
+            "check_time": "2025-05-25 15:30:00",
+            "value": "值2"
+        }
+    ]
+}
+```
+
+响应示例：
+```json
+{
+    "code": 200,
+    "msg": "操作成功",
     "data": {
-        "case_code": ["病例编号不存在"],
-        "template_code": ["模板编号不存在"],
-        "word_code": ["词条编号不存在"],
-        "check_time": ["日期格式错误: xxx, 应为YYYY-MM-DD格式"]
+        "message": "成功创建 2 条数据记录",
+        "data": [
+            {
+                "id": 123,
+                "case_code": "C000001",
+                "template_category": "分类1",
+                "template_name": "测试",
+                "word_name": "string",
+                "value": "值1",
+                "check_time": "2025-05-25 14:30:00"
+            },
+            {
+                "id": 124,
+                "case_code": "C000001",
+                "template_category": "分类1",
+                "template_name": "测试",
+                "word_name": "string",
+                "value": "值2",
+                "check_time": "2025-05-25 15:30:00"
+            }
+        ]
     }
 }
 ``` GET /data/ */
@@ -128,92 +136,100 @@ export async function dataList(
 
 ### 1. 单条数据录入
 POST /api/data/
+
+请求参数说明：
+- case_code: 病例编号
+- template_code: 模板编号
+- word_code: 词条编号
+- check_time: 检查时间，格式：YYYY-MM-DD HH:MM:SS
+- value: 数据值
+
+请求示例：
 ```json
 {
-    "case_code": "C000001",        // 病例编号
-    "template_code": "T000001",    // 模板编号
-    "word_code": "A000001",        // 词条编号
-    "check_time": "2025-05-25",    // 检查时间，格式：YYYY-MM-DD
-    "value": "检查值"              // 数据值
+    "case_code": "C000001",
+    "template_code": "T000001",
+    "word_code": "A000001",
+    "check_time": "2025-05-25 14:30:00",
+    "value": "检查值"
 }
 ```
 
-### 2. 批量数据录入
-POST /api/data/
-```json
-{
-    "case_code": "C000001",        // 病例编号
-    "template_code": "T000001",    // 模板编号
-    "data_list": [
-        {
-            "word_code": "A000001",     // 词条编号
-            "check_time": "2025-05-25", // 检查时间
-            "value": "值1"              // 数据值
-        },
-        {
-            "word_code": "A000002",
-            "check_time": "2025-05-25",
-            "value": "值2"
-        }
-    ]
-}
-```
-  ### 3. 数据列表查询
-GET /api/data/[?page=1&page_size=10][&case_code=C000001]
-
-响应格式：
-```json
-{
-    "code": 200,                    // 状态码
-    "msg": "操作成功",              // 响应消息
-    "data": {
-        "list": [                   // 数据列表
-            {
-                "id": 1,
-                "case_code": "C000001",
-                "template_category": "分类1",
-                "template_name": "测试",
-                "word_name": "string",
-                "value": "检查值",
-                "check_time": "2025-05-25T00:00:00"
-            }
-        ],
-        "total": 4,                // 总记录数
-        "page": 1,                 // 当前页码
-        "page_size": 10            // 每页记录数
-    }
-}
-```
-  ### 4. 查询单条数据详情
-GET /api/data/{id}/
-
-响应格式：
+响应示例：
 ```json
 {
     "code": 200,
     "msg": "操作成功",
     "data": {
-        "id": 1,
+        "id": 123,
         "case_code": "C000001",
         "template_category": "分类1",
         "template_name": "测试",
         "word_name": "string",
         "value": "检查值",
-        "check_time": "2025-05-25T00:00:00"
+        "check_time": "2025-05-25 14:30:00"
     }
 }
 ```
 
-## 错误响应示例
+### 2. 批量数据录入
+POST /api/data/
+
+请求参数说明：
+- case_code: 病例编号
+- template_code: 模板编号
+- data_list: 数据列表，每项包含：
+    - word_code: 词条编号
+    - check_time: 检查时间，格式：YYYY-MM-DD HH:MM:SS
+    - value: 数据值
+
+请求示例：
 ```json
 {
-    "code": 400,
-    "msg": "请求参数错误",
+    "case_code": "C000001",
+    "template_code": "T000001",
+    "data_list": [
+        {
+            "word_code": "A000001",
+            "check_time": "2025-05-25 14:30:00",
+            "value": "值1"
+        },
+        {
+            "word_code": "A000002",
+            "check_time": "2025-05-25 15:30:00",
+            "value": "值2"
+        }
+    ]
+}
+```
+
+响应示例：
+```json
+{
+    "code": 200,
+    "msg": "操作成功",
     "data": {
-        "case_code": ["病例编号不存在"],
-        "template_code": ["模板编号不存在"],
-        "word_code": ["词条编号不存在"],
-        "check_time": ["日期格式错误: xxx, 应为YYYY-MM-DD格式"]
+        "message": "成功创建 2 条数据记录",
+        "data": [
+            {
+                "id": 123,
+                "case_code": "C000001",
+                "template_category": "分类1",
+                "template_name": "测试",
+                "word_name": "string",
+                "value": "值1",
+                "check_time": "2025-05-25 14:30:00"
+            },
+            {
+                "id": 124,
+                "case_code": "C000001",
+                "template_category": "分类1",
+                "template_name": "测试",
+                "word_name": "string",
+                "value": "值2",
+                "check_time": "2025-05-25 15:30:00"
+            }
+        ]
     }
 }
 ``` POST /data/ */
@@ -237,92 +253,100 @@ export async function dataCreate(body: API.DataTable, options?: { [key: string]:
 
 ### 1. 单条数据录入
 POST /api/data/
+
+请求参数说明：
+- case_code: 病例编号
+- template_code: 模板编号
+- word_code: 词条编号
+- check_time: 检查时间，格式：YYYY-MM-DD HH:MM:SS
+- value: 数据值
+
+请求示例：
 ```json
 {
-    "case_code": "C000001",        // 病例编号
-    "template_code": "T000001",    // 模板编号
-    "word_code": "A000001",        // 词条编号
-    "check_time": "2025-05-25",    // 检查时间，格式：YYYY-MM-DD
-    "value": "检查值"              // 数据值
+    "case_code": "C000001",
+    "template_code": "T000001",
+    "word_code": "A000001",
+    "check_time": "2025-05-25 14:30:00",
+    "value": "检查值"
 }
 ```
 
-### 2. 批量数据录入
-POST /api/data/
-```json
-{
-    "case_code": "C000001",        // 病例编号
-    "template_code": "T000001",    // 模板编号
-    "data_list": [
-        {
-            "word_code": "A000001",     // 词条编号
-            "check_time": "2025-05-25", // 检查时间
-            "value": "值1"              // 数据值
-        },
-        {
-            "word_code": "A000002",
-            "check_time": "2025-05-25",
-            "value": "值2"
-        }
-    ]
-}
-```
-  ### 3. 数据列表查询
-GET /api/data/[?page=1&page_size=10][&case_code=C000001]
-
-响应格式：
-```json
-{
-    "code": 200,                    // 状态码
-    "msg": "操作成功",              // 响应消息
-    "data": {
-        "list": [                   // 数据列表
-            {
-                "id": 1,
-                "case_code": "C000001",
-                "template_category": "分类1",
-                "template_name": "测试",
-                "word_name": "string",
-                "value": "检查值",
-                "check_time": "2025-05-25T00:00:00"
-            }
-        ],
-        "total": 4,                // 总记录数
-        "page": 1,                 // 当前页码
-        "page_size": 10            // 每页记录数
-    }
-}
-```
-  ### 4. 查询单条数据详情
-GET /api/data/{id}/
-
-响应格式：
+响应示例：
 ```json
 {
     "code": 200,
     "msg": "操作成功",
     "data": {
-        "id": 1,
+        "id": 123,
         "case_code": "C000001",
         "template_category": "分类1",
         "template_name": "测试",
         "word_name": "string",
         "value": "检查值",
-        "check_time": "2025-05-25T00:00:00"
+        "check_time": "2025-05-25 14:30:00"
     }
 }
 ```
 
-## 错误响应示例
+### 2. 批量数据录入
+POST /api/data/
+
+请求参数说明：
+- case_code: 病例编号
+- template_code: 模板编号
+- data_list: 数据列表，每项包含：
+    - word_code: 词条编号
+    - check_time: 检查时间，格式：YYYY-MM-DD HH:MM:SS
+    - value: 数据值
+
+请求示例：
 ```json
 {
-    "code": 400,
-    "msg": "请求参数错误",
+    "case_code": "C000001",
+    "template_code": "T000001",
+    "data_list": [
+        {
+            "word_code": "A000001",
+            "check_time": "2025-05-25 14:30:00",
+            "value": "值1"
+        },
+        {
+            "word_code": "A000002",
+            "check_time": "2025-05-25 15:30:00",
+            "value": "值2"
+        }
+    ]
+}
+```
+
+响应示例：
+```json
+{
+    "code": 200,
+    "msg": "操作成功",
     "data": {
-        "case_code": ["病例编号不存在"],
-        "template_code": ["模板编号不存在"],
-        "word_code": ["词条编号不存在"],
-        "check_time": ["日期格式错误: xxx, 应为YYYY-MM-DD格式"]
+        "message": "成功创建 2 条数据记录",
+        "data": [
+            {
+                "id": 123,
+                "case_code": "C000001",
+                "template_category": "分类1",
+                "template_name": "测试",
+                "word_name": "string",
+                "value": "值1",
+                "check_time": "2025-05-25 14:30:00"
+            },
+            {
+                "id": 124,
+                "case_code": "C000001",
+                "template_category": "分类1",
+                "template_name": "测试",
+                "word_name": "string",
+                "value": "值2",
+                "check_time": "2025-05-25 15:30:00"
+            }
+        ]
     }
 }
 ``` GET /data/${param0}/ */
@@ -348,92 +372,100 @@ export async function dataRead(
 
 ### 1. 单条数据录入
 POST /api/data/
+
+请求参数说明：
+- case_code: 病例编号
+- template_code: 模板编号
+- word_code: 词条编号
+- check_time: 检查时间，格式：YYYY-MM-DD HH:MM:SS
+- value: 数据值
+
+请求示例：
 ```json
 {
-    "case_code": "C000001",        // 病例编号
-    "template_code": "T000001",    // 模板编号
-    "word_code": "A000001",        // 词条编号
-    "check_time": "2025-05-25",    // 检查时间，格式：YYYY-MM-DD
-    "value": "检查值"              // 数据值
+    "case_code": "C000001",
+    "template_code": "T000001",
+    "word_code": "A000001",
+    "check_time": "2025-05-25 14:30:00",
+    "value": "检查值"
 }
 ```
 
-### 2. 批量数据录入
-POST /api/data/
-```json
-{
-    "case_code": "C000001",        // 病例编号
-    "template_code": "T000001",    // 模板编号
-    "data_list": [
-        {
-            "word_code": "A000001",     // 词条编号
-            "check_time": "2025-05-25", // 检查时间
-            "value": "值1"              // 数据值
-        },
-        {
-            "word_code": "A000002",
-            "check_time": "2025-05-25",
-            "value": "值2"
-        }
-    ]
-}
-```
-  ### 3. 数据列表查询
-GET /api/data/[?page=1&page_size=10][&case_code=C000001]
-
-响应格式：
-```json
-{
-    "code": 200,                    // 状态码
-    "msg": "操作成功",              // 响应消息
-    "data": {
-        "list": [                   // 数据列表
-            {
-                "id": 1,
-                "case_code": "C000001",
-                "template_category": "分类1",
-                "template_name": "测试",
-                "word_name": "string",
-                "value": "检查值",
-                "check_time": "2025-05-25T00:00:00"
-            }
-        ],
-        "total": 4,                // 总记录数
-        "page": 1,                 // 当前页码
-        "page_size": 10            // 每页记录数
-    }
-}
-```
-  ### 4. 查询单条数据详情
-GET /api/data/{id}/
-
-响应格式：
+响应示例：
 ```json
 {
     "code": 200,
     "msg": "操作成功",
     "data": {
-        "id": 1,
+        "id": 123,
         "case_code": "C000001",
         "template_category": "分类1",
         "template_name": "测试",
         "word_name": "string",
         "value": "检查值",
-        "check_time": "2025-05-25T00:00:00"
+        "check_time": "2025-05-25 14:30:00"
     }
 }
 ```
 
-## 错误响应示例
+### 2. 批量数据录入
+POST /api/data/
+
+请求参数说明：
+- case_code: 病例编号
+- template_code: 模板编号
+- data_list: 数据列表，每项包含：
+    - word_code: 词条编号
+    - check_time: 检查时间，格式：YYYY-MM-DD HH:MM:SS
+    - value: 数据值
+
+请求示例：
 ```json
 {
-    "code": 400,
-    "msg": "请求参数错误",
+    "case_code": "C000001",
+    "template_code": "T000001",
+    "data_list": [
+        {
+            "word_code": "A000001",
+            "check_time": "2025-05-25 14:30:00",
+            "value": "值1"
+        },
+        {
+            "word_code": "A000002",
+            "check_time": "2025-05-25 15:30:00",
+            "value": "值2"
+        }
+    ]
+}
+```
+
+响应示例：
+```json
+{
+    "code": 200,
+    "msg": "操作成功",
     "data": {
-        "case_code": ["病例编号不存在"],
-        "template_code": ["模板编号不存在"],
-        "word_code": ["词条编号不存在"],
-        "check_time": ["日期格式错误: xxx, 应为YYYY-MM-DD格式"]
+        "message": "成功创建 2 条数据记录",
+        "data": [
+            {
+                "id": 123,
+                "case_code": "C000001",
+                "template_category": "分类1",
+                "template_name": "测试",
+                "word_name": "string",
+                "value": "值1",
+                "check_time": "2025-05-25 14:30:00"
+            },
+            {
+                "id": 124,
+                "case_code": "C000001",
+                "template_category": "分类1",
+                "template_name": "测试",
+                "word_name": "string",
+                "value": "值2",
+                "check_time": "2025-05-25 15:30:00"
+            }
+        ]
     }
 }
 ``` PUT /data/${param0}/ */
@@ -464,92 +496,100 @@ export async function dataUpdate(
 
 ### 1. 单条数据录入
 POST /api/data/
+
+请求参数说明：
+- case_code: 病例编号
+- template_code: 模板编号
+- word_code: 词条编号
+- check_time: 检查时间，格式：YYYY-MM-DD HH:MM:SS
+- value: 数据值
+
+请求示例：
 ```json
 {
-    "case_code": "C000001",        // 病例编号
-    "template_code": "T000001",    // 模板编号
-    "word_code": "A000001",        // 词条编号
-    "check_time": "2025-05-25",    // 检查时间，格式：YYYY-MM-DD
-    "value": "检查值"              // 数据值
+    "case_code": "C000001",
+    "template_code": "T000001",
+    "word_code": "A000001",
+    "check_time": "2025-05-25 14:30:00",
+    "value": "检查值"
 }
 ```
 
-### 2. 批量数据录入
-POST /api/data/
-```json
-{
-    "case_code": "C000001",        // 病例编号
-    "template_code": "T000001",    // 模板编号
-    "data_list": [
-        {
-            "word_code": "A000001",     // 词条编号
-            "check_time": "2025-05-25", // 检查时间
-            "value": "值1"              // 数据值
-        },
-        {
-            "word_code": "A000002",
-            "check_time": "2025-05-25",
-            "value": "值2"
-        }
-    ]
-}
-```
-  ### 3. 数据列表查询
-GET /api/data/[?page=1&page_size=10][&case_code=C000001]
-
-响应格式：
-```json
-{
-    "code": 200,                    // 状态码
-    "msg": "操作成功",              // 响应消息
-    "data": {
-        "list": [                   // 数据列表
-            {
-                "id": 1,
-                "case_code": "C000001",
-                "template_category": "分类1",
-                "template_name": "测试",
-                "word_name": "string",
-                "value": "检查值",
-                "check_time": "2025-05-25T00:00:00"
-            }
-        ],
-        "total": 4,                // 总记录数
-        "page": 1,                 // 当前页码
-        "page_size": 10            // 每页记录数
-    }
-}
-```
-  ### 4. 查询单条数据详情
-GET /api/data/{id}/
-
-响应格式：
+响应示例：
 ```json
 {
     "code": 200,
     "msg": "操作成功",
     "data": {
-        "id": 1,
+        "id": 123,
         "case_code": "C000001",
         "template_category": "分类1",
         "template_name": "测试",
         "word_name": "string",
         "value": "检查值",
-        "check_time": "2025-05-25T00:00:00"
+        "check_time": "2025-05-25 14:30:00"
     }
 }
 ```
 
-## 错误响应示例
+### 2. 批量数据录入
+POST /api/data/
+
+请求参数说明：
+- case_code: 病例编号
+- template_code: 模板编号
+- data_list: 数据列表，每项包含：
+    - word_code: 词条编号
+    - check_time: 检查时间，格式：YYYY-MM-DD HH:MM:SS
+    - value: 数据值
+
+请求示例：
 ```json
 {
-    "code": 400,
-    "msg": "请求参数错误",
+    "case_code": "C000001",
+    "template_code": "T000001",
+    "data_list": [
+        {
+            "word_code": "A000001",
+            "check_time": "2025-05-25 14:30:00",
+            "value": "值1"
+        },
+        {
+            "word_code": "A000002",
+            "check_time": "2025-05-25 15:30:00",
+            "value": "值2"
+        }
+    ]
+}
+```
+
+响应示例：
+```json
+{
+    "code": 200,
+    "msg": "操作成功",
     "data": {
-        "case_code": ["病例编号不存在"],
-        "template_code": ["模板编号不存在"],
-        "word_code": ["词条编号不存在"],
-        "check_time": ["日期格式错误: xxx, 应为YYYY-MM-DD格式"]
+        "message": "成功创建 2 条数据记录",
+        "data": [
+            {
+                "id": 123,
+                "case_code": "C000001",
+                "template_category": "分类1",
+                "template_name": "测试",
+                "word_name": "string",
+                "value": "值1",
+                "check_time": "2025-05-25 14:30:00"
+            },
+            {
+                "id": 124,
+                "case_code": "C000001",
+                "template_category": "分类1",
+                "template_name": "测试",
+                "word_name": "string",
+                "value": "值2",
+                "check_time": "2025-05-25 15:30:00"
+            }
+        ]
     }
 }
 ``` DELETE /data/${param0}/ */
@@ -575,92 +615,100 @@ export async function dataDelete(
 
 ### 1. 单条数据录入
 POST /api/data/
+
+请求参数说明：
+- case_code: 病例编号
+- template_code: 模板编号
+- word_code: 词条编号
+- check_time: 检查时间，格式：YYYY-MM-DD HH:MM:SS
+- value: 数据值
+
+请求示例：
 ```json
 {
-    "case_code": "C000001",        // 病例编号
-    "template_code": "T000001",    // 模板编号
-    "word_code": "A000001",        // 词条编号
-    "check_time": "2025-05-25",    // 检查时间，格式：YYYY-MM-DD
-    "value": "检查值"              // 数据值
+    "case_code": "C000001",
+    "template_code": "T000001",
+    "word_code": "A000001",
+    "check_time": "2025-05-25 14:30:00",
+    "value": "检查值"
 }
 ```
 
-### 2. 批量数据录入
-POST /api/data/
-```json
-{
-    "case_code": "C000001",        // 病例编号
-    "template_code": "T000001",    // 模板编号
-    "data_list": [
-        {
-            "word_code": "A000001",     // 词条编号
-            "check_time": "2025-05-25", // 检查时间
-            "value": "值1"              // 数据值
-        },
-        {
-            "word_code": "A000002",
-            "check_time": "2025-05-25",
-            "value": "值2"
-        }
-    ]
-}
-```
-  ### 3. 数据列表查询
-GET /api/data/[?page=1&page_size=10][&case_code=C000001]
-
-响应格式：
-```json
-{
-    "code": 200,                    // 状态码
-    "msg": "操作成功",              // 响应消息
-    "data": {
-        "list": [                   // 数据列表
-            {
-                "id": 1,
-                "case_code": "C000001",
-                "template_category": "分类1",
-                "template_name": "测试",
-                "word_name": "string",
-                "value": "检查值",
-                "check_time": "2025-05-25T00:00:00"
-            }
-        ],
-        "total": 4,                // 总记录数
-        "page": 1,                 // 当前页码
-        "page_size": 10            // 每页记录数
-    }
-}
-```
-  ### 4. 查询单条数据详情
-GET /api/data/{id}/
-
-响应格式：
+响应示例：
 ```json
 {
     "code": 200,
     "msg": "操作成功",
     "data": {
-        "id": 1,
+        "id": 123,
         "case_code": "C000001",
         "template_category": "分类1",
         "template_name": "测试",
         "word_name": "string",
         "value": "检查值",
-        "check_time": "2025-05-25T00:00:00"
+        "check_time": "2025-05-25 14:30:00"
     }
 }
 ```
 
-## 错误响应示例
+### 2. 批量数据录入
+POST /api/data/
+
+请求参数说明：
+- case_code: 病例编号
+- template_code: 模板编号
+- data_list: 数据列表，每项包含：
+    - word_code: 词条编号
+    - check_time: 检查时间，格式：YYYY-MM-DD HH:MM:SS
+    - value: 数据值
+
+请求示例：
 ```json
 {
-    "code": 400,
-    "msg": "请求参数错误",
+    "case_code": "C000001",
+    "template_code": "T000001",
+    "data_list": [
+        {
+            "word_code": "A000001",
+            "check_time": "2025-05-25 14:30:00",
+            "value": "值1"
+        },
+        {
+            "word_code": "A000002",
+            "check_time": "2025-05-25 15:30:00",
+            "value": "值2"
+        }
+    ]
+}
+```
+
+响应示例：
+```json
+{
+    "code": 200,
+    "msg": "操作成功",
     "data": {
-        "case_code": ["病例编号不存在"],
-        "template_code": ["模板编号不存在"],
-        "word_code": ["词条编号不存在"],
-        "check_time": ["日期格式错误: xxx, 应为YYYY-MM-DD格式"]
+        "message": "成功创建 2 条数据记录",
+        "data": [
+            {
+                "id": 123,
+                "case_code": "C000001",
+                "template_category": "分类1",
+                "template_name": "测试",
+                "word_name": "string",
+                "value": "值1",
+                "check_time": "2025-05-25 14:30:00"
+            },
+            {
+                "id": 124,
+                "case_code": "C000001",
+                "template_category": "分类1",
+                "template_name": "测试",
+                "word_name": "string",
+                "value": "值2",
+                "check_time": "2025-05-25 15:30:00"
+            }
+        ]
     }
 }
 ``` PATCH /data/${param0}/ */

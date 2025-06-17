@@ -59,8 +59,8 @@ export async function caseList(
 
 - **Identity Cases**: GET /api/case/identity/{identity_id}/
   - 获取指定身份证号的所有病例 POST /case/ */
-export async function caseCreate(body: API.Case, options?: { [key: string]: any }) {
-  return request<API.Case>('/case/', {
+export async function caseCreate(body: API.CaseDetail, options?: { [key: string]: any }) {
+  return request<API.CaseDetail>('/case/', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -126,11 +126,11 @@ export async function caseRead(
 export async function caseUpdate(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
   params: API.caseUpdateParams,
-  body: API.Case,
+  body: API.CaseDetail,
   options?: { [key: string]: any }
 ) {
   const { case_code: param0, ...queryParams } = params;
-  return request<API.Case>(`/case/${param0}/`, {
+  return request<API.CaseDetail>(`/case/${param0}/`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -197,11 +197,11 @@ export async function caseDelete(
 export async function casePartialUpdate(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
   params: API.casePartialUpdateParams,
-  body: API.Case,
+  body: API.CaseDetail,
   options?: { [key: string]: any }
 ) {
   const { case_code: param0, ...queryParams } = params;
-  return request<API.Case>(`/case/${param0}/`, {
+  return request<API.CaseDetail>(`/case/${param0}/`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
@@ -219,7 +219,7 @@ export async function caseIdentityCases(
   options?: { [key: string]: any }
 ) {
   const { identity_id: param0, ...queryParams } = params;
-  return request<{ count: number; next?: string; previous?: string; results: API.Case[] }>(
+  return request<{ count: number; next?: string; previous?: string; results: API.CaseDetail[] }>(
     `/case/identity/${param0}/`,
     {
       method: 'GET',

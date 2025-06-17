@@ -18,6 +18,7 @@
         v-if="currentStep === 1"
         :patient-data="selectedPatientData"
         @template-selected="handleTemplateSelected"
+        @go-back-to-case="handleBackToCase"
       />
 
       <BloodRoutineEntry
@@ -45,30 +46,63 @@ import SelectPatientAndCase from './SelectPatientAndCase.vue';
 import SelectClinicalTemplate from './SelectClinicalTemplate.vue';
 import BloodRoutineEntry from './BloodRoutineEntry.vue';
 
+// import { caseIdentityCases } from '../../api/openApiCase'; // This import seems unused, can be removed if not needed elsewhere
+
 const currentStep = ref(0); // 0: Select Patient/Case, 1: Select Template, 2: Data Entry
 
 const selectedPatientData = reactive({
-  name: '王XXX',
-  gender: '女',
-  age: '52岁',
-  idCard: 'XXXXXXXXXXXXXXXXX',
-  caseId: 'XA568942', // Only one case ID passed for simplicity as per image
+  name: '',
+  gender: '',
+  age: '',
+  idCard: '',
+  caseId: '',
 });
 
 const selectedTemplate = ref(null); // To store the selected template name/ID
 
 // Handlers for child component events
 const handlePatientCaseSelected = (data) => {
-  // In a real app, 'data' would contain the actual selected patient/case IDs
-  // For now, we use the hardcoded data
-  ElMessage.success('患者和病例已选择，进入下一步');
-  currentStep.value = 1; // Move to next step
+  try {
+    console.log('PdataView: 开始接收患者和病例数据');
+    console.log('PdataView: 接收到的数据:', data);
+    
+    if (!data || !data.patientData) {
+      console.error('接收到的数据格式不正确');
+      ElMessage.error('数据格式错误');
+      return;
+    }
+    
+    // 更新选中的患者数据
+    Object.assign(selectedPatientData, {
+      name: data.patientData.name || '',
+      gender: data.patientData.gender === 0 ? '女' : '男',
+      age: data.patientData.age || '',
+      idCard: data.patientData.idCard || '',
+      caseId: data.patientData.caseId || ''
+    });
+    
+    console.log('PdataView: 更新后的患者数据:', selectedPatientData);
+    ElMessage.success('患者和病例已选择，进入下一步');
+    
+    currentStep.value = 1; 
+    console.log('PdataView: 步骤已更新到1');
+
+  } catch (error) {
+    console.error('处理患者和病例数据失败:', error);
+    ElMessage.error('处理数据失败');
+  }
 };
 
-const handleTemplateSelected = (templateName) => {
-  selectedTemplate.value = templateName;
-  ElMessage.success(`临床模板 "${templateName}" 已选择，进入数据录入`);
-  currentStep.value = 2; // Move to next step
+const handleTemplateSelected = (templateData) => {
+  console.log('PdataView: 接收到的模板数据:', templateData);
+  selectedTemplate.value = {
+    id: templateData.templateId,
+    code: templateData.templateCode,
+    name: templateData.templateName,
+    dictionaryList: templateData.dictionaryList
+  };
+  ElMessage.success(`临床模板 "${templateData.templateName}" 已选择，进入数据录入`);
+  currentStep.value = 2;
 };
 
 const handleDataSubmitted = (formData) => {
@@ -76,6 +110,14 @@ const handleDataSubmitted = (formData) => {
   console.log('Final submitted data:', formData);
   // Optionally, reset workflow or navigate elsewhere
   // currentStep.value = 0; // Go back to start
+};
+
+// 返回病例选择
+const handleBackToCase = () => {
+  // 保留患者信息，只清空病例信息
+  selectedPatientData.caseId = '';
+  // 返回第一步，显示病例列表
+  currentStep.value = 0;
 };
 </script>
 

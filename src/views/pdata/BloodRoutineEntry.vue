@@ -15,7 +15,7 @@
       <template #header>
         <div class="card-header-content">
           <span class="in-progress-text">正在录入:</span>
-          <span class="template-name">{{ selectedTemplate }}</span>
+          <span class="template-name">{{ selectedTemplate.name }}</span>
           <el-icon class="refresh-icon">
             <Refresh />
           </el-icon>
@@ -27,68 +27,23 @@
 
       <div class="entry-form-layout">
         <div class="left-form-section">
-          <el-form :model="bloodRoutineForm" label-width="90px" label-position="left">
+          <el-form :model="formData" label-width="120px" label-position="left">
             <el-form-item label="检查时间">
               <el-date-picker
-                v-model="bloodRoutineForm.checkTime"
+                v-model="formData.checkTime"
                 type="datetime"
                 placeholder="请选择"
                 value-format="YYYY-MM-DD HH:mm"
                 style="width: 100%"
               />
             </el-form-item>
-            <el-form-item label="临床信息">
-              <el-select
-                v-model="bloodRoutineForm.clinicalInfo"
-                placeholder="请选择"
-                style="width: 100%"
-              >
-                <el-option label="感染" value="infection" />
-                <el-option label="炎症" value="inflammation" />
-                <el-option label="其他" value="other" />
-              </el-select>
-            </el-form-item>
 
-            <el-form-item label="白细胞计数">
-              <el-input v-model="bloodRoutineForm.wbcCount" placeholder="请输入" />
-              <span class="unit-label">WBC</span>
-            </el-form-item>
-            <el-form-item label="中性粒细胞计数">
-              <el-input v-model="bloodRoutineForm.neutrophilCount" placeholder="请输入" />
-            </el-form-item>
-            <el-form-item label="中性粒细胞比值">
-              <el-input v-model="bloodRoutineForm.neutrophilRatio" placeholder="请输入" />
-            </el-form-item>
-            <el-form-item label="淋巴细胞计数">
-              <el-input v-model="bloodRoutineForm.lymphocyteCount" placeholder="请输入" />
-            </el-form-item>
-            <el-form-item label="淋巴细胞比值">
-              <el-input v-model="bloodRoutineForm.lymphocyteRatio" placeholder="请输入" />
-            </el-form-item>
-            <el-form-item label="单核细胞计数">
-              <el-input v-model="bloodRoutineForm.monocyteCount" placeholder="请输入" />
-            </el-form-item>
-            <el-form-item label="单核细胞比值">
-              <el-input v-model="bloodRoutineForm.monocyteRatio" placeholder="请输入" />
-            </el-form-item>
-            <el-form-item label="红细胞计数">
-              <el-input v-model="bloodRoutineForm.rbcCount" placeholder="请输入" />
-              <span class="unit-label">RBC</span>
-            </el-form-item>
-            <el-form-item label="血红蛋白">
-              <el-input v-model="bloodRoutineForm.hemoglobin" placeholder="请输入" />
-              <span class="unit-label">HGB</span>
-            </el-form-item>
-            <el-form-item label="血小板计数">
-              <el-input v-model="bloodRoutineForm.plateletCount" placeholder="请输入" />
-              <span class="unit-label">PLT</span>
-            </el-form-item>
-            <el-form-item label="网织红细胞计数">
-              <el-input v-model="bloodRoutineForm.reticulocyteCount" placeholder="请输入" />
-            </el-form-item>
-            <el-form-item label="网织红细胞比值">
-              <el-input v-model="bloodRoutineForm.reticulocyteRatio" placeholder="请输入" />
-            </el-form-item>
+            <template v-for="item in selectedTemplate.dictionaryList" :key="item.word_code">
+              <el-form-item :label="item.word_name">
+                <el-input v-model="formData.values[item.word_code]" placeholder="请输入" />
+                <span v-if="item.word_short" class="unit-label">{{ item.word_short }}</span>
+              </el-form-item>
+            </template>
           </el-form>
         </div>
 
@@ -122,69 +77,71 @@ import {
   ElForm,
   ElFormItem,
   ElInput,
-  ElSelect,
-  ElOption,
   ElDatePicker,
   ElButton,
   ElMessage,
 } from 'element-plus';
 import { Refresh, InfoFilled } from '@element-plus/icons-vue';
+import { dataCreate } from '../../api/data';
 
 const props = defineProps({
-  patientData: Object, // Patient and case data from parent
-  selectedTemplate: String, // Selected template name from parent
+  patientData: Object,
+  selectedTemplate: Object,
 });
 
 const emit = defineEmits(['data-submitted', 'go-back-to-template']);
 
-// Form data (pre-filled with a date as per image)
-const bloodRoutineForm = reactive({
-  checkTime: '2024-05-31 13:20', // Using current date for realistic example
-  clinicalInfo: '',
-  wbcCount: '',
-  neutrophilCount: '',
-  neutrophilRatio: '',
-  lymphocyteCount: '',
-  lymphocyteRatio: '',
-  monocyteCount: '',
-  monocyteRatio: '',
-  rbcCount: '',
-  hemoglobin: '',
-  plateletCount: '',
-  reticulocyteCount: '',
-  reticulocyteRatio: '',
+// 表单数据
+const formData = reactive({
+  checkTime: '',
+  values: {},
 });
 
-const submitForm = () => {
-  ElMessage.success('表单已提交 (示意)');
-  console.log('Form data:', bloodRoutineForm);
-  emit('data-submitted', {
-    ...bloodRoutineForm,
-    patientData: props.patientData,
-    template: props.selectedTemplate,
-  });
-  // In a real application, you'd send bloodRoutineForm data to your backend
+// 提交表单
+const submitForm = async () => {
+  try {
+    // 确保 checkTime 是完整格式（加上秒）
+    let checkTime = formData.checkTime;
+      checkTime += ':00'; // 自动补全秒
+
+    // 构建批量录入数据
+    const dataList = props.selectedTemplate.dictionaryList.map(item => ({
+      word_code: item.word_code,
+      check_time: checkTime,
+      value: formData.values[item.word_code] || ''
+    }));
+
+    const submitData = {
+      case_code: props.patientData.caseId,
+      template_code: props.selectedTemplate.code,
+      data_list: dataList
+    };
+
+    console.log('提交的数据:', submitData);
+
+    // 调用 API
+    const response = await dataCreate(submitData);
+    console.log('API响应:', response);
+
+    // 判断响应是否成功
+    if (response?.data?.code === 200) {
+      ElMessage.success('数据录入成功');
+      emit('data-submitted', submitData);
+    } else {
+      ElMessage.error(`数据提交失败: ${response?.data?.message || '未知错误'}`);
+    }
+  } catch (error) {
+    console.error('数据提交异常:', error);
+    ElMessage.error('数据提交异常');
+  }
 };
 
+
+// 重置表单
 const resetForm = () => {
-  ElMessage.info('表单已重置 (示意)');
-  // Reset reactive form data
-  Object.assign(bloodRoutineForm, {
-    checkTime: '2024-05-31 13:20', // Reset to default or current date
-    clinicalInfo: '',
-    wbcCount: '',
-    neutrophilCount: '',
-    neutrophilRatio: '',
-    lymphocyteCount: '',
-    lymphocyteRatio: '',
-    monocyteCount: '',
-    monocyteRatio: '',
-    rbcCount: '',
-    hemoglobin: '',
-    plateletCount: '',
-    reticulocyteCount: '',
-    reticulocyteRatio: '',
-  });
+  formData.checkTime = '';
+  formData.values = {};
+  ElMessage.info('表单已重置');
 };
 </script>
 

@@ -23,6 +23,8 @@ declare namespace API {
     archive_code?: string;
     /** Archive name 档案名称 */
     archive_name: string;
+    /** Archive description 档案描述 */
+    archive_description?: string;
     /** Case count 包含病例数 */
     case_count?: number;
   };
@@ -49,45 +51,6 @@ declare namespace API {
     archive_code: string;
   };
 
-  type Case = {
-    /** Id 病例id */
-    id?: number;
-    /** Case code 病例编号（自动生成） */
-    case_code?: string;
-    /** Identity 身份证号 */
-    identity: string;
-    /** Identity name */
-    identity_name?: string;
-    /** Opd id 门诊号 */
-    opd_id?: string;
-    /** Inhospital id 住院号 */
-    inhospital_id?: string;
-    /** Name 姓名 */
-    name: string;
-    /** Gender 性别 0-女 1-男 */
-    gender: 0 | 1;
-    /** Birth date 出生年月日 */
-    birth_date: string;
-    /** Phone number 联系电话 */
-    phone_number?: string;
-    /** Home address 家庭住址 */
-    home_address?: string;
-    /** Blood type 血型 */
-    blood_type?: string;
-    /** Main diagnosis 主要诊断 */
-    main_diagnosis?: string;
-    /** Has transplant surgery 是否行移植手术,示例 是(2025-5-27) */
-    has_transplant_surgery?: string;
-    /** Is in transplant queue 是否存在移植排队 */
-    is_in_transplant_queue?: string;
-    /** 档案编号列表 */
-    archive_codes?: string[];
-    /** 关联的档案列表 */
-    archives?: number[];
-    /** Age 年龄 */
-    age?: string;
-  };
-
   type caseDeleteParams = {
     /** 病例编号 */
     case_code: string;
@@ -111,7 +74,7 @@ declare namespace API {
     /** Gender 性别 0-女 1-男 */
     gender: 0 | 1;
     /** Birth date 出生年月日 */
-    birth_date: string;
+    birth_date?: string;
     /** Phone number 联系电话 */
     phone_number?: string;
     /** Home address 家庭住址 */
@@ -124,9 +87,9 @@ declare namespace API {
     has_transplant_surgery?: string;
     /** Is in transplant queue 是否存在移植排队 */
     is_in_transplant_queue?: string;
-    /** Archive codes 关联的档案编号列表 */
-    archive_codes?: string;
-    /** 关联的档案列表 */
+    /** 档案编号列表 */
+    archive_codes?: string[];
+    /** 档案ID列表 */
     archives?: number[];
     /** Age 年龄 */
     age?: string;
@@ -266,7 +229,7 @@ declare namespace API {
     /** Category name */
     category_name?: string;
     dictionaries?: number[];
-    dictionary_list?: number[];
+    dictionary_list?: Dictionary[];
   };
 
   type DataTemplateCategory = {
@@ -403,6 +366,13 @@ declare namespace API {
     /** A page number within the paginated result set. */
     page?: number;
     /** Number of results to return per page. */
+    page_size?: number;
+  };
+
+  type patientMergedCaseListParams = {
+    /** 页码 */
+    page?: number;
+    /** 每页数量 */
     page_size?: number;
   };
 
