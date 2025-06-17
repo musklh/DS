@@ -96,19 +96,25 @@ const filterTemplates = (templates: TemplateItem[]) => {
 
 // 获取所有分类的唯一值
 const categories = computed(() => {
+  console.log('当前模板列表:', templates.value);
   const uniqueCategories = new Set(templates.value.map(t => t.category));
-  return Array.from(uniqueCategories);
+  console.log('提取的分类ID:', Array.from(uniqueCategories));
+  return Array.from(uniqueCategories).sort((a, b) => a - b);
 });
 
 // 根据分类过滤模板
 const getTemplatesByCategory = (category: number) => {
-  return filterTemplates(templates.value.filter(t => t.category === category));
+  const filtered = filterTemplates(templates.value.filter(t => t.category === category));
+  console.log(`分类 ${category} 的模板:`, filtered);
+  return filtered;
 };
 
 // 获取分类名称
 const getCategoryName = (category: number) => {
   const template = templates.value.find(t => t.category === category);
-  return template?.category_name || `分类${category}`;
+  const categoryName = template?.category_name || `分类${category}`;
+  console.log(`分类 ${category} 的名称:`, categoryName);
+  return categoryName;
 };
 
 // 替换 dialogVisible 为 showEditForm
@@ -123,7 +129,6 @@ const formData = reactive<TemplateItem>({
   dictionary_list: [],
 });
 // 表单引用，用于表单验证
-const formRef = ref<FormInstance>();
 
 // 表单验证规则
 const rules = reactive<FormRules>({
@@ -131,7 +136,6 @@ const rules = reactive<FormRules>({
   template_code: [{ required: true, message: '请输入模版编号', trigger: 'blur' }],
   template_description: [{ required: true, message: '请输入模版描述', trigger: 'blur' }],
   category: [{ required: true, message: '请选择模板类型', trigger: 'change' }],
-  type: [{ required: true, message: '请选择模板类型', trigger: 'change' }],
 });
 
 /**
@@ -140,7 +144,14 @@ const rules = reactive<FormRules>({
 const handleAddCustomTemplate = () => {
   dialogTitle.value = '添加自定义临床模版';
   // 重置表单数据为初始状态
-  Object.assign(formData, { template_name: '', template_code: '', template_description: '', category: 1, dictionary_list: [], type: 'custom' });
+  Object.assign(formData, { 
+    template_name: '', 
+    template_code: '', 
+    template_description: '', 
+    category: 1, 
+    dictionary_list: [], 
+    dictionaries: [] 
+  });
   showEditForm.value = true;
 };
 
@@ -276,12 +287,19 @@ const handleShowAll = () => {
   Object.assign(formData, { template_name: '', template_code: '', template_description: '', category: 1, dictionary_list: [], type: 'custom' });
 };
 
-// 修改 fetchTemplates 函数
+// 修改获取模板列表的函数
 const fetchTemplates = async () => {
   try {
-    const res = await dataTemplateList({});
+    const res = await dataTemplateList({
+      page: 1,
+      page_size: 9999  // 设置一个足够大的数值以获取所有数据
+    });
+    console.log('获取到的模板列表:', res.data);
     if (res?.data?.code === 200 && res.data?.data?.list) {
       templates.value = res.data.data.list;
+      // 设置默认展开所有分类
+      activeNames.value = categories.value.map(String);
+      console.log('设置展开的分类:', activeNames.value);
     } else {
       templates.value = [];
       console.log('API response does not contain valid template data or list is empty.', res);
@@ -319,7 +337,7 @@ onMounted(async () => {
   box-sizing: border-box; /* Include padding in element's total width and height */
 
   .edit-form-section {
-    max-width: 800px;
+    max-width:auto;
     margin: 20px auto;
     background: #fff;
     border-radius: 4px;

@@ -66,7 +66,11 @@ const handleCaseSelect = async (archive: { archive_code: string; archive_name: s
   selectedPatient.value = null;
 
   try {
-    const res = await archiveRead({ archive_code: archive.archive_code });
+    const res = await archiveRead({ 
+      archive_code: archive.archive_code,
+      page: 1,
+      page_size: 9999  // 设置一个足够大的数值以获取所有数据
+    });
 
     // 将后端返回的 case_list 映射为 Patient 类型
     const patientList = (res.data.data.case_list || []).map((item: any) => ({
@@ -114,8 +118,12 @@ const goBackToTable = () => {
 const refreshTable = async () => {
   if (!selectedCase.value) return;
   try {
-    const res = await archiveRead({ archive_code: selectedCase.value });
-    // Assuming 'patients' array is directly under 'data' in the response for refresh
+    const res = await archiveRead({ 
+      archive_code: selectedCase.value,
+      page: 1,
+      page_size: 9999  // 设置一个足够大的数值以获取所有数据
+    });
+    
     patients.value[selectedCase.value] = res.data.data.case_list.map((item: any) => ({
       id: item.identity || '',
       name: item.identity_name || '',
