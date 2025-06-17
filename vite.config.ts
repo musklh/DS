@@ -1,17 +1,12 @@
 // vite.config.ts
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
-import eslintPlugin from 'vite-plugin-eslint';
 import path from 'path';
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     vue(),
-    //安全检查  可选
-    // eslintPlugin({
-    //   include: ['src/**/*.ts', 'src/**/*.vue', 'src/**/*.js'], // Specify files to lint
-    //   cache: false, // Disable cache to ensure it picks up ESLint config changes
-    // }),
+
   ],
   server: {
     port: 5371,

@@ -111,19 +111,6 @@
 import { defineComponent, reactive, ref } from 'vue';
 import { ElMessage } from 'element-plus';
 import { caseCreate } from '../../api/openApiCase'; // 路径根据实际位置调整
-////
-// 示例：你可以放在 script 顶部，正式项目中应使用统一的类型声明文件
-
-
-interface Case {
-  archive_codes: string[];
-  identity: string;
-  opd_id: string;
-  inhospital_id: string;
-  main_diagnosis: string;
-  has_transplant_surgery: string;
-  is_in_transplant_queue: string;
-}
 
 export default defineComponent({
   name: 'NewMedicalCase',

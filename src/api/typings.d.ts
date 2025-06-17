@@ -266,7 +266,7 @@ declare namespace API {
     /** Category name */
     category_name?: string;
     dictionaries?: number[];
-    dictionary_list?: Dictionary[];
+    dictionary_list?: number[];
   };
 
   type DataTemplateCategory = {

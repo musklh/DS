@@ -53,6 +53,14 @@
           </el-table-column>
         </el-table>
 
+        <!-- 使用优化后的分页组件 -->
+        <Pagination
+          v-model:currentPage="currentPage"
+          :total="total"
+          :pageSize="pageSize"
+          @page-change="handlePageChange"
+        />
+
         <el-dialog
           :title="dialogTitle"
           v-model="dialogVisible"
@@ -111,6 +119,7 @@ import { defineComponent, ref, computed, onMounted } from 'vue'
 import { Plus, Search } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { dictionaryList, dictionaryCreate, dictionaryUpdate, dictionaryDelete } from '../../api/dictionary'
+import Pagination from '@/components/Pagination.vue'
 //
 interface DictItem {
   word_name: string     // 中文名称
@@ -130,7 +139,7 @@ const generateWordCode = (): string => {
 
 export default defineComponent({
   name: 'SystemDict',
-  components: { Plus, Search },
+  components: { Plus, Search, Pagination },
   setup() {
     // 基础数据
     const searchKeyword = ref('')
@@ -173,26 +182,39 @@ export default defineComponent({
       )
     })
 
-    // 获取词条列表
+    // 添加分页相关的状态
+    const currentPage = ref(1)
+    const pageSize = ref(10)
+    const total = ref(0)
+
+    // 修改获取词条列表函数
     const fetchDictList = async () => {
       try {
         const res = await dictionaryList({
-          page: 1,
-          page_size: 100
+          page: currentPage.value,
+          page_size: pageSize.value
         })
-        if (res?.data?.code === 200 && res.data?.data.list) {
+        if (res?.data?.code === 200 && res.data?.data) {
           dictList.value = res.data.data.list.map((item: any) => ({
             ...item,
-            data_type: item.data_type === '数值类型' ? '是' : '否' // 修改显示逻辑
+            data_type: item.data_type === '数值类型' ? '是' : '否'
           }))
-          console.log(dictList.value)
+          total.value = res.data.data.total || 0
         } else {
           dictList.value = []
+          total.value = 0
           ElMessage.warning('暂无数据')
         }
       } catch (error) {
         ElMessage.error('获取词条列表失败')
       }
+    }
+
+    // 修改分页处理函数
+    const handlePagination = ({ page, pageSize }: { page: number; pageSize: number }) => {
+      currentPage.value = page
+      pageSize.value = pageSize
+      fetchDictList()
     }
 
     // 添加词条
@@ -295,7 +317,11 @@ export default defineComponent({
       handleAdd,
       handleEdit,
       handleDelete,
-      handleSubmit
+      handleSubmit,
+      currentPage,
+      pageSize,
+      total,
+      handlePagination
     }
   }
 })
@@ -370,5 +396,11 @@ export default defineComponent({
     background-color: #fff;
     border: 1px solid #e9e9e9;
   }
+}
+
+.pagination-container {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
 }
 </style>

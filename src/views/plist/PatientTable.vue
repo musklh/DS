@@ -30,7 +30,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, defineEmits, ref } from 'vue';
+import { defineProps, defineEmits } from 'vue';
 
 interface Patient {
   id: string;
@@ -48,7 +48,6 @@ const emit = defineEmits(['view-detail', 'page-change']);
 
 const props = defineProps<{
   tableData: Patient[];
-  total: number;
 }>();
 
 

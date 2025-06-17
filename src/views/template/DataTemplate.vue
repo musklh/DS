@@ -69,7 +69,6 @@ interface TemplateItem {
   template_description?: string;
   category: number;
   category_name?: string;
-  dictionary_list?: API.Dictionary[];
   dictionaries?: number[]; // 添加这个字段以兼容现有代码
   type?: string; // 添加这个字段以兼容现有代码
 }
@@ -227,7 +226,7 @@ const handleSubmit = async (data: TemplateItem) => {
         template_code: data.template_code,
         template_description: data.template_description || '',
         category: data.category,
-        dictionary_list: data.dictionary_list || [],
+        dictionaries: data.dictionaries || [],
       };
       console.log('更新模板数据:', apiData);
       const res = await dataTemplateUpdate({ template_code: data.template_code }, apiData);
@@ -249,7 +248,7 @@ const handleSubmit = async (data: TemplateItem) => {
         template_name: data.template_name,
         template_description: data.template_description || '',
         category: data.category,
-        dictionary_list: data.dictionary_list || [],
+        dictionaries: data.dictionaries || [],
       };
       console.log('创建模板数据:', apiData);
       const res = await dataTemplateCreate(apiData);

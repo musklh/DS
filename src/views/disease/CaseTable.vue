@@ -22,16 +22,12 @@
     </el-table-column>
   </el-table>
 
-  <div class="pagination">
-    <el-pagination
-      background
-      layout="total, prev, pager, next, jumper"
-      :total="total"
-      :page-size="pageSize"
-      :current-page="currentPage"
-      @current-change="handlePageChange"
-    />
-  </div>
+  <Pagination
+    :total="total"
+    :page-size="pageSize"
+    :current-page="currentPage"
+    @page-change="handlePageChange"
+  />
 
   <el-dialog
     v-model="dialogVisible"
@@ -88,7 +84,6 @@ import {
   ElTable,
   ElTableColumn,
   ElButton,
-  ElPagination,
   ElDialog,
   ElForm,
   ElFormItem,
@@ -97,8 +92,9 @@ import {
   ElSelect,
   ElOption,
 } from 'element-plus';
-import type { FormInstance, FormRules } from 'element-plus';
+import type { FormInstance, } from 'element-plus';
 import { caseList, caseDelete, caseUpdate } from '../../api/openApiCase';
+import Pagination from '@/components/Pagination.vue';
 
 // Define the type for a table row item
 interface TableCaseItem {
