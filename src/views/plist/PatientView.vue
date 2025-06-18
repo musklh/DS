@@ -36,7 +36,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { ElMessage } from 'element-plus';
-import { archiveRead } from '../../api/archive';
+import { patientMergedCaseList } from '../../api/patientMergedCase';
 import { caseIdentityCases } from '../../api/openApiCase';
 
 import CaseSelector from './CaseSelector.vue';
@@ -66,12 +66,12 @@ const handleCaseSelect = async (archive: { archive_code: string; archive_name: s
   selectedPatient.value = null;
 
   try {
-    const res = await archiveRead({ archive_code: archive.archive_code });
+    const res = await patientMergedCaseList({ archive_code: archive.archive_code });
 
     // 将后端返回的 case_list 映射为 Patient 类型
-    const patientList = (res.data.data.case_list || []).map((item: any) => ({
-      id: item.identity || '',
-      name: item.identity_name || '',
+    const patientList = (res.data.data.list || []).map((item: any) => ({
+      id: item.identity_id || '',
+      name: item.name || '',
       gender: item.gender === 1 ? '男' : '女',
       age: item.age || 0,
       phone: item.phone_number || '',

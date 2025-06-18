@@ -3,7 +3,7 @@
     <div class="patient-case-header">
       <span class="patient-name">{{ patientData.name }}</span>
       <span class="patient-age-gender">{{ patientData.gender }} {{ patientData.age }}</span>
-      <span class="patient-id-card">{{ patientData.idCard }}</span>
+      <span class="patient-id-card">{{ patientData.identity_id }}</span>
       <el-divider direction="vertical" />
       <span class="case-id">病例: {{ patientData.caseId }}</span>
       <el-icon class="refresh-icon">
@@ -27,8 +27,8 @@
 
       <div class="entry-form-layout">
         <div class="left-form-section">
-          <el-form :model="formData" label-width="120px" label-position="left">
-            <el-form-item label="检查时间">
+          <el-form :model="formData" :rules="formRules" ref="formRef" label-width="120px" label-position="left">
+            <el-form-item label="检查时间" prop="checkTime">
               <el-date-picker
                 v-model="formData.checkTime"
                 type="datetime"
@@ -39,7 +39,7 @@
             </el-form-item>
 
             <template v-for="item in selectedTemplate.dictionaryList" :key="item.word_code">
-              <el-form-item :label="item.word_name">
+              <el-form-item :label="item.word_name" :prop="`values.${item.word_code}`">
                 <el-input v-model="formData.values[item.word_code]" placeholder="请输入" />
                 <span v-if="item.word_short" class="unit-label">{{ item.word_short }}</span>
               </el-form-item>
@@ -61,7 +61,7 @@
       </div>
 
       <div class="form-actions">
-        <el-button type="primary" @click="submitForm"> 录入 </el-button>
+        <el-button type="primary" @click="submitForm" :loading="submitting"> 录入 </el-button>
         <el-button @click="resetForm"> 重置 </el-button>
       </div>
     </el-card>
@@ -69,7 +69,7 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue';
+import { reactive, ref, computed } from 'vue';
 import {
   ElDivider,
   ElIcon,
@@ -91,18 +91,52 @@ const props = defineProps({
 
 const emit = defineEmits(['data-submitted', 'go-back-to-template']);
 
+// 表单引用
+const formRef = ref(null);
+const submitting = ref(false);
+
 // 表单数据
 const formData = reactive({
   checkTime: '',
   values: {},
 });
 
+// 动态生成表单校验规则
+const formRules = computed(() => {
+  const rules = {
+    checkTime: [
+      { required: true, message: '请选择检查时间', trigger: 'change' }
+    ]
+  };
+
+  // 为每个模板字段添加必填校验
+  if (props.selectedTemplate?.dictionaryList) {
+    props.selectedTemplate.dictionaryList.forEach(item => {
+      rules[`values.${item.word_code}`] = [
+        { required: true, message: `请输入${item.word_name}`, trigger: 'blur' }
+      ];
+    });
+  }
+
+  return rules;
+});
+
 // 提交表单
 const submitForm = async () => {
   try {
+    // 表单校验
+    const valid = await formRef.value.validate();
+    if (!valid) {
+      ElMessage.warning('请完善所有必填字段');
+      return;
+    }
+
+    submitting.value = true;
+
     // 确保 checkTime 是完整格式（加上秒）
     let checkTime = formData.checkTime;
       checkTime += ':00'; // 自动补全秒
+
 
     // 构建批量录入数据
     const dataList = props.selectedTemplate.dictionaryList.map(item => ({
@@ -125,22 +159,31 @@ const submitForm = async () => {
 
     // 判断响应是否成功
     if (response?.data?.code === 200) {
-      ElMessage.success('数据录入成功');
+      ElMessage.success('数据录入成功，即将跳转到患者列表');
       emit('data-submitted', submitData);
     } else {
       ElMessage.error(`数据提交失败: ${response?.data?.message || '未知错误'}`);
     }
   } catch (error) {
     console.error('数据提交异常:', error);
-    ElMessage.error('数据提交异常');
+    if (error.message && error.message.includes('validation')) {
+      ElMessage.warning('请完善所有必填字段');
+    } else {
+      ElMessage.error('数据提交异常');
+    }
+  } finally {
+    submitting.value = false;
   }
 };
-
 
 // 重置表单
 const resetForm = () => {
   formData.checkTime = '';
   formData.values = {};
+  // 清除表单校验状态
+  if (formRef.value) {
+    formRef.value.clearValidate();
+  }
   ElMessage.info('表单已重置');
 };
 </script>

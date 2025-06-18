@@ -1,5 +1,5 @@
 // vite.config.ts
-import { defineConfig } from 'vite';
+import { build, defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import path from 'path';
 // https://vitejs.dev/config/
@@ -8,6 +8,21 @@ export default defineConfig({
     vue(),
 
   ],
+  build: {
+    minify: 'esbuild',
+    assetsInlineLimit: 4096,
+    manifest: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          console.log(id)
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
+        },
+      },
+    },
+  },
   server: {
     port: 5371,
     proxy: {
