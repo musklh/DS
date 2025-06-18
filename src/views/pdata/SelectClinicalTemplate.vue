@@ -2,8 +2,8 @@
   <div class="select-template-container">
     <div class="patient-case-header">
       <span class="patient-name">{{ patientData.name }}</span>
-      <span class="patient-age-gender">{{ patientData.gender }} {{ patientData.age }}</span>
-      <span class="patient-id-card">{{ patientData.idCard }}</span>
+      <span class="patient-age-gender">{{ patientData.gender }} {{ patientData.age}}岁</span>
+      <span class="patient-id-card">{{ patientData.identity_id }}</span>
       <el-divider direction="vertical" />
       <span class="case-id">病例: {{ patientData.caseId }}</span>
       <el-icon class="refresh-icon" @click="fetchTemplates">
@@ -63,7 +63,7 @@ const props = defineProps({
   patientData: Object,
 });
 
-const emit = defineEmits(['template-selected', 'go-back-to-case']);
+const emit = defineEmits(['template-selected', 'go-back-to-patient']);
 
 const templates = ref([]);
 

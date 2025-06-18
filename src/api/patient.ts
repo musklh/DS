@@ -6,7 +6,7 @@ import request from '@/request';
 患者信息会在创建病例时自动创建或更新。
 
 - **List**: GET /api/patient/
-  - 支持分页和搜索：?search=xxx（可搜索：身份证号、姓名）
+  - 支持分页和模糊搜索：?search=xxx（可模糊搜索身份证号、姓名）
 
 - **Retrieve**: GET /api/patient/{identity_id}/
   - 返回患者详情及其所有病例
@@ -34,7 +34,7 @@ export async function patientList(
 患者信息会在创建病例时自动创建或更新。
 
 - **List**: GET /api/patient/
-  - 支持分页和搜索：?search=xxx（可搜索：身份证号、姓名）
+  - 支持分页和模糊搜索：?search=xxx（可模糊搜索身份证号、姓名）
 
 - **Retrieve**: GET /api/patient/{identity_id}/
   - 返回患者详情及其所有病例
@@ -58,7 +58,7 @@ export async function patientRead(
 患者信息会在创建病例时自动创建或更新。
 
 - **List**: GET /api/patient/
-  - 支持分页和搜索：?search=xxx（可搜索：身份证号、姓名）
+  - 支持分页和模糊搜索：?search=xxx（可模糊搜索身份证号、姓名）
 
 - **Retrieve**: GET /api/patient/{identity_id}/
   - 返回患者详情及其所有病例
@@ -87,7 +87,7 @@ export async function patientUpdate(
 患者信息会在创建病例时自动创建或更新。
 
 - **List**: GET /api/patient/
-  - 支持分页和搜索：?search=xxx（可搜索：身份证号、姓名）
+  - 支持分页和模糊搜索：?search=xxx（可模糊搜索身份证号、姓名）
 
 - **Retrieve**: GET /api/patient/{identity_id}/
   - 返回患者详情及其所有病例

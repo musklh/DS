@@ -363,10 +363,12 @@ declare namespace API {
   };
 
   type patientListParams = {
-    /** A page number within the paginated result set. */
+    /** 页码 */
     page?: number;
-    /** Number of results to return per page. */
+    /** 每页数量 */
     page_size?: number;
+    /** 模糊搜索身份证号或姓名 */
+    search?: string;
   };
 
   type patientMergedCaseListParams = {
@@ -374,6 +376,8 @@ declare namespace API {
     page?: number;
     /** 每页数量 */
     page_size?: number;
+    /** 档案编号，用于筛选特定档案下的患者 */
+    archive_code?: string;
   };
 
   type patientPartialUpdateParams = {

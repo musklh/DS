@@ -12,7 +12,17 @@
       <SelectPatientAndCase
         v-if="currentStep === 0"
         @patient-case-selected="handlePatientCaseSelected"
-      />
+      >
+        <template #header>
+          <div class="card-header-content" style="justify-content: space-between;">
+            <div>
+              <el-icon><Tickets /></el-icon>
+              <span>选择病例</span>
+            </div>
+            <el-button type="text" @click="handleBackToPatient" style="color: #409eff;">返回</el-button>
+          </div>
+        </template>
+      </SelectPatientAndCase>
 
       <SelectClinicalTemplate
         v-if="currentStep === 1"
@@ -77,7 +87,7 @@ const handlePatientCaseSelected = (data) => {
       name: data.patientData.name || '',
       gender: data.patientData.gender === 0 ? '女' : '男',
       age: data.patientData.age || '',
-      idCard: data.patientData.idCard || '',
+      identity_id: data.patientData.identity_id || '',
       caseId: data.patientData.caseId || ''
     });
     
@@ -108,8 +118,17 @@ const handleTemplateSelected = (templateData) => {
 const handleDataSubmitted = (formData) => {
   ElMessage.success('数据已成功录入！');
   console.log('Final submitted data:', formData);
-  // Optionally, reset workflow or navigate elsewhere
-  // currentStep.value = 0; // Go back to start
+  // 数据录入完成后，重置整个流程，跳转回到患者列表
+  currentStep.value = 0;
+  // 清空已选择的数据
+  Object.assign(selectedPatientData, {
+    name: '',
+    gender: '',
+    age: '',
+    idCard: '',
+    caseId: '',
+  });
+  selectedTemplate.value = null;
 };
 
 // 返回病例选择
@@ -117,6 +136,11 @@ const handleBackToCase = () => {
   // 保留患者信息，只清空病例信息
   selectedPatientData.caseId = '';
   // 返回第一步，显示病例列表
+  currentStep.value = 0;
+};
+
+const handleBackToPatient = () => {
+  selectedPatientData.caseId = '';
   currentStep.value = 0;
 };
 </script>

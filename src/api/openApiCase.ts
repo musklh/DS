@@ -10,7 +10,7 @@ import request from '@/request';
 
 - **List**: GET /api/case/
   - 支持分页: ?page=1&page_size=10
-  - 支持搜索: ?search=xxx（可搜索：档案编号、身份证号、门诊号、住院号、姓名）
+  - 支持模糊搜索: ?search=xxx（可模糊搜索档案编号、身份证号、门诊号、住院号、姓名）
 
 - **Retrieve**: GET /api/case/{case_code}/
   - 返回病例详细信息，包括关联的档案
@@ -47,7 +47,7 @@ export async function caseList(
 
 - **List**: GET /api/case/
   - 支持分页: ?page=1&page_size=10
-  - 支持搜索: ?search=xxx（可搜索：档案编号、身份证号、门诊号、住院号、姓名）
+  - 支持模糊搜索: ?search=xxx（可模糊搜索档案编号、身份证号、门诊号、住院号、姓名）
 
 - **Retrieve**: GET /api/case/{case_code}/
   - 返回病例详细信息，包括关联的档案
@@ -78,7 +78,7 @@ export async function caseCreate(body: API.CaseDetail, options?: { [key: string]
 
 - **List**: GET /api/case/
   - 支持分页: ?page=1&page_size=10
-  - 支持搜索: ?search=xxx（可搜索：档案编号、身份证号、门诊号、住院号、姓名）
+  - 支持模糊搜索: ?search=xxx（可模糊搜索档案编号、身份证号、门诊号、住院号、姓名）
 
 - **Retrieve**: GET /api/case/{case_code}/
   - 返回病例详细信息，包括关联的档案
@@ -111,7 +111,7 @@ export async function caseRead(
 
 - **List**: GET /api/case/
   - 支持分页: ?page=1&page_size=10
-  - 支持搜索: ?search=xxx（可搜索：档案编号、身份证号、门诊号、住院号、姓名）
+  - 支持模糊搜索: ?search=xxx（可模糊搜索档案编号、身份证号、门诊号、住院号、姓名）
 
 - **Retrieve**: GET /api/case/{case_code}/
   - 返回病例详细信息，包括关联的档案
@@ -149,7 +149,7 @@ export async function caseUpdate(
 
 - **List**: GET /api/case/
   - 支持分页: ?page=1&page_size=10
-  - 支持搜索: ?search=xxx（可搜索：档案编号、身份证号、门诊号、住院号、姓名）
+  - 支持模糊搜索: ?search=xxx（可模糊搜索档案编号、身份证号、门诊号、住院号、姓名）
 
 - **Retrieve**: GET /api/case/{case_code}/
   - 返回病例详细信息，包括关联的档案
@@ -182,7 +182,7 @@ export async function caseDelete(
 
 - **List**: GET /api/case/
   - 支持分页: ?page=1&page_size=10
-  - 支持搜索: ?search=xxx（可搜索：档案编号、身份证号、门诊号、住院号、姓名）
+  - 支持模糊搜索: ?search=xxx（可模糊搜索档案编号、身份证号、门诊号、住院号、姓名）
 
 - **Retrieve**: GET /api/case/{case_code}/
   - 返回病例详细信息，包括关联的档案

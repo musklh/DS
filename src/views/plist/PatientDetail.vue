@@ -28,7 +28,20 @@
 
         <p><strong>年龄: </strong>{{ patient.age }}</p>
         <p><strong>身份证号: </strong>{{ patient.idCard }}</p>
-        <p v-for="item in patient.allCases" :key="item.case_code"><strong>病例号: </strong>{{ item.case_code }}</p>
+        <div class="case-selector">
+          <strong>病例号: </strong>
+          <div class="case-buttons">
+            <el-button
+              v-for="(caseItem, index) in patient.allCases"
+              :key="caseItem.case_code"
+              :type="selectedCaseCodes.includes(caseItem.case_code) ? 'primary' : 'default'"
+              size="small"
+              @click="toggleCaseSelection(caseItem.case_code)"
+            >
+              {{ caseItem.case_code }}
+            </el-button>
+          </div>
+        </div>
       </div>
       <el-divider />
       <div class="patient-contact-info-grid">
@@ -54,7 +67,7 @@
             <el-table :data="section.items" border stripe size="small" :show-header="false">
               <el-table-column prop="label" label="项目" width="180">
                 <template #default="{ row }">
-                  <el-button type="primary" link @click="openTemplateDetailDialog(row.template_code)">
+                  <el-button type="primary" link @click="openTemplateDetailDialog(row.template_code, row.case_code)">
                     {{ row.label }}
                   </el-button>
                 </template>
@@ -71,7 +84,7 @@
             <el-table :data="section.items" border stripe size="small" :show-header="false">
               <el-table-column prop="label" label="项目" width="180">
                 <template #default="{ row }">
-                  <el-button type="primary" link @click="openTemplateDetailDialog(row.template_code)">
+                  <el-button type="primary" link @click="openTemplateDetailDialog(row.template_code, row.case_code)">
                     {{ row.label }}
                   </el-button>
                 </template>
@@ -149,18 +162,24 @@ import { ref, reactive, computed, onMounted, PropType } from 'vue';
 import { ElMessage, ElButton, ElDialog, ElTable, ElTableColumn, ElDivider, ElAlert } from 'element-plus';
 import { caseTemplateSummaryCreate } from '../../api/caseTemplateSummary';
 import { caseTemplateDetailCreate } from '../../api/caseTemplateDetail';
-import type { AxiosResponse } from 'axios';
 
 // 定义接口以解决类型错误
 interface TemplateItem {
   template_name: string;
   template_code: string; // 确保这里包含 template_code
   check_time: string;
+  case_code: string; // 添加病例编号字段
 }
 
 interface TemplateCategoryData {
   template_category: string;
   templates: TemplateItem[];
+}
+
+// 新增：按病例分组的模板数据结构
+interface CaseTemplateData {
+  case_code: string;
+  template_categories: TemplateCategoryData[];
 }
 
 interface TemplateDetailItem {
@@ -220,59 +239,162 @@ const editForm = reactive({
 });
 
 const emit = defineEmits(['back']);
-const templateData = ref<TemplateCategoryData[]>([]);
+const templateData = ref<CaseTemplateData[]>([]);
+
+// 新增：选中的病例编号列表
+const selectedCaseCodes = ref<string[]>([]);
 
 const templateDetailDialogVisible = ref(false);
 const currentTemplateDetail = ref<TemplateDetailData | null>(null);
 
-// 获取模板数据
+// 切换病例选择
+const toggleCaseSelection = (caseCode: string) => {
+  const index = selectedCaseCodes.value.indexOf(caseCode);
+  if (index > -1) {
+    // 如果已选中，则取消选择
+    selectedCaseCodes.value.splice(index, 1);
+  } else {
+    // 如果未选中，则添加到选择列表
+    selectedCaseCodes.value.push(caseCode);
+  }
+  console.log('当前选中的病例:', selectedCaseCodes.value);
+};
+
+// 获取模板数据 - 分别获取每个病例的模板数据
 const fetchTemplateData = async () => {
   try {
     if (!props.patient.allCases?.length) return;
     
-    const caseCodes = props.patient.allCases.map((case_: PatientCase) => case_.case_code);
-    const res = await caseTemplateSummaryCreate({ case_codes: caseCodes });
-    
-    // 明确类型断言以解决 linter 错误
-    const apiResponse = res.data as ApiResponse<TemplateCategoryData[]>;
-    if (apiResponse?.code === 200) {
-      templateData.value = apiResponse.data;
-    } else {
-      ElMessage.error('获取模板数据失败');
+    // 默认选中第一个病例
+    if (selectedCaseCodes.value.length === 0) {
+      selectedCaseCodes.value = [props.patient.allCases[0].case_code];
     }
+    
+    const caseTemplatePromises = props.patient.allCases.map(async (patientCase: PatientCase) => {
+      try {
+        const res = await caseTemplateSummaryCreate({ case_codes: [patientCase.case_code] });
+        console.log(`病例 ${patientCase.case_code} 的模板数据:`, res.data);
+        
+        const apiResponse = res.data as ApiResponse<TemplateCategoryData[]>;
+        if (apiResponse?.code === 200) {
+          // 为每个模板添加病例编号
+          const processedCategories = apiResponse.data.map((category: TemplateCategoryData) => ({
+            ...category,
+            templates: category.templates.map((template: TemplateItem) => ({
+              ...template,
+              case_code: patientCase.case_code
+            }))
+          }));
+          
+          return {
+            case_code: patientCase.case_code,
+            template_categories: processedCategories
+          };
+        } else {
+          console.error(`获取病例 ${patientCase.case_code} 的模板数据失败:`, apiResponse?.msg);
+          return {
+            case_code: patientCase.case_code,
+            template_categories: []
+          };
+        }
+      } catch (error) {
+        console.error(`获取病例 ${patientCase.case_code} 的模板数据失败:`, error);
+        return {
+          case_code: patientCase.case_code,
+          template_categories: []
+        };
+      }
+    });
+    
+    const results = await Promise.all(caseTemplatePromises);
+    templateData.value = results.filter(result => result.template_categories.length > 0);
+    
+    console.log('所有病例的模板数据:', templateData.value);
   } catch (error) {
     console.error('获取模板数据失败:', error);
     ElMessage.error('获取模板数据失败');
   }
 };
 
-// 将模板数据转换为左右两栏的格式
+// 将模板数据转换为左右两栏的格式 - 只显示选中病例的模板数据
 const leftSections = computed(() => {
-  if (!templateData.value.length) return [];
+  if (!templateData.value.length || !selectedCaseCodes.value.length) return [];
+  
+  // 只处理选中病例的模板数据
+  const selectedCaseData = templateData.value.filter(caseData => 
+    selectedCaseCodes.value.includes(caseData.case_code)
+  );
+  
+  // 收集所有选中病例的所有模板分类
+  const allCategories: TemplateCategoryData[] = [];
+  
+  selectedCaseData.forEach((caseData: CaseTemplateData) => {
+    caseData.template_categories.forEach((category: TemplateCategoryData) => {
+      // 检查是否已存在相同的模板分类
+      const existingCategory = allCategories.find(cat => cat.template_category === category.template_category);
+      if (existingCategory) {
+        // 如果存在，合并模板
+        existingCategory.templates.push(...category.templates);
+      } else {
+        // 如果不存在，添加新分类
+        allCategories.push({
+          template_category: category.template_category,
+          templates: [...category.templates]
+        });
+      }
+    });
+  });
   
   // 将数据分成左右两栏
-  const midPoint = Math.ceil(templateData.value.length / 2);
-  return templateData.value.slice(0, midPoint).map((category: TemplateCategoryData) => ({
+  const midPoint = Math.ceil(allCategories.length / 2);
+  return allCategories.slice(0, midPoint).map((category: TemplateCategoryData) => ({
     title: category.template_category,
     items: category.templates.map((template: TemplateItem) => ({
       label: template.template_name,
       time: template.check_time,
-      template_code: template.template_code // 传递 template_code
+      template_code: template.template_code,
+      case_code: template.case_code
     }))
   }));
 });
 
 const rightSections = computed(() => {
-  if (!templateData.value.length) return [];
+  if (!templateData.value.length || !selectedCaseCodes.value.length) return [];
+  
+  // 只处理选中病例的模板数据
+  const selectedCaseData = templateData.value.filter(caseData => 
+    selectedCaseCodes.value.includes(caseData.case_code)
+  );
+  
+  // 收集所有选中病例的所有模板分类
+  const allCategories: TemplateCategoryData[] = [];
+  
+  selectedCaseData.forEach((caseData: CaseTemplateData) => {
+    caseData.template_categories.forEach((category: TemplateCategoryData) => {
+      // 检查是否已存在相同的模板分类
+      const existingCategory = allCategories.find(cat => cat.template_category === category.template_category);
+      if (existingCategory) {
+        // 如果存在，合并模板
+        existingCategory.templates.push(...category.templates);
+      } else {
+        // 如果不存在，添加新分类
+        allCategories.push({
+          template_category: category.template_category,
+          templates: [...category.templates]
+        });
+      }
+    });
+  });
   
   // 将数据分成左右两栏
-  const midPoint = Math.ceil(templateData.value.length / 2);
-  return templateData.value.slice(midPoint).map((category: TemplateCategoryData) => ({
+  const midPoint = Math.ceil(allCategories.length / 2);
+  return allCategories.slice(midPoint).map((category: TemplateCategoryData) => ({
     title: category.template_category,
     items: category.templates.map((template: TemplateItem) => ({
       label: template.template_name,
       time: template.check_time,
-      template_code: template.template_code // 传递 template_code
+      template_code: template.template_code,
+      case_code: template.case_code
     }))
   }));
 });
@@ -296,12 +418,13 @@ const goBack = () => {
 };
 
 // 新增：打开模板详情对话框
-const openTemplateDetailDialog = async (templateCode: string) => {
-  if (!props.patient.allCases || props.patient.allCases.length === 0) {
-    ElMessage.warning('该患者没有病例信息，无法获取模板详情。');
+const openTemplateDetailDialog = async (templateCode: string, caseCode: string) => {
+  if (!caseCode) {
+    ElMessage.warning('缺少病例编号信息，无法获取模板详情。');
     return;
   }
-  const caseCode = props.patient.allCases[0].case_code; // 假设使用第一个病例编号
+  
+  console.log(`正在获取模板详情 - 病例编号: ${caseCode}, 模板编号: ${templateCode}`);
   
   try {
     const res = await caseTemplateDetailCreate({
@@ -314,8 +437,9 @@ const openTemplateDetailDialog = async (templateCode: string) => {
     if (apiResponse?.code === 200) {
       currentTemplateDetail.value = apiResponse.data;
       templateDetailDialogVisible.value = true;
+      console.log('模板详情获取成功:', apiResponse.data);
     } else {
-      ElMessage.error('获取模板详情失败');
+      ElMessage.error(`获取模板详情失败: ${apiResponse?.msg || '未知错误'}`);
     }
   } catch (error) {
     console.error('获取模板详情失败:', error);
@@ -463,5 +587,49 @@ onMounted(() => {
 .el-divider {
   margin-top: 16px;
   margin-bottom: 16px;
+}
+
+/* 病例选择器样式 */
+.case-selector {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.case-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.case-buttons .el-button {
+  margin: 0;
+  min-width: 80px;
+}
+
+/* 响应式调整 */
+@media (max-width: 900px) {
+  .case-selector {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .case-buttons {
+    gap: 6px;
+  }
+  
+  .case-buttons .el-button {
+    min-width: 70px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 600px) {
+  .case-buttons .el-button {
+    min-width: 60px;
+    font-size: 11px;
+    padding: 4px 8px;
+  }
 }
 </style>
