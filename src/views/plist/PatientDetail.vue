@@ -5,25 +5,32 @@
       <div class="right-toolbar">
         <el-button icon="Edit" type="primary" @click="openEditDialog"> 编辑信息 </el-button>
         <div class="view-switch">
-          <el-button
-            :type="viewMode === 'table' ? 'danger' : 'default'"
-            icon="Grid"
-            circle
-            @click="viewMode = 'table'"
-          />
-          <el-button
-            :type="viewMode === 'timeline' ? 'danger' : 'default'"
-            icon="Notebook"
-            circle
-            @click="viewMode = 'timeline'"
-          />
-        </div>
+        <!-- 自定义图标：列表视图 -->
+        <el-button
+          :type="viewMode === 'table' ? 'danger' : 'default'"
+          square
+          @click="viewMode = 'table'"
+          class="square-btn"
+        >
+        <img src="@/assets/table.png" alt="自定义图标" class="icon-img" />
+        </el-button>
+
+        <!-- 自定义图标：时间轴视图 -->
+        <el-button
+          :type="viewMode === 'timeline' ? 'danger' : 'default'"
+          square
+          @click="viewMode = 'timeline'"
+          class="square-btn"
+        >
+        <img src="@/assets/time.png" alt="自定义图标" class="icon-img" />
+        </el-button>
+      </div>
       </div>
     </div>
 
     <el-card class="mb-4">
       <div class="patient-info-grid">
-        <p><strong>当前患者: </strong>{{ patient.name }}</p>
+        <p><strong>当前患者: </strong>{{ patient.identity_name }}</p>
         <p><strong>性别: </strong>{{ patient.gender === 1 ? '男' : '女' }}</p>
 
         <p><strong>年龄: </strong>{{ patient.age }}</p>
@@ -57,12 +64,15 @@
       <p><strong>主要诊断: </strong>{{ patient.main_diagnosis }}</p>
     </el-card>
 
+
     <div v-if="viewMode === 'table'">
       <el-row :gutter="20">
         <el-col :span="12">
           <el-card v-for="section in leftSections" :key="section.title" class="mb-4">
             <template #header>
-              <strong>{{ section.title }}</strong>
+              <div class="section-title-header">
+                <strong>{{ section.title }}</strong>
+              </div>
             </template>
             <el-table :data="section.items" border stripe size="small" :show-header="false">
               <el-table-column prop="label" label="项目" width="180">
@@ -79,7 +89,9 @@
         <el-col :span="12">
           <el-card v-for="section in rightSections" :key="section.title" class="mb-4">
             <template #header>
-              <strong>{{ section.title }}</strong>
+              <div class="section-title-header">
+                <strong>{{ section.title }}</strong>
+              </div>
             </template>
             <el-table :data="section.items" border stripe size="small" :show-header="false">
               <el-table-column prop="label" label="项目" width="180">
@@ -206,7 +218,7 @@ interface PatientCase {
 }
 
 interface Patient {
-  name: string;
+  identity_name: string;//name 和identity_name不一致，原因在于 一个身份证录入两个不同的名字
   gender: number;
   age: number;
   idCard: string;
@@ -491,6 +503,20 @@ onMounted(() => {
 </script>
 
 <style scoped>
+
+.square-btn {
+  width: 35px;
+  height: 35px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.icon-img {
+  width: 25px;
+  height: 25px;
+}
+
 .patient-detail {
   padding: 32px;
   width: 100vw;
@@ -631,5 +657,44 @@ onMounted(() => {
     font-size: 11px;
     padding: 4px 8px;
   }
+}
+
+.section-title-header {
+  background: #F0F0F0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  border-radius: 6px;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+}
+
+.el-card.mb-4 {
+  border-radius: 14px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+  transition: box-shadow 0.3s;
+  border: none;
+  overflow: hidden;
+  background: linear-gradient(135deg, #f8fafc 0%, #f0f4f8 100%);
+  position: relative;
+}
+.el-card.mb-4:hover {
+  box-shadow: 0 8px 32px rgba(0,0,0,0.16);
+}
+.el-card.mb-4::before {
+  content: '';
+  display: block;
+  height: 5px;
+  width: 100%;
+  /* background: linear-gradient(90deg, #6a9cf7 0%, #7ee8fa 100%); 这是边框渐变化处理 */
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 14px 14px 0 0;
+}
+.el-card__body {
+  padding: 28px 24px 20px 24px;
+  font-size: 16px;
+  color: #333;
+  line-height: 1.7;
 }
 </style>

@@ -31,10 +31,14 @@
         <el-menu-item index="/dashboard/data-entry"> 数据录入 </el-menu-item>
       </el-sub-menu>
 
-      <el-menu-item index="/dashboard/DataAnalysisView">
-        <img src="@/assets/4.png" class="menu-icon" />
-        <span>数据分析</span>
-      </el-menu-item>
+      <el-sub-menu index="data-analysis">
+          <template #title>
+            <img src="@/assets/4.png" class="menu-icon" />
+            <span>数据分析</span>
+          </template>
+          <el-menu-item index="/dashboard/DataAnalysisView"> 数据可视化 </el-menu-item>
+        </el-sub-menu>
+
     </el-menu>
   </div>
 </template>

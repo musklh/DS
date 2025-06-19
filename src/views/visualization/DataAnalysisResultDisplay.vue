@@ -15,196 +15,229 @@
       </el-button>
     </div>
 
-    <el-card class="content-card">
-      <div class="parameter-selection">
-        <el-button-group>
-          <el-button
-            v-for="param in parameters"
-            :key="param.value"
-            :type="selectedParameter === param.value ? 'primary' : 'default'"
-            @click="selectParameter(param.value)"
+      <!-- Y轴指标选择区域 -->
+      <div class="axis-select-block">
+        <div class="axis-block-title">Y轴指标：</div>
+        <el-radio-group v-model="selectedY" @change="handleSelectionChange">
+          <el-radio-button
+            v-for="item in props.axisData.y_axis_options"
+            :key="item.word_code"
+            :label="item.word_code"
           >
-            {{ param.label }}
-          </el-button>
-        </el-button-group>
-        <el-icon class="filter-icon">
-          <Filter />
-        </el-icon>
-      </div>
-
-      <div class="date-filter-row">
-        <el-radio-group v-model="selectedDateFilter">
-          <el-radio-button label="YTD"> YTD </el-radio-button>
+            {{ item.word_name }}
+          </el-radio-button>
         </el-radio-group>
-        <el-date-picker
-          v-model="startDate"
-          type="date"
-          placeholder="2024-XX-XX"
-          value-format="YYYY-MM-DD"
-          style="width: 130px"
-        />
-        <el-date-picker
-          v-model="endDate"
-          type="date"
-          placeholder="2024-XX-XX"
-          value-format="YYYY-MM-DD"
-          style="width: 130px"
-        />
       </div>
+      
 
-      <div class="analysis-sections">
+      <!-- X轴时间选择区域 -->
+      <div class="axis-select-block">
+        <div class="axis-block-title">X轴时间：</div>
+        <el-checkbox-group v-model="selectedX" @change="handleSelectionChange">
+          <el-checkbox-button
+            v-for="item in props.axisData.x_axis_options"
+            :key="item.check_time"
+            :label="item.check_time"
+            class="x-radio-btn"
+          >
+            {{ item.check_time }}
+          </el-checkbox-button>
+        </el-checkbox-group>
+      </div>
+    <el-card class="content-card">
+      <el-alert type="info" :closable="false" show-icon style="margin-bottom: 20px;">
+        先选Y轴指标，再选X轴时间。
+      </el-alert>
+
+
+      <!-- 折线图和表格，只有选中Y和X后才显示 -->
+      <div v-if="showResult" class="analysis-sections">
         <div class="chart-section">
           <h3>图:</h3>
           <div class="chart-box">
-            <h4 class="chart-title">
-              {{ chartData.title }}
-            </h4>
-            <div class="line-chart-placeholder">
-              <svg width="100%" height="100%" viewBox="0 0 300 200" preserveAspectRatio="none">
-                <rect
-                  x="0"
-                  y="0"
-                  width="300"
-                  height="200"
-                  fill="transparent"
-                  stroke="#409EFF"
-                  stroke-width="2"
-                />
-                <polyline
-                  fill="none"
-                  stroke="#409EFF"
-                  stroke-width="2"
-                  points="30,170 100,100 200,120 270,80"
-                />
-                <text x="30" y="190" font-size="12" fill="#606266">2024-XX-XX</text>
-                <text x="100" y="190" font-size="12" fill="#606266">2024-XX-XX</text>
-                <text x="200" y="190" font-size="12" fill="#606266">2024-XX-XX</text>
-              </svg>
-            </div>
+            <h4 class="chart-title">{{ chartTitle }}</h4>
+            <v-chart :option="echartsOption" autoresize style="width: 100%; height: 260px;" ref="chartRef" />
           </div>
-          <div class="chart-actions">
-            <el-icon><Download /></el-icon>
-            <span>保存为图片</span>
-          </div>
+          <el-button size="small" @click="exportChartToImage">
+              <el-icon><Download /></el-icon>
+              保存为图片
+            </el-button>
         </div>
 
         <div class="table-section">
           <h3>表:</h3>
+
           <div class="table-box">
-            <h4 class="table-title">
-              {{ chartData.title }}
-            </h4>
-            <!-- 新增表头标题 -->
+            <h4 class="table-title">{{ chartTitle }}</h4>
             <el-table
               :data="tableData"
               border
               stripe
               size="small"
-              :show-header="false"
+              :show-header="true"
               style="width: 100%"
+              ref="tableRef"
             >
-              <el-table-column prop="date" width="120" />
-              <el-table-column prop="value" />
+              <el-table-column prop="date" label="时间" width="120" />
+              <el-table-column prop="value" label="值" />
             </el-table>
           </div>
           <div class="table-actions">
-            <el-icon><Download /></el-icon>
-            <span>保存为Excel表</span>
+            <el-button size="small" @click="exportTableToExcel">
+              <el-icon><Download /></el-icon>
+              保存为Excel表格
+            </el-button>
           </div>
         </div>
+
       </div>
+      
     </el-card>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, watch } from 'vue';
+import { ref, computed, watch, nextTick } from 'vue';
 import {
   ElDivider,
   ElIcon,
   ElCard,
   ElButton,
-  ElButtonGroup,
   ElRadioGroup,
   ElRadioButton,
-  ElDatePicker,
+  ElCheckboxGroup,
+  ElCheckboxButton,
   ElTable,
   ElTableColumn,
+  ElAlert
 } from 'element-plus';
-import { Refresh, Filter, Download, Back } from '@element-plus/icons-vue';
+import { Refresh, Back, Download } from '@element-plus/icons-vue';
+import { caseVisualizationDataCreate } from '../../api/caseVisualizationData';
+import VChart from 'vue-echarts';
+import html2canvas from 'html2canvas';
+import * as XLSX from 'xlsx';
 
 const props = defineProps({
-  patientData: Object, // Patient and case data from parent
-});
-
-const emit = defineEmits(['go-back-to-selection']);
-
-// Mock Data
-const parameters = reactive([
-  { label: 'YEB', value: 'yeb' },
-  { label: '红细胞计数', value: 'rbcCount' },
-  { label: '白细胞计数', value: 'wbcCount' },
-  { label: '中性粒细胞比例', value: 'neutrophilRatio' },
-  { label: '中性粒细胞计数', value: 'neutrophilCount' },
-  { label: '红细胞计数', value: 'rbcCount2' }, // Duplicated as per image for visual
-  { label: '血红蛋白', value: 'hemoglobin' },
-  { label: '血小板计数', value: 'plateletCount' },
-  { label: '总蛋白', value: 'totalProtein' },
-  { label: '白蛋白', value: 'albumin' },
-  { label: '球蛋白', value: 'globulin' },
-  { label: '总胆红素', value: 'totalBilirubin' },
-  { label: '直接胆红素', value: 'directBilirubin' },
-  { label: '间接胆红素', value: 'indirectBilirubin' },
-  { label: '尿素氮', value: 'bun' },
-  { label: '谷氨酰转肽酶', value: 'ggt' },
-  { label: '天冬氨酸氨基转移酶', value: 'ast' },
-  { label: '激活部分凝血活酶时间', value: 'aptt' },
-  { label: '凝血酶原时间', value: 'pt' },
-  { label: '血浆纤维蛋白原', value: 'fibrinogen' },
-  { label: 'CRP', value: 'crp' },
-  { label: '血氨', value: 'bloodAmmonia' },
-  { label: '他克莫司', value: 'tacrolimus' },
-]);
-
-const selectedParameter = ref('bloodAmmonia'); // Default selected as per image
-
-const selectedDateFilter = ref('YTD'); // Default selected as per image
-const startDate = ref('2024-XX-XX'); // Mock dates
-const endDate = ref('2024-XX-XX'); // Mock dates
-
-const chartData = reactive({
-  title: '血氨', // Changes with selectedParameter
-  // In a real app, this would be dynamic based on selectedParameter and dates
-});
-
-const tableData = reactive([
-  { date: '2024-XX-XX', value: 10 },
-  { date: '2024-XX-XX', value: 20 },
-  { date: '2024-XX-XX', value: 15 },
-]);
-
-watch(selectedParameter, (newVal) => {
-  const param = parameters.find((p) => p.value === newVal);
-  chartData.title = param ? param.label : '';
-  // In a real app, you'd fetch/update chart and table data here
-  // For now, we update the title and keep mock data
-  if (newVal === 'bloodAmmonia') {
-    Object.assign(tableData, [
-      { date: '2024-XX-XX', value: 10 },
-      { date: '2024-XX-XX', value: 20 },
-      { date: '2024-XX-XX', value: 15 },
-    ]);
-  } else {
-    Object.assign(tableData, [
-      { date: '2024-XX-XX', value: Math.floor(Math.random() * 100) },
-      { date: '2024-XX-XX', value: Math.floor(Math.random() * 100) },
-      { date: '2024-XX-XX', value: Math.floor(Math.random() * 100) },
-    ]);
+  patientData: Object,
+  axisData: {
+    type: Object,
+    default: () => ({ x_axis_options: [], y_axis_options: [] })
   }
 });
+const emit = defineEmits(['go-back-to-selection']);
 
-const selectParameter = (value) => {
-  selectedParameter.value = value;
+const selectedY = ref(''); // 只允许单选
+const selectedX = ref([]); // 多选
+const chartTitle = ref('');
+const chartValues = ref([]); // y值数组
+const tableData = ref([]);
+const showResult = computed(() => selectedY.value && selectedX.value.length > 0 && chartValues.value.length > 0);
+
+const tableRef = ref();
+const chartRef = ref();
+
+// x轴排序，保证图表和表格一致
+const selectedXSorted = computed(() => {
+  // 按时间字符串升序排列
+  return [...selectedX.value].sort();
+});
+
+// eCharts option
+const echartsOption = computed(() => {
+  return {
+    tooltip: { trigger: 'axis' },
+    grid: { left: 40, right: 20, top: 40, bottom: 40 },
+    xAxis: {
+      type: 'category',
+      data: selectedXSorted.value,
+      axisLabel: { rotate: 30 },
+      axisLine: { lineStyle: { color: '#409EFF' } },
+      splitLine: { show: true, lineStyle: { type: 'dashed', color: '#e0e6f1' } }
+    },
+    yAxis: {
+      type: 'value',
+      min: val => Math.floor(val.min * 0.9),
+      max: val => Math.ceil(val.max * 1.1),
+      splitLine: { show: true, lineStyle: { type: 'dashed', color: '#e0e6f1' } },
+      axisLine: { lineStyle: { color: '#409EFF' } }
+    },
+    series: [
+      {
+        name: chartTitle.value,
+        type: 'line',
+        data: chartValues.value,
+        smooth: true,
+        symbol: 'circle',
+        symbolSize: 10,
+        lineStyle: { color: '#67C23A', width: 3 },
+        itemStyle: { color: '#409EFF', borderColor: '#fff', borderWidth: 2 },
+        areaStyle: { color: 'rgba(64,158,255,0.08)' }
+      }
+    ]
+  };
+});
+
+// 导出图表为图片
+const exportChartToImage = async () => {
+  await nextTick();
+  const chartEl = chartRef.value?.$el;
+  if (!chartEl) return;
+  html2canvas(chartEl, { backgroundColor: '#fff' }).then(canvas => {
+    const link = document.createElement('a');
+    link.href = canvas.toDataURL('image/png');
+    link.download = `${chartTitle.value || '图表'}.png`;
+    link.click();
+  });
+};
+
+// 导出表格为Excel表格
+const exportTableToExcel = () => {
+  // 只导出当前表格数据
+  const ws = XLSX.utils.json_to_sheet(tableData.value);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, chartTitle.value || 'Sheet1');
+  XLSX.writeFile(wb, `${chartTitle.value || '表格'}.xlsx`);
+};
+
+const handleSelectionChange = async () => {
+  if (!selectedY.value || selectedX.value.length === 0) {
+    chartValues.value = [];
+    tableData.value = [];
+    chartTitle.value = '';
+    return;
+  }
+  // x轴转字符串并排序
+  const xAxisStr = selectedX.value.map(x => {
+    if (x instanceof Date) {
+      return x.toISOString().slice(0, 10);
+    }
+    return x;
+  }).sort();
+  const body = {
+    case_code: props.patientData.caseId,
+    x_axis_word_codes: xAxisStr,
+    y_axis_word_codes: [selectedY.value],
+  };
+  try {
+    const res = await caseVisualizationDataCreate(body);
+    if (res && res.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
+      const yData = res.data.data[0];
+      chartTitle.value = yData.word_name || '';
+      // 保证chartValues顺序与xAxisStr一致
+      const valueMap = {};
+      (yData.data_points || []).forEach(p => { valueMap[p.check_time] = Number(p.value); });
+      chartValues.value = xAxisStr.map(x => valueMap[x] ?? 0);
+      tableData.value = xAxisStr.map((x, i) => ({ date: x, value: chartValues.value[i] ?? '' }));
+    } else {
+      chartValues.value = [];
+      tableData.value = [];
+      chartTitle.value = '';
+    }
+  } catch (e) {
+    chartValues.value = [];
+    tableData.value = [];
+    chartTitle.value = '';
+  }
 };
 </script>
 
@@ -267,37 +300,34 @@ const selectParameter = (value) => {
   padding: 20px; /* Add padding to the card content */
 }
 
-.parameter-selection {
-  margin-bottom: 20px;
+.axis-select-block {
+  background: #f6faff;
+  border: 1px solid #d3e4f7;
+  border-radius: 8px;
+  padding: 18px 18px 12px 18px;
+  margin-bottom: 18px;
   display: flex;
-  align-items: center;
-  justify-content: space-between; /* Space between button group and filter icon */
-  flex-wrap: wrap; /* Allow wrapping on smaller screens */
-  gap: 10px; /* Space between wrapped items */
+  flex-direction: column;
+  align-items: flex-start;
+}
+.axis-block-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #409EFF;
+  margin-bottom: 12px;
+}
+.x-radio-btn {
+  margin-right: 8px;
+  margin-bottom: 8px;
 }
 
-.parameter-selection .el-button-group {
-  flex-wrap: wrap; /* Allow buttons to wrap */
-  max-width: calc(100% - 40px); /* Adjust max-width to allow space for filter icon */
+.xy-axis-info {
+  margin-bottom: 24px;
+  font-size: 16px;
 }
 
-.parameter-selection .el-button {
-  margin-right: 5px; /* Space between buttons in group */
-  margin-bottom: 5px; /* Space for wrapped buttons */
-}
-
-.filter-icon {
-  font-size: 20px;
-  color: #909399;
-  cursor: pointer;
-  margin-left: 10px;
-}
-
-.date-filter-row {
-  display: flex;
-  align-items: center;
-  margin-bottom: 20px;
-  gap: 10px;
+.xy-axis-info .el-tag {
+  font-size: 15px;
 }
 
 .analysis-sections {
@@ -321,6 +351,20 @@ const selectParameter = (value) => {
   margin-top: 0;
   margin-bottom: 15px;
   color: #303133;
+}
+
+.chart-actions {
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.table-actions {
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .chart-box {
@@ -349,22 +393,6 @@ const selectParameter = (value) => {
   margin-bottom: 10px;
   position: relative;
   overflow: hidden; /* Ensure SVG content is clipped */
-}
-
-.chart-actions,
-.table-actions {
-  display: flex;
-  align-items: center;
-  margin-top: 10px;
-  color: #606266;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.chart-actions .el-icon,
-.table-actions .el-icon {
-  margin-right: 5px;
-  font-size: 16px;
 }
 
 .table-box {

@@ -108,7 +108,8 @@ const formRules = computed(() => {
       { required: true, message: '请选择检查时间', trigger: 'change' }
     ]
   };
-
+  //这里少一个词条单位，目前用的是英文缩写代替。。。。。。
+  console.log(props.selectedTemplate.dictionaryList)
   // 为每个模板字段添加必填校验
   if (props.selectedTemplate?.dictionaryList) {
     props.selectedTemplate.dictionaryList.forEach(item => {
