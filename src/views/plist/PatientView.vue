@@ -1,7 +1,19 @@
 <template>
   <div class="patient-view-root">
     <div class="selector-bar">
-      <CaseSelector @case-selected="handleCaseSelect" />
+      <CaseSelector
+        @case-selected="handleCaseSelect"
+        :disabled="isSelectorDisabled"
+        :initial-selected-code="selectedCase"
+      />
+      <el-button
+        v-if="isSelectorDisabled"
+        type="primary"
+        class="ml-2"
+        @click="resetArchive"
+      >
+        重新选择档案
+      </el-button>
     </div>
 
     <el-alert
@@ -34,7 +46,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import { patientMergedCaseList } from '../../api/patientMergedCase';
 import { caseIdentityCases } from '../../api/openApiCase';
@@ -42,6 +54,7 @@ import { caseIdentityCases } from '../../api/openApiCase';
 import CaseSelector from './CaseSelector.vue';
 import PatientTable from './PatientTable.vue';
 import PatientDetail from './PatientDetail.vue';
+import { archiveRead } from '../../api/archive';
 
 interface Patient {
   id: string;
@@ -59,15 +72,33 @@ const selectedCase = ref('');
 const selectedCaseName = ref('');
 const selectedPatient = ref<Patient | null>(null);
 const patients = ref<{ [key: string]: Patient[] }>({});
+const isSelectorDisabled = ref(false);
+
+// 页面加载时读取 localStorage
+onMounted(() => {
+  const archiveCode = localStorage.getItem('selectedCase') || '';
+  const archiveName = localStorage.getItem('selectedCaseName') || '';
+  if (archiveCode) {
+    selectedCase.value = archiveCode;
+    selectedCaseName.value = archiveName;
+    isSelectorDisabled.value = true;
+    // 这里可以自动加载患者列表
+    handleCaseSelect({ archive_code: archiveCode, archive_name: archiveName });
+  }
+});
 
 const handleCaseSelect = async (archive: { archive_code: string; archive_name: string }) => {
+  if (!archive.archive_code) return;
   selectedCase.value = archive.archive_code;
   selectedCaseName.value = archive.archive_name;
   selectedPatient.value = null;
+  isSelectorDisabled.value = true;
+  // 保存到 localStorage
+  localStorage.setItem('selectedCase', archive.archive_code);
+  localStorage.setItem('selectedCaseName', archive.archive_name);
 
   try {
     const res = await patientMergedCaseList({ archive_code: archive.archive_code });
-
     // 将后端返回的 case_list 映射为 Patient 类型
     const patientList = (res.data.data.list || []).map((item: any) => ({
       id: item.identity_id || '',
@@ -80,9 +111,11 @@ const handleCaseSelect = async (archive: { archive_code: string; archive_name: s
       surgeryTime: item.has_transplant_surgery || '',
       isWaiting: item.is_in_transplant_queue || '',
     }));
+    console.log
     patients.value = {
       [archive.archive_code]: patientList,
     };
+    console.error('获取档案详情成功:');
   } catch (err) {
     console.error('获取档案详情失败:', err);
     ElMessage.error('获取档案详情失败');
@@ -93,19 +126,21 @@ const handleViewDetail = async (patient: Patient) => {
   const identityId = patient.id;
   try {
     const res = await caseIdentityCases({ identity_id: identityId });
+    console.log(res.data)
     const caseList = res.data.data.list || [];
+
     const detailData = caseList.length > 0 ? {
       ...caseList[0],
       allCases: caseList,
       idCard: identityId, // 直接用 identityId
     } : { idCard: identityId, allCases: [] };
+    console.log(detailData)
     selectedPatient.value = detailData;
   } catch (err) {
     ElMessage.error('获取该患者所有病例失败');
     console.error(err);
   }
 };
-
 
 const goBackToTable = () => {
   selectedPatient.value = null;
@@ -115,6 +150,7 @@ const refreshTable = async () => {
   if (!selectedCase.value) return;
   try {
     const res = await archiveRead({ archive_code: selectedCase.value });
+    
     // Assuming 'patients' array is directly under 'data' in the response for refresh
     patients.value[selectedCase.value] = res.data.data.case_list.map((item: any) => ({
       id: item.identity || '',
@@ -132,6 +168,16 @@ const refreshTable = async () => {
     console.error('刷新失败:', err);
     ElMessage.error('刷新失败');
   }
+};
+
+const resetArchive = () => {
+  selectedCase.value = '';
+  selectedCaseName.value = '';
+  selectedPatient.value = null;
+  isSelectorDisabled.value = false;
+  // 清空 localStorage
+  localStorage.removeItem('selectedCase');
+  localStorage.removeItem('selectedCaseName');
 };
 </script>
 

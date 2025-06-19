@@ -8,16 +8,31 @@
       </el-steps>
     </div>
 
+    <!-- 信息展示区域，仅在已选病例且currentStep为1时显示 -->
+    <div v-if="selectedPatientData.caseId && currentStep === 1" class="selected-info-bar">
+      <span class="patient-name">{{ selectedPatientData.name }}</span>
+      <span class="patient-age-gender">{{ selectedPatientData.gender }} {{ selectedPatientData.age }}</span>
+      <span class="patient-id-card">{{ selectedPatientData.idCard }}</span>
+      <el-divider direction="vertical" />
+      <span class="case-id">病例: {{ selectedPatientData.caseId }}</span>
+      <el-icon class="refresh-icon">
+        <Refresh />
+      </el-icon>
+    </div>
+
     <div class="workflow-content">
       <DataAnalysisSelectPatientAndCase
-        v-if="currentStep <= 1"
+        v-if="currentStep === 1"
+        :key="resetKey"
         @patient-case-selected="handlePatientCaseSelected"
+        @clear-selected="handleClearSelected"
       />
 
       <DataAnalysisResultDisplay
         v-if="currentStep === 2"
         :patient-data="selectedPatientData"
-        @go-back-to-selection="currentStep = 1"
+        :axis-data="axisData"
+        @go-back-to-selection="handleGoBack"
       />
     </div>
   </div>
@@ -25,35 +40,65 @@
 
 <script setup>
 import { ref, reactive } from 'vue';
-import { ElSteps, ElStep, ElMessage } from 'element-plus';
-import { UserFilled, Document, DataAnalysis } from '@element-plus/icons-vue';
-
-// Import child components
+import { ElSteps, ElStep, ElMessage, ElDivider, ElIcon } from 'element-plus';
+import { UserFilled, Document, DataAnalysis, Refresh } from '@element-plus/icons-vue';
 import DataAnalysisSelectPatientAndCase from './DataAnalysisSelectPatientAndCase.vue';
 import DataAnalysisResultDisplay from './DataAnalysisResultDisplay.vue';
+import { caseVisualizationOptionsCreate } from '@/api/caseVisualizationOptions';
 
-const currentStep = ref(0); // 0: Select Patient, 1: Select Case (handled within child), 2: Display Results
+const currentStep = ref(1); // 1: 选择患者和病例, 2: 结果展示
+const resetKey = ref(0); // 用于强制刷新子组件
 
 const selectedPatientData = reactive({
-  name: '王XXX',
-  gender: '女',
-  age: '52岁',
-  idCard: 'XXXXXXXXXXXXXXXXX',
-  caseId: 'XA568942', // Mocking a selected case ID
+  name: '',
+  gender: '',
+  age: '',
+  idCard: '',
+  caseId: '',
 });
 
-// Handler for patient/case selection
-const handlePatientCaseSelected = (data) => {
-  // In a real app, 'data' would contain the actual selected patient/case IDs
-  // For now, we update the mock data if needed and advance
-  selectedPatientData.name = data.patientName || '王XXX';
-  selectedPatientData.gender = data.gender || '女';
-  selectedPatientData.age = data.age || '52岁';
-  selectedPatientData.idCard = data.idCard || 'XXXXXXXXXXXXXXXXX';
-  selectedPatientData.caseId = data.caseId || 'XA568942';
+const axisData = ref({ x_axis_options: [], y_axis_options: [] });
 
+const handlePatientCaseSelected = async (data) => {
+  selectedPatientData.name = data.patientName;
+  selectedPatientData.gender = data.gender;
+  selectedPatientData.age = data.age;
+  selectedPatientData.idCard = data.idCard;
+  selectedPatientData.caseId = data.caseId;
+  
+  // 获取xy轴数据
+  try {
+    const res = await caseVisualizationOptionsCreate({ case_code: data.caseId });
+    if (res.data.code === 200 ) {
+      axisData.value = res.data.data;
+    } else {
+      console.log(res.data)
+      axisData.value = { x_axis_options: [], y_axis_options: [] };
+    }
+  } catch (e) {
+    axisData.value = { x_axis_options: [], y_axis_options: [] };
+  }
   ElMessage.success('患者和病例已选择，进入结果展示');
-  currentStep.value = 2; // Move to results display
+  currentStep.value = 2;
+};
+
+const handleGoBack = () => {
+  selectedPatientData.name = '';
+  selectedPatientData.gender = '';
+  selectedPatientData.age = '';
+  selectedPatientData.idCard = '';
+  selectedPatientData.caseId = '';
+  currentStep.value = 1;
+};
+
+const handleClearSelected = () => {
+  selectedPatientData.name = '';
+  selectedPatientData.gender = '';
+  selectedPatientData.age = '';
+  selectedPatientData.idCard = '';
+  selectedPatientData.caseId = '';
+  currentStep.value = 1;
+  resetKey.value++;
 };
 </script>
 
@@ -72,6 +117,30 @@ const handlePatientCaseSelected = (data) => {
   border-radius: 4px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
   margin-bottom: 20px;
+}
+
+.selected-info-bar {
+  background-color: #fff;
+  padding: 15px 20px;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  color: #303133;
+  position: relative;
+}
+.selected-info-bar span {
+  margin-right: 15px;
+}
+.selected-info-bar .patient-name {
+  font-weight: bold;
+}
+.selected-info-bar .refresh-icon {
+  margin-left: 5px;
+  cursor: pointer;
+  color: #409eff;
 }
 
 .workflow-header-steps .el-step__icon-inner {

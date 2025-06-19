@@ -1,6 +1,7 @@
 <template>
   <el-select
     v-model="selectedCaseCode"
+    :disabled="disabled"
     placeholder="请选择专病档案"
     filterable
     clearable
@@ -36,6 +37,17 @@ const selectedCaseCode = ref<string | null>(null); // Change v-model to bind to 
 const caseOptions = ref<ArchiveItem[]>([]
 );
 
+const props = defineProps<{
+  disabled?: boolean
+  initialSelectedCode?: string
+}>();
+
+watch(() => props.initialSelectedCode, (newCode) => {
+  if (newCode) {
+    selectedCaseCode.value = newCode;
+  }
+}, { immediate: true });
+
 const fetchArchives = async () => {
   try {
     const response = await archiveList({
@@ -66,17 +78,6 @@ const handleChange = (code: string) => {
     emit('caseSelected', { archive_code: '', archive_name: '' });
   }
 };
-
-// Optional: If you need to set an initial selection based on a prop or external change
-// You can use a watch here to update selectedCaseCode if an initial value needs to be set
-/*
-const props = defineProps<{ initialSelectedCode?: string }>();
-watch(() => props.initialSelectedCode, (newCode) => {
-  if (newCode) {
-    selectedCaseCode.value = newCode;
-  }
-}, { immediate: true });
-*/
 
 onMounted(() => {
   fetchArchives();
