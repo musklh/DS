@@ -115,7 +115,6 @@ const handleCaseSelect = async (archive: { archive_code: string; archive_name: s
     patients.value = {
       [archive.archive_code]: patientList,
     };
-    console.error('获取档案详情成功:');
   } catch (err) {
     console.error('获取档案详情失败:', err);
     ElMessage.error('获取档案详情失败');
