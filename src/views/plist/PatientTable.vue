@@ -53,7 +53,6 @@ const props = defineProps<{
 
 
 function handleViewDetail(row: Patient) {
-  console.log('选中患者名字:', row.name);
   console.log('选中患者身份证号:', row.id);
   emit('view-detail', row);
 }
