@@ -44,7 +44,7 @@
           </el-table-column>
           <el-table-column prop="word_apply" label="词条应用" width="120" />
           <el-table-column prop="word_belong" label="从属别名" width="120" />
-          <el-table-column prop="data_type" label="数据类型" width="120" />
+          <el-table-column prop="data_type" label="数值类型" width="120" />
           <el-table-column prop="actions" label="操作" width="200" fixed="right">
             <template #default="{ row }">
               <el-button size="small" @click="handleEdit(row)">编辑</el-button>

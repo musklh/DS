@@ -14,7 +14,6 @@
         返回选择
       </el-button>
     </div>
-
       <!-- Y轴指标选择区域 -->
       <div class="axis-select-block">
         <div class="axis-block-title">Y轴指标：</div>
@@ -28,7 +27,6 @@
           </el-radio-button>
         </el-radio-group>
       </div>
-      
 
       <!-- X轴时间选择区域 -->
       <div class="axis-select-block">
@@ -48,6 +46,7 @@
       <el-alert type="info" :closable="false" show-icon style="margin-bottom: 20px;">
         先选Y轴指标，再选X轴时间。
       </el-alert>
+
 
 
       <!-- 折线图和表格，只有选中Y和X后才显示 -->

@@ -7,7 +7,7 @@
         <el-step title="数据录入" icon="Edit" />
       </el-steps>
     </div>
-
+    
     <div class="workflow-content">
       <SelectPatientAndCase
         v-if="currentStep === 0"

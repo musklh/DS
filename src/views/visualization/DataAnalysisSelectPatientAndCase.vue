@@ -44,11 +44,16 @@
         <div style="margin-bottom: 12px;">
           <el-button type="default" @click="handleBackToPatientList">返回患者列表</el-button>
         </div>
-        <el-table :data="cases" border stripe size="small" @row-click="handleSelectCase">
+        <el-table :data="cases" border stripe size="small">
           <el-table-column prop="case_code" label="病例号" width="120" />
           <el-table-column prop="main_diagnosis" label="主诊断" />
           <el-table-column prop="inhospital_id" label="住院号" width="120" />
           <el-table-column prop="opd_id" label="门诊号" width="120" />
+          <el-table-column label="操作" width="120">
+            <template #default="{ row }">
+              <el-button type="primary" link @click.stop="handleSelectCase(row)">选择</el-button>
+            </template>
+          </el-table-column>
         </el-table>
         <div v-if="cases.length === 0" style="margin: 24px 0; text-align: center; color: #999;">该患者暂无病例</div>
       </div>
@@ -61,6 +66,7 @@ import { ref, reactive } from 'vue';
 import { ElAlert, ElButton, ElCard, ElInput, ElTable, ElTableColumn, ElPagination, ElMessage } from 'element-plus';
 import { patientList, patientRead } from '../../api/patient';
 import { caseIdentityCases } from '@/api/openApiCase';
+import{caseVisualizationOptionsCreate} from '@/api/caseVisualizationOptions'
 
 const emit = defineEmits(['patient-case-selected', 'clear-selected']);
 
