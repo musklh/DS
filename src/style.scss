@@ -115,10 +115,42 @@ h3 { font-size: 1.5rem; }
 }
 
 // Ensure the main layout content area has some padding
-// This can be targeted more specifically if needed, e.g., .main-content from Layout.vue
 .main-content { // Assuming this class is used in your layout as seen in src/layout/index.vue
-  padding: 20px; // Add some padding around the content area
+  padding: 20px;
   background-color: #f4f6f9; // A slightly different shade of light gray for content background
+}
+
+/* Responsive Adjustments */
+@media (max-width: 767px) {
+  body {
+    font-size: 14px; // Base font size for mobile
+    line-height: 1.5;
+  }
+
+  h1 { font-size: 1.8rem; }
+  h2 { font-size: 1.6rem; }
+  h3 { font-size: 1.3rem; }
+
+  .main-content {
+    padding: 15px; // Reduced padding for main content on mobile
+  }
+
+  .custom-card {
+    padding: 15px; // Reduced padding for cards on mobile
+    margin-bottom: 15px;
+  }
+
+  // Hide elements meant only for desktop
+  .hidden-xs {
+    display: none !important;
+  }
+}
+
+@media (min-width: 768px) {
+  // Hide elements meant only for mobile
+  .hidden-sm-up {
+    display: none !important;
+  }
 }
 
 // Element Plus Overrides (if necessary)
