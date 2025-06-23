@@ -1,4 +1,15 @@
 <template>
+  <div class="toolbar" style="margin-bottom: 16px; display: flex;">
+    <el-input
+      v-model="searchQuery"
+      placeholder="搜索病例号/姓名/身份证号"
+      clearable
+      @keyup.enter="handleSearch"
+      style="width: 300px; margin-right: 10px;"
+      @clear="handleSearch"
+    />
+    <el-button type="primary" @click="handleSearch">搜索</el-button>
+  </div>
   <el-table :data="tableData" style="width: 100%" border v-loading="loading">
     <el-table-column prop="recordId" label="档案号" min-width="120" show-overflow-tooltip />
     <el-table-column prop="caseId" label="病例号" min-width="150" show-overflow-tooltip />
@@ -61,7 +72,7 @@
         </el-select>
       </el-form-item>
       <el-form-item label="年龄" prop="age">
-        <el-input-number v-model="currentCase.age" :min="0" :max="150" />
+        <el-input-number v-model="currentCase.age!" :min="0" :max="150" />
       </el-form-item>
       <el-form-item label="主要诊断" prop="diagnosis">
         <el-input v-model="currentCase.diagnosis" type="textarea" :rows="2" />
@@ -105,7 +116,7 @@ interface TableCaseItem {
   inpatientId: string; // From inhospital_id
   name: string;
   gender: string; // '男' or '女'
-  age: number | '-';
+  age: number | null;
   diagnosis: string; // From main_diagnosis
   // Add original backend IDs to help with update/delete
   originalCaseCode: string; // Store original case_code for API calls
@@ -123,6 +134,7 @@ const loading = ref(false);
 const currentPage = ref(1);
 const pageSize = ref(10);
 const total = ref(0);
+const searchQuery = ref('');
 
 // Dialog and form for editing
 const dialogVisible = ref(false);
@@ -135,7 +147,7 @@ const currentCase = reactive<TableCaseItem>({
   inpatientId: '',
   name: '',
   gender: '',
-  age: 0,
+  age: null,
   diagnosis: '',
   originalCaseCode: '',
   originalIdentity: '',
@@ -152,7 +164,8 @@ const fetchData = async () => {
     loading.value = true;
     const res = await caseList({
       page: currentPage.value,
-      size: pageSize.value,
+      page_size: pageSize.value,
+      search: searchQuery.value || undefined,
     });
 
     console.log('caseList 返回结果:', res);
@@ -209,6 +222,11 @@ const fetchData = async () => {
   }
 };
 
+const handleSearch = () => {
+  currentPage.value = 1;
+  fetchData();
+};
+
 // --- Pagination Handler ---
 const handlePageChange = (page: number) => {
   currentPage.value = page;
@@ -216,8 +234,8 @@ const handlePageChange = (page: number) => {
 };
 
 // --- Age Calculation ---
-function getAgeFromBirth(birthDateStr?: string): number | '-' {
-  if (!birthDateStr) return '-';
+function getAgeFromBirth(birthDateStr?: string): number | null {
+  if (!birthDateStr) return null;
   const birth = new Date(birthDateStr);
   const now = new Date();
   let age = now.getFullYear() - birth.getFullYear();
@@ -250,14 +268,13 @@ const submitForm = async () => {
       try {
         // 1. Prepare the 'params' argument for caseUpdate
         // This includes the path parameter (case_code) and any other query params needed for lookup
-        const apiParams: API.caseUpdateParams = {
+        const apiParams = {
           case_code: currentCase.originalCaseCode, // Use the original case_code for the URL path
-          identity: currentCase.originalIdentity, // Send original identity as a query parameter
         };
 
         // 2. Prepare the 'body' argument for caseUpdate
         // This is the actual data that will be sent as JSON in the request body
-        const apiBody: API.Case = {
+        const apiBody = {
           case_code: currentCase.caseId, // New case ID if changed
           identity: currentCase.idNumber, // New identity if changed
           opd_id: currentCase.outpatientId === '-' ? '' : currentCase.outpatientId,
@@ -309,7 +326,6 @@ const handleDelete = async (row: TableCaseItem) => {
     // If confirmed, proceed with deletion
     const res = await caseDelete({
       case_code: row.originalCaseCode,
-      identity: row.originalIdentity,
     });
 
     if (res.data?.code === 200) {

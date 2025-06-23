@@ -58,7 +58,7 @@
       <div class="patient-medical-info-grid">
         <p><strong>血型: </strong>{{ patient.blood_type }}</p>
         <p><strong>RH: </strong>{{ patient.rh||"阴性" }}</p>
-        <p><strong>是否行肝移植手术: </strong>{{ patient.has_transplant_surgery }}</p>
+        <p><strong>是否做过移植手术: </strong>{{ patient.has_transplant_surgery }}</p>
         <p><strong>是否在移植排队: </strong>{{ patient.is_in_transplant_queue }}</p>
       </div>
       <p><strong>主要诊断: </strong>{{ patient.main_diagnosis }}</p>
@@ -130,16 +130,25 @@
           <el-input v-model="editForm.name" />
         </el-form-item>
         <el-form-item label="性别">
-          <el-select v-model="editForm.gender">
-            <el-option label="男" value="男" />
-            <el-option label="女" value="女" />
-          </el-select>
+          <span>{{ editForm.gender === 1 ? '男' : '女' }}</span>
         </el-form-item>
         <el-form-item label="年龄">
-          <el-input v-model="editForm.age" />
+          <span>{{ editForm.age }}</span>
         </el-form-item>
         <el-form-item label="电话">
-          <el-input v-model="editForm.phone" />
+          <el-input v-model="editForm.phone_number" />
+        </el-form-item>
+        <el-form-item label="是否做过移植手术">
+          <el-input v-model="editForm.has_transplant_surgery" />
+        </el-form-item>
+        <el-form-item label="是否在移植排队">
+          <el-select v-model="editForm.is_in_transplant_queue" placeholder="请选择">
+            <el-option label="是" value="是" />
+            <el-option label="否" value="否" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="主要诊断">
+          <el-input v-model="editForm.main_diagnosis" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -174,6 +183,7 @@ import { ref, reactive, computed, onMounted, PropType } from 'vue';
 import { ElMessage, ElButton, ElDialog, ElTable, ElTableColumn, ElDivider, ElAlert } from 'element-plus';
 import { caseTemplateSummaryCreate } from '../../api/caseTemplateSummary';
 import { caseTemplateDetailCreate } from '../../api/caseTemplateDetail';
+import { caseUpdate} from '../../api/openApiCase'
 
 // 定义接口以解决类型错误
 interface TemplateItem {
@@ -245,9 +255,12 @@ const viewMode = ref('table'); // 'table' or 'timeline'
 const editDialogVisible = ref(false);
 const editForm = reactive({
   name: '',
-  gender: '',
+  gender: 1,
   age: '',
-  phone: '',
+  phone_number: '',
+  has_transplant_surgery: '',
+  is_in_transplant_queue: '',
+  main_diagnosis:'',
 });
 
 const emit = defineEmits(['back']);
@@ -362,7 +375,7 @@ const leftSections = computed(() => {
   return allCategories.slice(0, midPoint).map((category: TemplateCategoryData) => ({
     title: category.template_category,
     items: category.templates.map((template: TemplateItem) => ({
-      label: template.template_name,
+      label: template.template_name,midPoint,
       time: template.check_time,
       template_code: template.template_code,
       case_code: template.case_code
@@ -413,15 +426,67 @@ const rightSections = computed(() => {
 
 // Open edit dialog
 const openEditDialog = () => {
-  Object.assign(editForm, props.patient);
+  editForm.name = props.patient.identity_name;
+  editForm.gender = props.patient.gender;
+  editForm.age = String(props.patient.age);
+  editForm.phone_number = props.patient.phone_number;
+  editForm.has_transplant_surgery = props.patient.has_transplant_surgery;
+  editForm.is_in_transplant_queue = props.patient.is_in_transplant_queue;
+  editForm.main_diagnosis = props.patient.main_diagnosis;
   editDialogVisible.value = true;
 };
 
 // Save edited information
-const saveEdit = () => {
-  Object.assign(props.patient, editForm);
-  ElMessage.success('已保存');
-  editDialogVisible.value = false;
+const saveEdit = async () => {
+  if (selectedCaseCodes.value.length !== 1) {
+    ElMessage.warning('请选择一个且仅一个病例以进行信息编辑。');
+    return;
+  }
+
+  const caseCodeToUpdate = selectedCaseCodes.value[0];
+
+  try {
+    const params = {
+      case_code: caseCodeToUpdate,
+    };
+    
+    // Construct the body for the PUT request.
+    const body = {
+      // Editable fields from form
+      name: editForm.name,
+      phone_number: editForm.phone_number,
+      main_diagnosis: editForm.main_diagnosis,
+      has_transplant_surgery: editForm.has_transplant_surgery,
+      is_in_transplant_queue: editForm.is_in_transplant_queue,
+      
+      // Non-editable fields from original patient data
+      identity: props.patient.idCard,
+      gender: props.patient.gender,
+      home_address: props.patient.home_address,
+      blood_type: props.patient.blood_type,
+      rh: props.patient.rh,
+    };
+
+    const res = await caseUpdate(params, body as any);
+
+    if (res.data?.code === 200) {
+      ElMessage.success('患者信息更新成功！');
+      editDialogVisible.value = false;
+      // Update local patient data to reflect changes
+      props.patient.identity_name = editForm.name;
+      props.patient.phone_number = editForm.phone_number;
+      props.patient.main_diagnosis = editForm.main_diagnosis;
+      props.patient.has_transplant_surgery = editForm.has_transplant_surgery;
+      props.patient.is_in_transplant_queue = editForm.is_in_transplant_queue;
+      // 无感刷新：重新拉取模板数据
+      await fetchTemplateData();
+    } else {
+      ElMessage.error(res.data?.msg || '更新患者信息失败。');
+    }
+  } catch (error) {
+    console.error('更新患者信息失败:', error);
+    ElMessage.error('更新操作失败。');
+  }
 };
 
 // Go back to list
