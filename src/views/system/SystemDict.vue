@@ -53,12 +53,17 @@
           </el-table-column>
         </el-table>
 
-        <!-- 使用优化后的分页组件 -->
-        <Pagination
-          v-model:currentPage="currentPage"
+        <!-- 使用原生分页组件 -->
+        <el-pagination
+          style="margin-top: 20px; text-align: right;"
+          background
+          layout="->, sizes, total, prev, pager, next, jumper"
+          :current-page="currentPage"
+          :page-size="pageSize"
           :total="total"
-          :pageSize="pageSize"
-          @page-change="handlePageChange"
+          :page-sizes="[10, 20, 50, 100]"
+          @current-change="handlePageChange"
+          @size-change="handlePageSizeChange"
         />
 
         <el-dialog
@@ -119,7 +124,6 @@ import { defineComponent, ref, computed, onMounted } from 'vue'
 import { Plus, Search } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { dictionaryList, dictionaryCreate, dictionaryUpdate, dictionaryDelete } from '../../api/dictionary'
-import Pagination from '@/components/Pagination.vue'
 //
 interface DictItem {
   word_name: string     // 中文名称
@@ -139,7 +143,7 @@ const generateWordCode = (): string => {
 
 export default defineComponent({
   name: 'SystemDict',
-  components: { Plus, Search, Pagination },
+  components: { Plus, Search },
   setup() {
     // 基础数据
     const searchKeyword = ref('')
@@ -187,7 +191,7 @@ export default defineComponent({
     const pageSize = ref(10)
     const total = ref(0)
 
-    // 修改获取词条列表函数
+    // 获取词条列表函数
     const fetchDictList = async () => {
       try {
         const res = await dictionaryList({
@@ -210,12 +214,17 @@ export default defineComponent({
       }
     }
 
-    // 修改分页处理函数
-    const handlePagination = ({ page, pageSize }: { page: number; pageSize: number }) => {
-      currentPage.value = page
-      pageSize.value = pageSize
-      fetchDictList()
-    }
+    // 分页切换
+    const handlePageChange = (page: number) => {
+      currentPage.value = page;
+      fetchDictList();
+    };
+    // 每页条数切换
+    const handlePageSizeChange = (size: number) => {
+      pageSize.value = size;
+      currentPage.value = 1;
+      fetchDictList();
+    };
 
     // 添加词条
     const handleAdd = () => {
@@ -321,7 +330,8 @@ export default defineComponent({
       currentPage,
       pageSize,
       total,
-      handlePagination
+      handlePageChange,
+      handlePageSizeChange
     }
   }
 })
