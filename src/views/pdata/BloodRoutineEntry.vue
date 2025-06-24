@@ -48,14 +48,63 @@
         </div>
 
         <div class="right-ocr-section">
-          <div class="ocr-placeholder">
-            <div class="ocr-icon-box">
+          <div class="ocr-placeholder" @click="triggerFileUpload">
+            <div v-if="!uploadedImage" class="ocr-icon-box">
               <img src="../../assets/s.png" alt="" />
+              <div class="upload-hint">点击上传图片或拍照</div>
+            </div>
+            <div v-else class="image-preview">
+              <img :src="uploadedImage" alt="上传的图片" />
+              <div class="image-overlay">
+                <el-button type="primary" size="small" @click.stop="triggerFileUpload">重新上传</el-button>
+                <el-button type="danger" size="small" @click.stop="removeImage">删除</el-button>
+              </div>
             </div>
           </div>
+          
+          <!-- 隐藏的文件上传输入框 -->
+          <input
+            ref="fileInput"
+            type="file"
+            accept="image/*"
+            style="display: none"
+            @change="handleFileUpload"
+          />
+          
+          <!-- 拍照按钮 -->
+          <div class="camera-section">
+            <el-button type="primary" @click="openCamera" :disabled="!hasCamera">
+              <el-icon><Camera /></el-icon>
+              拍照
+            </el-button>
+            <el-button @click="triggerFileUpload">
+              <el-icon><Upload /></el-icon>
+              上传图片
+            </el-button>
+          </div>
+          
           <div class="ocr-hint">
             <el-icon><InfoFilled /></el-icon>
             <span>拍照或者上传图片后OCR会自动识别字段。</span>
+          </div>
+          
+          <!-- OCR识别结果展示 -->
+          <div v-if="ocrResults.length > 0" class="ocr-results">
+            <h4>OCR识别结果：</h4>
+            <div class="ocr-result-list">
+              <div v-for="result in ocrResults" :key="result.field" class="ocr-result-item">
+                <span class="field-name">{{ result.field }}:</span>
+                <span class="field-value">{{ result.value }}</span>
+                <el-button 
+                  type="primary" 
+                  size="small" 
+                  @click="applyOcrResult(result)"
+                  :disabled="!canApplyOcrResult(result)"
+                >
+                  应用
+                </el-button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -69,7 +118,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, computed } from 'vue';
+import { reactive, ref, computed, onMounted } from 'vue';
 import {
   ElDivider,
   ElIcon,
@@ -81,7 +130,7 @@ import {
   ElButton,
   ElMessage,
 } from 'element-plus';
-import { Refresh, InfoFilled } from '@element-plus/icons-vue';
+import { Refresh, InfoFilled, Camera, Upload } from '@element-plus/icons-vue';
 import { dataCreate } from '../../api/data';
 
 const props = defineProps({
@@ -94,6 +143,13 @@ const emit = defineEmits(['data-submitted', 'go-back-to-template']);
 // 表单引用
 const formRef = ref(null);
 const submitting = ref(false);
+
+// 图片上传相关
+const fileInput = ref(null);
+const uploadedImage = ref('');
+const hasCamera = ref(false);
+const ocrResults = ref([]);
+const isProcessingOcr = ref(false);
 
 // 表单数据
 const formData = reactive({
@@ -120,6 +176,112 @@ const formRules = computed(() => {
   }
 
   return rules;
+});
+
+// 检查是否有摄像头
+const checkCamera = async () => {
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    hasCamera.value = devices.some(device => device.kind === 'videoinput');
+  } catch (error) {
+    console.log('无法检测摄像头:', error);
+    hasCamera.value = false;
+  }
+};
+
+// 触发文件上传
+const triggerFileUpload = () => {
+  fileInput.value?.click();
+};
+
+// 处理文件上传
+const handleFileUpload = (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    processImage(file);
+  }
+};
+
+// 打开摄像头拍照
+const openCamera = async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    // 这里可以打开一个拍照对话框，或者直接使用文件上传
+    // 为了简化，我们直接触发文件上传
+    triggerFileUpload();
+  } catch (error) {
+    ElMessage.error('无法访问摄像头');
+    console.error('摄像头访问失败:', error);
+  }
+};
+
+// 处理图片
+const processImage = (file) => {
+  if (!file.type.startsWith('image/')) {
+    ElMessage.error('请选择图片文件');
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    uploadedImage.value = e.target.result;
+    // 模拟OCR识别过程
+    simulateOcrRecognition();
+  };
+  reader.readAsDataURL(file);
+};
+
+// 删除图片
+const removeImage = () => {
+  uploadedImage.value = '';
+  ocrResults.value = [];
+  if (fileInput.value) {
+    fileInput.value.value = '';
+  }
+};
+
+// 模拟OCR识别（实际项目中应该调用后端OCR API）
+const simulateOcrRecognition = async () => {
+  isProcessingOcr.value = true;
+  
+  // 模拟API调用延迟
+  await new Promise(resolve => setTimeout(resolve, 2000));
+  
+  // 模拟OCR识别结果
+  const mockResults = [
+    { field: '白细胞计数', value: '6.8', word_code: 'WBC' },
+    { field: '红细胞计数', value: '4.5', word_code: 'RBC' },
+    { field: '血红蛋白', value: '135', word_code: 'HGB' },
+    { field: '血小板计数', value: '250', word_code: 'PLT' },
+  ];
+  
+  ocrResults.value = mockResults;
+  isProcessingOcr.value = false;
+  ElMessage.success('OCR识别完成');
+};
+
+// 检查是否可以应用OCR结果
+const canApplyOcrResult = (result) => {
+  return props.selectedTemplate?.dictionaryList?.some(item => 
+    item.word_code === result.word_code
+  );
+};
+
+// 应用OCR结果到表单
+const applyOcrResult = (result) => {
+  const matchingField = props.selectedTemplate?.dictionaryList?.find(item => 
+    item.word_code === result.word_code
+  );
+  
+  if (matchingField) {
+    formData.values[matchingField.word_code] = result.value;
+    ElMessage.success(`已应用 ${result.field} 的值`);
+  }
+};
+
+// 组件挂载时检查摄像头
+onMounted(() => {
+  checkCamera();
 });
 
 // 提交表单
@@ -317,15 +479,64 @@ const resetForm = () => {
   text-align: center;
   background-color: #fafafa;
   margin-bottom: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
 }
 
-.ocr-icon-box .el-icon {
-  font-size: 50px; /* Larger icon */
-  margin-bottom: 5px;
+.ocr-placeholder:hover {
+  border-color: #409eff;
+  background-color: #f0f9ff;
 }
 
-.ocr-icon-box span {
-  font-size: 20px;
+.upload-hint {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #909399;
+}
+
+.image-preview {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.image-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.image-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.image-preview:hover .image-overlay {
+  opacity: 1;
+}
+
+.camera-section {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  justify-content: center;
+}
+
+.camera-section .el-button {
+  min-width: 100px;
 }
 
 .ocr-hint {
@@ -349,5 +560,56 @@ const resetForm = () => {
 .form-actions .el-button {
   width: 100px; /* Fixed width for buttons */
   margin: 0 10px;
+}
+
+.ocr-results {
+  margin-top: 20px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.ocr-results h4 {
+  margin: 0 0 10px 0;
+  color: #495057;
+  font-size: 14px;
+}
+
+.ocr-result-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ocr-result-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  background: white;
+  border-radius: 4px;
+  border: 1px solid #dee2e6;
+}
+
+.field-name {
+  font-weight: 500;
+  color: #495057;
+  min-width: 80px;
+}
+
+.field-value {
+  flex: 1;
+  color: #6c757d;
+  background: #f8f9fa;
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-family: monospace;
+}
+
+.ocr-result-item .el-button {
+  min-width: 60px;
+  height: 28px;
+  font-size: 12px;
 }
 </style>
