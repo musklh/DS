@@ -7,7 +7,7 @@
       class="mb-4"
     />
 
-    <el-form ref="formRef" :model="form" :rules="rules" label-width="80px" label-position="left" hide-required-asterisk>
+    <el-form ref="formRef" :model="form" :rules="rules" label-width="140px" label-position="left" hide-required-asterisk>
       <el-form-item label="病例号">
         <el-input v-model="form.caseId" disabled style="width: 300px;" />
         <el-link type="primary" class="ml-2" @click="generateCaseId"> 自动生成 </el-link>
@@ -217,8 +217,8 @@ export default defineComponent({
     };
 
     /**
-     * 处理“是否做过移植手术”的选择变化
-     * 如果选择“否”，则清空移植手术日期
+     * 处理"是否做过移植手术"的选择变化
+     * 如果选择"否"，则清空移植手术日期
      */
     const updateHasTransplantSurgery = () => {
       if (form.hasTransplantSurgery === '否') {
@@ -325,5 +325,14 @@ export default defineComponent({
 .tip-text {
   font-size: 14px;
   color: #909399;
+}
+
+/* 优化表单label单行省略号显示 */
+/deep/ .el-form-item__label {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
 }
 </style>
