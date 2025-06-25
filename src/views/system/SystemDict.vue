@@ -32,7 +32,7 @@
           </el-input>
         </div>
 
-        <el-table :data="filteredDictList" style="width: 100%" border stripe>
+        <el-table :data="paginatedDictList" style="width: 100%" border stripe>
           <el-table-column prop="word_name" label="中文名称" width="120" />
           <el-table-column prop="word_eng" label="英文名称" width="150" />
           <el-table-column prop="word_short" label="英文缩写" width="100" />
@@ -120,7 +120,7 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent, ref, computed, onMounted } from 'vue'
+import { defineComponent, ref, computed, onMounted, watch } from 'vue'
 import { Plus, Search } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { dictionaryList, dictionaryCreate, dictionaryUpdate, dictionaryDelete } from '../../api/dictionary'
@@ -150,7 +150,7 @@ export default defineComponent({
     const dialogVisible = ref(false)
     const isEdit = ref(false)
     const formRef = ref()
-    const dictList = ref<DictItem[]>([])
+    const allDictList = ref<DictItem[]>([])
 
     // 表单数据
     const formData = ref<DictItem>({
@@ -171,42 +171,54 @@ export default defineComponent({
       word_apply: [{ required: true, message: '请输入词条应用', trigger: 'blur' }]
     }
 
+    // 分页状态
+    const currentPage = ref(1)
+    const pageSize = ref(10)
+
     // 计算属性
     const dialogTitle = computed(() => isEdit.value ? '编辑词条' : '添加词条')
     const filteredDictList = computed(() => {
-      if (!searchKeyword.value) return dictList.value
+      if (!searchKeyword.value) {
+        return allDictList.value
+      }
       const keyword = searchKeyword.value.toLowerCase()
-      return dictList.value.filter(item =>
+      return allDictList.value.filter(item =>
         item.word_name?.toLowerCase().includes(keyword) ||
         item.word_eng?.toLowerCase().includes(keyword) ||
         item.word_short?.toLowerCase().includes(keyword) ||
         item.word_code?.toLowerCase().includes(keyword) ||
         item.word_belong?.toLowerCase().includes(keyword) ||
-        item.data_type?.toLowerCase().includes(keyword) // 搜索也包括 data_type
+        (item.data_type && item.data_type.toLowerCase().includes(keyword))
       )
     })
 
-    // 添加分页相关的状态
-    const currentPage = ref(1)
-    const pageSize = ref(10)
-    const total = ref(0)
+    const paginatedDictList = computed(() => {
+      const start = (currentPage.value - 1) * pageSize.value
+      const end = start + pageSize.value
+      return filteredDictList.value.slice(start, end)
+    })
+
+    const total = computed(() => filteredDictList.value.length)
+
+    // 监听搜索关键词变化，重置到第一页
+    watch(searchKeyword, () => {
+      currentPage.value = 1
+    })
 
     // 获取词条列表函数
     const fetchDictList = async () => {
       try {
         const res = await dictionaryList({
-          page: currentPage.value,
-          page_size: pageSize.value
+          page: 1, // 获取所有数据
+          page_size: 99999
         })
         if (res?.data?.code === 200 && res.data?.data) {
-          dictList.value = res.data.data.list.map((item: any) => ({
+          allDictList.value = res.data.data.list.map((item: any) => ({
             ...item,
             data_type: item.data_type === '数值类型' ? '是' : '否'
           }))
-          total.value = res.data.data.total || 0
         } else {
-          dictList.value = []
-          total.value = 0
+          allDictList.value = []
           ElMessage.warning('暂无数据')
         }
       } catch (error) {
@@ -216,15 +228,13 @@ export default defineComponent({
 
     // 分页切换
     const handlePageChange = (page: number) => {
-      currentPage.value = page;
-      fetchDictList();
-    };
+      currentPage.value = page
+    }
     // 每页条数切换
     const handlePageSizeChange = (size: number) => {
-      pageSize.value = size;
-      currentPage.value = 1;
-      fetchDictList();
-    };
+      pageSize.value = size
+      currentPage.value = 1
+    }
 
     // 添加词条
     const handleAdd = () => {
@@ -320,8 +330,7 @@ export default defineComponent({
       formRef,
       rules,
       dialogTitle,
-      dictList,
-      filteredDictList,
+      paginatedDictList,
       getTagword_class,
       handleAdd,
       handleEdit,
