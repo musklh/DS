@@ -26,11 +26,21 @@
       </el-table-column>
     </el-table>
 
+    <el-pagination
+      :current-page="currentPage"
+      :page-size="10"
+      :total="total"
+      layout="->, total, prev, pager, next"
+      @current-change="handlePageChange"
+      background
+      class="mt-4"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { defineProps, defineEmits } from 'vue';
+import { ElPagination, ElTable, ElTableColumn, ElButton } from 'element-plus';
 
 interface Patient {
   id: string;
@@ -48,13 +58,17 @@ const emit = defineEmits(['view-detail', 'page-change']);
 
 const props = defineProps<{
   tableData: Patient[];
+  total: number;
+  currentPage: number;
 }>();
-
-
 
 function handleViewDetail(row: Patient) {
   console.log('选中患者身份证号:', row.id);
   emit('view-detail', row);
+}
+
+function handlePageChange(page: number) {
+  emit('page-change', page);
 }
 </script>
 
@@ -84,12 +98,7 @@ function handleViewDetail(row: Patient) {
   background: #f0f6ff !important;
 }
 
-.pagination-container {
-  display: flex;
-  justify-content: flex-end;
-  padding: 10px;
-  background: #fff;
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+.mt-4 {
+  margin-top: 16px;
 }
 </style>
