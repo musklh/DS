@@ -27,15 +27,15 @@
             </template>
           </el-table-column>
         </el-table>
-        <div style="margin-top: 12px; text-align: right;">
+        <div style="margin-top: 12px;">
           <el-pagination
             v-model:current-page="page"
             v-model:page-size="pageSize"
             :total="total"
-            layout="prev, pager, next, jumper"
+            layout="->, prev, pager, next, jumper"
             @current-change="fetchPatients"
             @size-change="fetchPatients"
-            small
+            background
           />
         </div>
       </div>
@@ -133,7 +133,7 @@ fetchPatients();
 
 <style scoped>
 .analysis-select-container {
-  padding: 0; /* Handled by parent */
+  padding: 32px 0 0 0;
   flex-grow: 1;
   display: flex;
   flex-direction: column;
@@ -153,5 +153,6 @@ fetchPatients();
 .search-bar {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
 }
 </style>
