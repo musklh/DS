@@ -32,11 +32,18 @@
       <el-card class="table-card">
         <div class="card-header">
           <span class="card-title">{{ selectedCaseName }}</span>
-          <el-tooltip content="刷新" placement="top">
+          <div class="search-and-refresh">
+            <el-input
+              v-model="searchQuery"
+              placeholder="搜索姓名/身份证号"
+              clearable
+              @keyup.enter="handleSearch"
+              style="width: 240px; margin-right: 12px;"
+            />
             <el-button type="primary" circle @click="refreshTable">
               <el-icon><RefreshRight /></el-icon>
             </el-button>
-          </el-tooltip>
+          </div>
         </div>
         <PatientTable
           :table-data="patients[selectedCase] || []"
@@ -51,7 +58,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { ElMessage } from 'element-plus';
 import { patientMergedCaseList } from '../../api/patientMergedCase';
 import { caseIdentityCases } from '../../api/openApiCase';
@@ -64,13 +71,24 @@ import PatientDetail from './PatientDetail.vue';
 interface Patient {
   id: string;
   name: string;
-  gender: string;
+  gender: number;
   age: number;
   phone: string;
   address: string;
   bloodType: string;
   surgeryTime: string;
   isWaiting: string;
+  // 以下是 PatientDetail 需要的字段
+  identity_name: string;
+  idCard: string;
+  phone_number: string;
+  home_address: string;
+  blood_type: string;
+  rh: string;
+  has_transplant_surgery: string;
+  is_in_transplant_queue: string;
+  main_diagnosis: string;
+  allCases: any[];
 }
 
 const selectedCase = ref('');
@@ -82,6 +100,14 @@ const isSelectorDisabled = ref(false);
 const currentPage = ref(1);
 const total = ref(0);
 const pageSize = 10; // 假设每页10条
+const searchQuery = ref('');
+
+// 监听搜索框变化，自动触发搜索
+watch(searchQuery, (newVal, oldVal) => {
+  if (newVal !== oldVal) {
+    handleSearch();
+  }
+});
 
 // 页面加载时读取 localStorage
 onMounted(() => {
@@ -112,19 +138,30 @@ const fetchPatientsForCase = async (archiveCode: string, page: number) => {
     const res = await patientMergedCaseList({
       archive_code: archiveCode,
       page: page,
-      page_size: pageSize
+      page_size: pageSize,
+      search: searchQuery.value || undefined,
     });
     
     const patientList = (res.data.data.list || []).map((item: any) => ({
       id: item.identity_id || '',
       name: item.name || '',
-      gender: item.gender === 1 ? '男' : '女',
+      gender: item.gender,
       age: item.age || 0,
       phone: item.phone_number || '',
       address: item.home_address || '',
       bloodType: item.blood_type || '',
       surgeryTime: item.has_transplant_surgery || '',
       isWaiting: item.is_in_transplant_queue || '',
+      identity_name: item.name || '',
+      idCard: item.identity_id || '',
+      phone_number: item.phone_number || '',
+      home_address: item.home_address || '',
+      blood_type: item.blood_type || '',
+      rh: item.rh || '',
+      has_transplant_surgery: item.has_transplant_surgery || '',
+      is_in_transplant_queue: item.is_in_transplant_queue || '',
+      main_diagnosis: item.main_diagnosis || '',
+      allCases: [],
     }));
     
     patients.value = { [archiveCode]: patientList };
@@ -134,6 +171,11 @@ const fetchPatientsForCase = async (archiveCode: string, page: number) => {
     console.error('获取档案详情失败:', err);
     ElMessage.error('获取档案详情失败');
   }
+};
+
+const handleSearch = () => {
+  currentPage.value = 1;
+  fetchPatientsForCase(selectedCase.value, 1);
 };
 
 const handlePageChange = (page: number) => {
@@ -150,7 +192,7 @@ const handleViewDetail = async (patient: Patient) => {
       ...caseList[0],
       allCases: caseList,
       idCard: identityId,
-    } : { idCard: identityId, allCases: [] };
+    } : { ...patient, idCard: identityId, allCases: [] };
     selectedPatient.value = detailData;
   } catch (err) {
     ElMessage.error('获取该患者所有病例失败');
@@ -221,5 +263,10 @@ const resetArchive = () => {
   font-size: 20px;
   font-weight: bold;
   color: #222;
+}
+
+.search-and-refresh {
+  display: flex;
+  align-items: center;
 }
 </style>

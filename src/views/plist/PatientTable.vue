@@ -10,7 +10,11 @@
     >
       <el-table-column prop="id" label="身份证号" />
       <el-table-column prop="name" label="姓名" />
-      <el-table-column prop="gender" label="性别" />
+      <el-table-column prop="gender" label="性别">
+        <template #default="{ row }">
+          {{ formatGender(row.gender) }}
+        </template>
+      </el-table-column>
       <el-table-column prop="age" label="年龄" />
       <el-table-column prop="phone" label="联系电话" />
       <el-table-column prop="address" label="家庭住址" />
@@ -45,7 +49,7 @@ import { ElPagination, ElTable, ElTableColumn, ElButton } from 'element-plus';
 interface Patient {
   id: string;
   name: string;
-  gender: string;
+  gender: number;
   age: number;
   phone: string;
   address: string;
@@ -70,6 +74,10 @@ function handleViewDetail(row: Patient) {
 function handlePageChange(page: number) {
   emit('page-change', page);
 }
+
+const formatGender = (gender: number) => {
+  return gender === 1 ? '男' : '女';
+};
 </script>
 
 <style scoped>

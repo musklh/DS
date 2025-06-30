@@ -12,7 +12,7 @@
           <el-alert type="info" :closable="false" show-icon> 请选择要录入数据的患者 </el-alert>
         </div>
         <div class="patient-content">
-          <div class="search-bar">
+          <div class="search-bar" style="display: flex; justify-content: flex-end;">
             <el-input
               v-model="searchQuery"
               placeholder="请输入患者姓名或身份证号"
@@ -242,10 +242,6 @@ onMounted(() => {
 .patient-content,
 .case-content {
   padding: 20px;
-}
-
-.search-bar {
-  margin-bottom: 20px;
 }
 
 .pagination-container {

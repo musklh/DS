@@ -378,6 +378,8 @@ declare namespace API {
     page_size?: number;
     /** 档案编号，用于筛选特定档案下的患者 */
     archive_code?: string;
+    /** 模糊搜索患者姓名或身份证号 */
+    search?: string;
   };
 
   type patientPartialUpdateParams = {
