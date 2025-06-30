@@ -33,7 +33,9 @@
         <div class="card-header">
           <span class="card-title">{{ selectedCaseName }}</span>
           <el-tooltip content="刷新" placement="top">
-            <el-button icon="el-icon-refresh" circle @click="refreshTable" />
+            <el-button type="primary" circle @click="refreshTable">
+              <el-icon><RefreshRight /></el-icon>
+            </el-button>
           </el-tooltip>
         </div>
         <PatientTable
@@ -53,6 +55,7 @@ import { ref, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import { patientMergedCaseList } from '../../api/patientMergedCase';
 import { caseIdentityCases } from '../../api/openApiCase';
+import { RefreshRight } from '@element-plus/icons-vue';
 
 import CaseSelector from './CaseSelector.vue';
 import PatientTable from './PatientTable.vue';
