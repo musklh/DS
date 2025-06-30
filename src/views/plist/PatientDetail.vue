@@ -125,7 +125,7 @@
     </div>
 
     <el-dialog v-model="editDialogVisible" title="编辑患者信息" width="500px">
-      <el-form :model="editForm" label-width="80px">
+      <el-form :model="editForm" label-width="140px">
         <el-form-item label="姓名">
           <el-input v-model="editForm.name" />
         </el-form-item>
@@ -731,6 +731,7 @@ onMounted(() => {
   padding: 8px 16px;
   display: flex;
   align-items: center;
+  line-height: 1.7;
 }
 
 .el-card.mb-4 {
@@ -761,5 +762,13 @@ onMounted(() => {
   font-size: 16px;
   color: #333;
   line-height: 1.7;
+}
+
+/deep/ .el-dialog .el-form-item {
+  margin-bottom: 22px;
+}
+
+/deep/ .el-dialog .el-form-item__label {
+  white-space: nowrap;
 }
 </style>
