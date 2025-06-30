@@ -35,8 +35,15 @@
                 </div>
                 <div class="dictionary-items">
                   <el-checkbox-group v-model="selectedDictionaries">
-                    <div v-for="item in filteredDictionaryItems" :key="item.id" class="dictionary-item">
-                      <el-checkbox :value="item.id"> {{ item.word_name }}</el-checkbox>
+                    <!-- 已选词条 -->
+                    <div v-for="item in filteredDictionaryItems.selected" :key="item.id" class="dictionary-item selected-item">
+                      <el-checkbox :value="item.id">{{ item.word_name }}</el-checkbox>
+                    </div>
+                    <!-- 分割线 -->
+                    <el-divider v-if="filteredDictionaryItems.selected.length > 0 && filteredDictionaryItems.unselected.length > 0" />
+                    <!-- 未选词条 -->
+                    <div v-for="item in filteredDictionaryItems.unselected" :key="item.id" class="dictionary-item">
+                      <el-checkbox :value="item.id">{{ item.word_name }}</el-checkbox>
                     </div>
                   </el-checkbox-group>
                 </div>
@@ -90,16 +97,25 @@
     }
   }, { immediate: true, deep: true });
   
-  // 过滤后的词条列表
+  // 过滤后的词条列表，已选的置顶
   const filteredDictionaryItems = computed(() => {
     const items = dictionaryItems.value;
+    const selectedIds = new Set(selectedDictionaries.value);
+    const selectedItems = items.filter(item => selectedIds.has(item.id));
+    const unselectedItems = items.filter(item => !selectedIds.has(item.id));
+
+    const filterFn = (item) => item.word_name.toLowerCase().includes(searchKeyword.value.toLowerCase());
+
     if (!searchKeyword.value) {
-      return items;
+      return {
+        selected: selectedItems,
+        unselected: unselectedItems
+      };
     }
-    const filtered = items.filter(item =>
-      item.word_name.toLowerCase().includes(searchKeyword.value.toLowerCase())
-    );
-    return filtered;
+    return {
+      selected: selectedItems.filter(filterFn),
+      unselected: unselectedItems.filter(filterFn)
+    };
   });
   
   // 获取词条列表
@@ -297,5 +313,10 @@
   
   :deep(.el-input__wrapper.is-focus) {
     box-shadow: 0 0 0 1px #409eff inset;
+  }
+  
+  .selected-item {
+    background-color: #e6f7ff;
+    border-left: 3px solid #1890ff;
   }
   </style>
