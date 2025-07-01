@@ -60,6 +60,7 @@ import {
     dataTemplateUpdate,
     dataTemplateDelete,
 } from '../../api/dataTemplate';
+import { templateCategoryList } from '../../api/templateCategory';
 
 // 定义模板数据类型
 interface TemplateItem {
@@ -81,6 +82,9 @@ const activeNames = ref<string[]>([]);
 // 存储所有模板数据
 const templates = ref<TemplateItem[]>([]);
 
+// 存储分类数据
+const categories_data = ref<{ id: number; name: string }[]>([]);
+
 // 根据搜索关键字过滤模板列表的计算属性
 const filterTemplates = (templates: TemplateItem[]) => {
   if (!searchKeyword.value) return templates;
@@ -93,27 +97,83 @@ const filterTemplates = (templates: TemplateItem[]) => {
   );
 };
 
-// 获取所有分类的唯一值
+// 获取所有分类的唯一值 - 包括没有模板的分类
 const categories = computed(() => {
   console.log('当前模板列表:', templates.value);
-  const uniqueCategories = new Set(templates.value.map(t => t.category));
-  console.log('提取的分类ID:', Array.from(uniqueCategories));
-  return Array.from(uniqueCategories).sort((a, b) => a - b);
+  console.log('当前分类数据:', categories_data.value);
+  
+  // 从模板数据中提取分类ID
+  const templateCategories = new Set(templates.value.map(t => t.category));
+  
+  // 从分类数据中提取所有分类ID
+  const allCategories = new Set(categories_data.value.map(c => c.id));
+  
+  // 合并两个集合，确保所有分类都显示
+  const mergedCategories = new Set([...templateCategories, ...allCategories]);
+  
+  console.log('模板分类ID:', Array.from(templateCategories));
+  console.log('所有分类ID:', Array.from(allCategories));
+  console.log('合并后的分类ID:', Array.from(mergedCategories));
+  
+  return Array.from(mergedCategories).sort((a, b) => a - b);
 });
 
-// 根据分类过滤模板
+// 根据分类过滤模板 - 包括空分类
 const getTemplatesByCategory = (category: number) => {
-  const filtered = filterTemplates(templates.value.filter(t => t.category === category));
+  const categoryTemplates = templates.value.filter(t => t.category === category);
+  const filtered = filterTemplates(categoryTemplates);
   console.log(`分类 ${category} 的模板:`, filtered);
+  console.log(`分类 ${category} 是否为空分类:`, categoryTemplates.length === 0);
   return filtered;
 };
 
-// 获取分类名称
+// 获取分类名称 - 同步版本用于模板显示
 const getCategoryName = (category: number) => {
+  // 先从缓存的分类数据中查找
+  const categoryInfo = categories_data.value.find(c => c.id === category);
+  if (categoryInfo) {
+    return categoryInfo.name;
+  }
+  
+  // 从模板数据中查找
   const template = templates.value.find(t => t.category === category);
-  const categoryName = template?.category_name || `分类${category}`;
-  console.log(`分类 ${category} 的名称:`, categoryName);
-  return categoryName;
+  if (template?.category_name) {
+    return template.category_name;
+  }
+  
+  // 如果都没有，触发数据更新并返回临时名称
+  refreshCategoryData(category);
+  return `分类${category}`;
+};
+
+// 异步刷新分类数据
+const refreshCategoryData = async (category?: number) => {
+  try {
+    // 同时获取分类数据和模板数据
+    const [categoryRes] = await Promise.all([
+      templateCategoryList({ page: 1, page_size: 9999 }),
+      fetchTemplates()
+    ]);
+    
+    // 根据实际的API响应结构来处理数据
+    if (categoryRes?.data?.code === 200 && categoryRes?.data?.data?.list) {
+      categories_data.value = categoryRes.data.data.list.map((item: any) => ({
+        id: item.id!,
+        name: item.name
+      }));
+      console.log('分类数据已更新（从list）:', categories_data.value);
+    } else if (categoryRes?.data?.results) {
+      categories_data.value = categoryRes.data.results.map((item: any) => ({
+        id: item.id!,
+        name: item.name
+      }));
+      console.log('分类数据已更新（从results）:', categories_data.value);
+    } else {
+      console.log('刷新时分类数据结构不匹配:', categoryRes?.data);
+    }
+  } catch (error) {
+    console.error('刷新分类数据失败:', error);
+  }
 };
 
 // 替换 dialogVisible 为 showEditForm
@@ -286,6 +346,40 @@ const handleShowAll = () => {
   Object.assign(formData, { template_name: '', template_code: '', template_description: '', category: 1, dictionary_list: [], type: 'custom' });
 };
 
+// 获取分类数据
+const fetchCategories = async () => {
+  try {
+    const res = await templateCategoryList({
+      page: 1,
+      page_size: 9999
+    });
+    console.log('获取到的分类列表:', res.data);
+    
+    // 根据实际的API响应结构来处理数据
+    if (res?.data?.code === 200 && res?.data?.data?.list) {
+      // 如果是分页结构 {code: 200, data: {list: [], total: x}}
+      categories_data.value = res.data.data.list.map((item: any) => ({
+        id: item.id!,
+        name: item.name
+      }));
+      console.log('处理后的分类数据（从list）:', categories_data.value);
+    } else if (res?.data?.results) {
+      // 如果是直接的results结构 {results: []}
+      categories_data.value = res.data.results.map((item: any) => ({
+        id: item.id!,
+        name: item.name
+      }));
+      console.log('处理后的分类数据（从results）:', categories_data.value);
+    } else {
+      console.log('分类数据结构不匹配，完整响应:', res.data);
+      categories_data.value = [];
+    }
+  } catch (error) {
+    console.error('获取分类列表失败:', error);
+    categories_data.value = [];
+  }
+};
+
 // 修改获取模板列表的函数
 const fetchTemplates = async () => {
   try {
@@ -318,13 +412,20 @@ const handleAddCategory = () => {
 };
 
 const handleCategorySuccess = () => {
-  // 可以在这里刷新分类列表
-  fetchTemplates();
+  // 刷新分类和模板数据
+  refreshCategoryData();
 };
 
 onMounted(async () => {
-  // 在组件挂载时获取初始数据
+  // 在组件挂载时获取初始数据，先获取分类再获取模板
+  await fetchCategories();
   await fetchTemplates();
+  
+  // 确保分类数据完整后，设置默认展开状态
+  setTimeout(() => {
+    activeNames.value = categories.value.map(String);
+    console.log('设置展开的分类（包括空分类）:', activeNames.value);
+  }, 100);
 });
 </script>
 
