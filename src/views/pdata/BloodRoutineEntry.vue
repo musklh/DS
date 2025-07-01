@@ -27,7 +27,7 @@
 
       <div class="entry-form-layout">
         <div class="left-form-section">
-          <el-form :model="formData" :rules="formRules" ref="formRef" label-width="120px" label-position="left">
+          <el-form :model="formData" :rules="formRules" ref="formRef" label-width="auto" label-position="left" class="adaptive-form">
             <el-form-item label="检查时间" prop="checkTime">
               <el-date-picker
                 v-model="formData.checkTime"
@@ -39,8 +39,17 @@
             </el-form-item>
 
             <template v-for="item in selectedTemplate.dictionaryList" :key="item.word_code">
-              <el-form-item :label="item.word_name" :prop="`values.${item.word_code}`">
-                <el-input v-model="formData.values[item.word_code]" placeholder="请输入" />
+              <el-form-item :prop="`values.${item.word_code}`">
+                <template #label>
+                  <el-tooltip :content="item.word_name" placement="top" :disabled="item.word_name.length <= 8">
+                    <span class="form-label">{{ item.word_name }}</span>
+                  </el-tooltip>
+                </template>
+                <el-input 
+                  v-model="formData.values[item.word_code]" 
+                  placeholder="请输入"
+                  :suffix-icon="item.word_short ? '' : undefined"
+                />
                 <span v-if="item.word_short" class="unit-label">{{ item.word_short }}</span>
               </el-form-item>
             </template>
@@ -153,6 +162,7 @@ import {
   ElDatePicker,
   ElButton,
   ElMessage,
+  ElTooltip,
 } from 'element-plus';
 import { Refresh, InfoFilled, Camera, Upload } from '@element-plus/icons-vue';
 import { dataCreate } from '../../api/data';
@@ -533,24 +543,90 @@ const resetForm = () => {
   flex-grow: 1; /* Allow layout to fill space */
 }
 
+/* 响应式布局 */
+@media (max-width: 1200px) {
+  .entry-form-layout {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .left-form-section {
+    flex: none;
+    max-width: 100%;
+    width: 100%;
+  }
+  
+  .left-form-section :deep(.el-form-item__label) {
+    min-width: 120px;
+    max-width: 160px;
+  }
+}
+
 .left-form-section {
-  flex: 0 0 450px; /* Fixed width for the form section as per image */
-  max-width: 450px;
+  flex: 0 0 500px; /* 增大表单区域宽度 */
+  max-width: 500px;
+}
+
+.left-form-section .adaptive-form {
+  /* 自适应表单标签宽度 */
 }
 
 .left-form-section .el-form-item {
-  margin-bottom: 18px; /* Adjust spacing between form items */
-  position: relative; /* For unit label positioning */
+  margin-bottom: 18px;
+  position: relative;
+  display: flex;
+  align-items: flex-start; /* 确保对齐 */
+}
+
+/* 优化标签和输入框的布局 */
+.left-form-section :deep(.el-form-item__label) {
+  min-width: 140px; /* 最小标签宽度 */
+  max-width: 200px; /* 最大标签宽度 */
+  width: auto !important; /* 自适应宽度 */
+  text-align: right;
+  padding-right: 12px;
+  line-height: 32px; /* 与输入框高度对齐 */
+  white-space: nowrap; /* 防止标签文字换行 */
+  overflow: hidden;
+  text-overflow: ellipsis; /* 过长时显示省略号 */
+}
+
+.left-form-section :deep(.el-form-item__content) {
+  flex: 1;
+  margin-left: 0 !important; /* 移除默认margin */
+  position: relative;
+}
+
+/* 对于特别长的标签，提供tooltip提示 */
+.left-form-section :deep(.el-form-item__label):hover {
+  overflow: visible;
+  white-space: normal;
+  z-index: 1000;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border-radius: 4px;
+  padding: 4px 8px;
+}
+
+/* 表单标签样式 */
+.form-label {
+  display: inline-block;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: help;
 }
 
 .unit-label {
   position: absolute;
-  right: 0;
+  right: 10px;
   top: 50%;
   transform: translateY(-50%);
   color: #909399;
   font-size: 14px;
-  margin-right: 10px; /* Space from input field */
+  pointer-events: none; /* 防止影响输入框交互 */
+  z-index: 10;
 }
 
 .right-ocr-section {

@@ -44,7 +44,7 @@
         <div style="margin-bottom: 12px;">
           <el-button type="default" @click="handleBackToPatientList">返回患者列表</el-button>
         </div>
-        <el-table :data="cases" border stripe size="small">
+        <el-table :data="cases" border stripe size="large"  class="my-large-table" >
           <el-table-column prop="case_code" label="病例号" width="120" />
           <el-table-column prop="main_diagnosis" label="主诊断" />
           <el-table-column prop="inhospital_id" label="住院号" width="120" />
@@ -153,5 +153,9 @@ fetchPatients();
   display: flex;
   align-items: center;
   justify-content: flex-end;
+}
+
+.my-large-table {
+  font-size: 24px;
 }
 </style>
