@@ -7,10 +7,10 @@ export async function caseVisualizationDataCreate(
   body: {
     /** 病例编号 */
     case_code: string;
-    /** X轴词条编号列表，例如["2024-06-01", "2024-06-02"] */
-    x_axis_word_codes: string[];
-    /** Y轴词条编号列表，例如["A000001", "A000002"] */
-    y_axis_word_codes: string[];
+    /** X轴词条编号数组，例如["TES000001"] */
+    x_axis_word_code: string[];
+    /** Y轴时间数组，例如["2025-06-18 04:36:00", "2025-06-19 04:41:00"] */
+    y_axis_times: string[];
   },
   options?: { [key: string]: any }
 ) {

@@ -6,7 +6,8 @@ import * as archive from './archive';
 import * as caseTemplateDetail from './caseTemplateDetail';
 import * as caseTemplateSummary from './caseTemplateSummary';
 import * as caseVisualizationData from './caseVisualizationData';
-import * as caseVisualizationOptions from './caseVisualizationOptions';
+import * as caseVisualizationXaxisOptions from './caseVisualizationXaxisOptions';
+import * as caseVisualizationYaxisOptions from './caseVisualizationYaxisOptions';
 import * as openApiCase from './openApiCase';
 import * as dataTemplate from './dataTemplate';
 import * as data from './data';
@@ -23,7 +24,8 @@ export default {
   caseTemplateDetail,
   caseTemplateSummary,
   caseVisualizationData,
-  caseVisualizationOptions,
+  caseVisualizationXaxisOptions,
+  caseVisualizationYaxisOptions,
   openApiCase,
   dataTemplate,
   data,

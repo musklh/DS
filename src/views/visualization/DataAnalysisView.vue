@@ -44,7 +44,7 @@ import { ElSteps, ElStep, ElMessage, ElDivider, ElIcon } from 'element-plus';
 import { UserFilled, Document, DataAnalysis, Refresh } from '@element-plus/icons-vue';
 import DataAnalysisSelectPatientAndCase from './DataAnalysisSelectPatientAndCase.vue';
 import DataAnalysisResultDisplay from './DataAnalysisResultDisplay.vue';
-import { caseVisualizationOptionsCreate } from '@/api/caseVisualizationOptions';
+import { caseVisualizationYaxisOptionsCreate } from '../../api/caseVisualizationYaxisOptions';
 
 const currentStep = ref(1); // 1: 选择患者和病例, 2: 结果展示
 const resetKey = ref(0); // 用于强制刷新子组件
@@ -57,7 +57,7 @@ const selectedPatientData = reactive({
   caseId: '',
 });
 
-const axisData = ref({ x_axis_options: [], y_axis_options: [] });
+const axisData = ref({ y_axis_options: [] });
 
 const handlePatientCaseSelected = async (data) => {
   selectedPatientData.name = data.patientName;
@@ -66,17 +66,21 @@ const handlePatientCaseSelected = async (data) => {
   selectedPatientData.idCard = data.idCard;
   selectedPatientData.caseId = data.caseId;
   
-  // 获取xy轴数据
+  // 获取y轴数据
   try {
-    const res = await caseVisualizationOptionsCreate({ case_code: data.caseId });
+    const res = await caseVisualizationYaxisOptionsCreate({ case_code: data.caseId });
     if (res.data.code === 200 ) {
-      axisData.value = res.data.data;
+      axisData.value = { 
+        data: res.data.data, // Y轴指标数据
+        x_axis_options: [] // X轴时间数据，目前为空，需要后续获取
+      };
     } else {
-      console.log(res.data)
-      axisData.value = { x_axis_options: [], y_axis_options: [] };
+      console.log('获取Y轴数据失败:', res.data)
+      axisData.value = { data: [], x_axis_options: [] };
     }
   } catch (e) {
-    axisData.value = { x_axis_options: [], y_axis_options: [] };
+    console.error('获取Y轴数据异常:', e);
+    axisData.value = { data: [], x_axis_options: [] };
   }
   ElMessage.success('患者和病例已选择，进入结果展示');
   currentStep.value = 2;

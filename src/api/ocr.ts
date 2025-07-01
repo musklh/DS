@@ -1,7 +1,7 @@
 // @ts-ignore
 /* eslint-disable */
 // OCR 识别相关接口
-import request from '@/request';
+import request from '../request';
 
 export interface OcrUploadParams {
   image: File;
@@ -75,7 +75,6 @@ export const ocrUpload = (params: OcrUploadParams): Promise<{ data: OcrResponse 
 /**
  * 模拟OCR识别结果（开发阶段使用）
  */
-
 export const mockOcrRecognition = (): Promise<{ data: OcrResponse }> => {
   return new Promise((resolve) => {
     // 模拟网络延迟
@@ -98,7 +97,7 @@ export const mockOcrRecognition = (): Promise<{ data: OcrResponse }> => {
           "test_results": [
             {
               "seq": "1",
-              "item": "血氨",
+              "item": "白细胞计数",
               "result": "2.06",
               "reference_range": "3.5-9.5",
               "unit": "x10^9/L"
@@ -329,4 +328,4 @@ export const mockOcrRecognition = (): Promise<{ data: OcrResponse }> => {
       resolve({ data: testData });
     }, 2000);
   });
-}; 
+};

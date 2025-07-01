@@ -19,9 +19,9 @@
         <div class="axis-block-title">Y轴指标：</div>
         <el-radio-group v-model="selectedY" @change="handleSelectionChange">
           <el-radio-button
-            v-for="item in props.axisData.y_axis_options"
+            v-for="item in props.axisData.data"
             :key="item.word_code"
-            :label="item.word_code"
+            :value="item.word_code"
           >
             {{ item.word_name }}
           </el-radio-button>
@@ -31,16 +31,44 @@
       <!-- X轴时间选择区域 -->
       <div class="axis-select-block">
         <div class="axis-block-title">X轴时间：</div>
-        <el-checkbox-group v-model="selectedX" @change="handleSelectionChange">
-          <el-checkbox-button
-            v-for="item in props.axisData.x_axis_options"
-            :key="item.check_time"
-            :label="item.check_time"
-            class="x-radio-btn"
-          >
-            {{ item.check_time }}
-          </el-checkbox-button>
-        </el-checkbox-group>
+        <div v-if="!selectedY" class="x-axis-hint">
+          <el-alert type="info" :closable="false" show-icon size="small">
+            请先选择Y轴指标
+          </el-alert>
+        </div>
+        <div v-else-if="isLoadingXAxis" class="x-axis-hint">
+          <el-alert type="info" :closable="false" show-icon size="small">
+            正在加载时间数据...
+          </el-alert>
+        </div>
+        <div v-else-if="xAxisOptions.length === 0" class="x-axis-hint">
+          <el-alert type="warning" :closable="false" show-icon size="small">
+            该指标暂无时间数据
+          </el-alert>
+        </div>
+        <div v-else class="x-axis-selection-area">
+          <div class="x-axis-buttons-container">
+                         <el-checkbox-group v-model="selectedX" @change="handleSelectionChange">
+                <el-checkbox-button
+                 v-for="item in formattedXAxisOptions"
+                 :key="item.value"
+                 :value="item.value"
+                 class="x-radio-btn"
+                >
+                 {{ item.label }}
+                </el-checkbox-button>
+              </el-checkbox-group>
+          </div>
+          <div v-if="formattedXAxisOptions.length > 0" class="x-axis-actions">
+            <el-button size="small" type="primary" link @click="selectAllXAxis">
+              全选
+            </el-button>
+            <el-button size="small" type="primary" link @click="clearAllXAxis">
+              清空
+            </el-button>
+            <span class="selected-count">已选择 {{ selectedX.length }}/{{ formattedXAxisOptions.length }} 个时间点</span>
+          </div>
+        </div>
       </div>
     <el-card class="content-card">
       <el-alert type="info" :closable="false" show-icon style="margin-bottom: 20px;">
@@ -112,6 +140,7 @@ import {
 } from 'element-plus';
 import { Refresh, Back, Download } from '@element-plus/icons-vue';
 import { caseVisualizationDataCreate } from '../../api/caseVisualizationData';
+import { caseVisualizationXaxisOptionsCreate } from '../../api/caseVisualizationXaxisOptions';
 import VChart from 'vue-echarts';
 import html2canvas from 'html2canvas';
 import * as XLSX from 'xlsx';
@@ -130,7 +159,47 @@ const selectedX = ref([]); // 多选
 const chartTitle = ref('');
 const chartValues = ref([]); // y值数组
 const tableData = ref([]);
+const xAxisOptions = ref([]); // 动态获取的X轴时间选项
+const isLoadingXAxis = ref(false); // X轴数据加载状态
 const showResult = computed(() => selectedY.value && selectedX.value.length > 0 && chartValues.value.length > 0);
+
+// 格式化X轴时间选项显示
+const formattedXAxisOptions = computed(() => {
+  return xAxisOptions.value.map(item => {
+    // 处理不同的数据格式
+    const timeValue = item.check_time || item;
+    const displayLabel = formatTimeDisplay(timeValue);
+    
+    return {
+      value: timeValue,
+      label: displayLabel
+    };
+  });
+});
+
+// 时间显示格式化函数
+const formatTimeDisplay = (timeStr) => {
+  if (!timeStr) return '';
+  
+  try {
+    // 处理不同的时间格式
+    const date = new Date(timeStr);
+    if (isNaN(date.getTime())) {
+      return timeStr; // 如果无法解析，返回原始字符串
+    }
+    
+    // 格式化为 YYYY-MM-DD HH:mm
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    
+    return `${year}-${month}-${day} ${hours}:${minutes}`;
+  } catch (error) {
+    return timeStr; // 出错时返回原始字符串
+  }
+};
 
 const tableRef = ref();
 const chartRef = ref();
@@ -198,6 +267,71 @@ const exportTableToExcel = () => {
   XLSX.writeFile(wb, `${chartTitle.value || '表格'}.xlsx`);
 };
 
+// 全选X轴时间
+const selectAllXAxis = () => {
+  selectedX.value = formattedXAxisOptions.value.map(item => item.value);
+};
+
+// 清空X轴选择
+const clearAllXAxis = () => {
+  selectedX.value = [];
+};
+
+// 获取X轴时间选项
+const fetchXAxisOptions = async () => {
+  if (!selectedY.value) {
+    xAxisOptions.value = [];
+    return;
+  }
+  
+  isLoadingXAxis.value = true;
+  console.log('selectedY.value', selectedY.value);
+  console.log('props.patientData.caseId',props.patientData.caseId);
+  
+  try {
+    const res = await caseVisualizationXaxisOptionsCreate({
+      case_code: props.patientData.caseId,
+      y_axis_word_code: selectedY.value
+    });
+    
+    console.log('X轴API完整响应:', res.data);
+    
+    if (res.data.code === 200 && res.data.data && res.data.data.x_axis_options) {
+      // 根据API返回的数据结构调整，取x_axis_options数组
+      xAxisOptions.value = res.data.data.x_axis_options;
+      console.log('获取到X轴时间选项:', xAxisOptions.value);
+    } else {
+      console.log('获取X轴数据失败:', res.data);
+      xAxisOptions.value = [];
+    }
+  } catch (error) {
+    console.error('获取X轴数据异常:', error);
+    xAxisOptions.value = [];
+  } finally {
+    isLoadingXAxis.value = false;
+  }
+};
+
+// 监听Y轴选择变化
+watch(selectedY, async (newValue) => {
+  if (newValue) {
+    // 清空之前的X轴选择
+    selectedX.value = [];
+    chartValues.value = [];
+    tableData.value = [];
+    chartTitle.value = '';
+    
+    // 获取新的X轴选项
+    await fetchXAxisOptions();
+  } else {
+    xAxisOptions.value = [];
+    selectedX.value = [];
+    chartValues.value = [];
+    tableData.value = [];
+    chartTitle.value = '';
+  }
+});
+
 const handleSelectionChange = async () => {
   if (!selectedY.value || selectedX.value.length === 0) {
     chartValues.value = [];
@@ -214,8 +348,8 @@ const handleSelectionChange = async () => {
   }).sort();
   const body = {
     case_code: props.patientData.caseId,
-    x_axis_word_codes: xAxisStr,
-    y_axis_word_codes: [selectedY.value],
+    y_axis_word_code:[selectedY.value],
+    x_axis_times:xAxisStr,
   };
   try {
     const res = await caseVisualizationDataCreate(body);
@@ -233,6 +367,7 @@ const handleSelectionChange = async () => {
       chartTitle.value = '';
     }
   } catch (e) {
+    console.error('获取图表数据异常:', e);
     chartValues.value = [];
     tableData.value = [];
     chartTitle.value = '';
@@ -315,9 +450,69 @@ const handleSelectionChange = async () => {
   color: #409EFF;
   margin-bottom: 12px;
 }
+
+
+.x-axis-hint {
+  width: 100%;
+}
+
+.x-axis-selection-area {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.x-axis-buttons-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.x-axis-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 8px;
+  border-top: 1px solid #e4e7ed;
+  font-size: 14px;
+}
+
+.selected-count {
+  color: #909399;
+  font-size: 13px;
+  margin-left: auto;
+}
+
+/* 优化复选框按钮的样式 */
 .x-radio-btn {
-  margin-right: 8px;
-  margin-bottom: 8px;
+  margin: 0 !important; /* 移除默认margin，使用gap来控制间距 */
+}
+
+/* 确保复选框按钮在小屏幕上也能正常换行 */
+@media (max-width: 768px) {
+  .x-axis-buttons-container {
+    gap: 6px;
+  }
+  
+  .x-radio-btn :deep(.el-checkbox-button__inner) {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+  
+  .x-axis-actions {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .selected-count {
+    font-size: 12px;
+    width: 100%;
+    text-align: center;
+    margin-left: 0;
+    margin-top: 4px;
+  }
 }
 
 .xy-axis-info {
