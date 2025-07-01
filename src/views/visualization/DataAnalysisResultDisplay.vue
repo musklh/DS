@@ -348,8 +348,8 @@ const handleSelectionChange = async () => {
   }).sort();
   const body = {
     case_code: props.patientData.caseId,
-    y_axis_word_code:[selectedY.value],
-    x_axis_times:xAxisStr,
+    y_axis_word_codes:[selectedY.value],
+    x_axis_times: xAxisStr
   };
   try {
     const res = await caseVisualizationDataCreate(body);

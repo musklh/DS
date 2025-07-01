@@ -8,7 +8,7 @@ export async function caseVisualizationDataCreate(
     /** 病例编号 */
     case_code: string;
     /** X轴词条编号数组，例如["TES000001"] */
-    x_axis_word_code: string[];
+    x_axis_word_codes: string[];
     /** Y轴时间数组，例如["2025-06-18 04:36:00", "2025-06-19 04:41:00"] */
     y_axis_times: string[];
   },
