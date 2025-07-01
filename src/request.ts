@@ -2,7 +2,7 @@ import axios from 'axios';
 //
 // 创建 Axios 实例1
 const myAxios = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_BASE_URL,
   timeout: 60000,
   withCredentials: true, // 确保这个设置为true以发送cookie
 });
