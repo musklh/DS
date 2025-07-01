@@ -17,6 +17,7 @@ import * as patient from './patient';
 import * as register from './register';
 import * as templateCategory from './templateCategory';
 import * as token from './token';
+import * as ocr from './ocr';
 export default {
   archive,
   caseTemplateDetail,
@@ -33,4 +34,5 @@ export default {
   register,
   templateCategory,
   token,
+  ocr,
 };
