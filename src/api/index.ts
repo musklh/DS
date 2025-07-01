@@ -6,7 +6,8 @@ import * as archive from './archive';
 import * as caseTemplateDetail from './caseTemplateDetail';
 import * as caseTemplateSummary from './caseTemplateSummary';
 import * as caseVisualizationData from './caseVisualizationData';
-import * as caseVisualizationOptions from './caseVisualizationOptions';
+import * as caseVisualizationXaxisOptions from './caseVisualizationXaxisOptions';
+import * as caseVisualizationYaxisOptions from './caseVisualizationYaxisOptions';
 import * as openApiCase from './openApiCase';
 import * as dataTemplate from './dataTemplate';
 import * as data from './data';
@@ -17,12 +18,14 @@ import * as patient from './patient';
 import * as register from './register';
 import * as templateCategory from './templateCategory';
 import * as token from './token';
+import * as ocr from './ocr';
 export default {
   archive,
   caseTemplateDetail,
   caseTemplateSummary,
   caseVisualizationData,
-  caseVisualizationOptions,
+  caseVisualizationXaxisOptions,
+  caseVisualizationYaxisOptions,
   openApiCase,
   dataTemplate,
   data,
@@ -33,4 +36,5 @@ export default {
   register,
   templateCategory,
   token,
+  ocr,
 };

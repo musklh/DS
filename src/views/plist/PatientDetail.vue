@@ -77,7 +77,7 @@
             <el-table :data="section.items" border stripe size="small" :show-header="false">
               <el-table-column prop="label" label="项目" width="180">
                 <template #default="{ row }">
-                  <el-button type="primary" link @click="openTemplateDetailDialog(row.template_code, row.case_code)">
+                  <el-button type="primary" link @click="openTemplateDetailDialog(row.template_code, row.case_code, row.time)">
                     {{ row.label }}
                   </el-button>
                 </template>
@@ -96,7 +96,7 @@
             <el-table :data="section.items" border stripe size="small" :show-header="false">
               <el-table-column prop="label" label="项目" width="180">
                 <template #default="{ row }">
-                  <el-button type="primary" link @click="openTemplateDetailDialog(row.template_code, row.case_code)">
+                  <el-button type="primary" link @click="openTemplateDetailDialog(row.template_code, row.case_code, row.time)">
                     {{ row.label }}
                   </el-button>
                 </template>
@@ -375,7 +375,7 @@ const leftSections = computed(() => {
   return allCategories.slice(0, midPoint).map((category: TemplateCategoryData) => ({
     title: category.template_category,
     items: category.templates.map((template: TemplateItem) => ({
-      label: template.template_name,midPoint,
+      label: template.template_name,
       time: template.check_time,
       template_code: template.template_code,
       case_code: template.case_code
@@ -495,18 +495,18 @@ const goBack = () => {
 };
 
 // 新增：打开模板详情对话框
-const openTemplateDetailDialog = async (templateCode: string, caseCode: string) => {
+const openTemplateDetailDialog = async (templateCode: string, caseCode: string, check_time: string) => {
   if (!caseCode) {
     ElMessage.warning('缺少病例编号信息，无法获取模板详情。');
     return;
   }
   
-  console.log(`正在获取模板详情 - 病例编号: ${caseCode}, 模板编号: ${templateCode}`);
-  
+  console.log(`正在获取模板详情 - 病例编号: ${caseCode}, 模板编号: ${templateCode}, 检查时间: ${check_time}`);
   try {
     const res = await caseTemplateDetailCreate({
       case_code: caseCode,
-      template_code: templateCode
+      template_code: templateCode,
+      check_time: check_time
     });
 
     // 明确类型断言以解决 linter 错误
@@ -764,11 +764,11 @@ onMounted(() => {
   line-height: 1.7;
 }
 
-/deep/ .el-dialog .el-form-item {
+:deep(.el-dialog .el-form-item) {
   margin-bottom: 22px;
 }
 
-/deep/ .el-dialog .el-form-item__label {
+:deep(.el-dialog .el-form-item__label) {
   white-space: nowrap;
 }
 </style>

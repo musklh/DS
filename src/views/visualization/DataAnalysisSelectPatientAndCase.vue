@@ -66,7 +66,6 @@ import { ref, reactive } from 'vue';
 import { ElAlert, ElButton, ElCard, ElInput, ElTable, ElTableColumn, ElPagination, ElMessage } from 'element-plus';
 import { patientList, patientRead } from '../../api/patient';
 import { caseIdentityCases } from '@/api/openApiCase';
-import{caseVisualizationOptionsCreate} from '@/api/caseVisualizationOptions'
 
 const emit = defineEmits(['patient-case-selected', 'clear-selected']);
 
