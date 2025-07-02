@@ -189,7 +189,11 @@
         <el-divider />
         <el-table :data="currentTemplateDetail.items" border stripe size="small">
           <el-table-column prop="word_name" label="词条名称" />
-          <el-table-column prop="value" label="值" />
+          <el-table-column label="值">
+            <template #default="{ row }">
+              <span v-html="formatDisplayValue(row)"></span>
+            </template>
+          </el-table-column>
         </el-table>
       </div>
       <div v-else>
@@ -210,6 +214,7 @@ import { Right } from '@element-plus/icons-vue';
 import { caseTemplateSummaryCreate } from '../../api/caseTemplateSummary';
 import { caseTemplateDetailCreate } from '../../api/caseTemplateDetail';
 import { caseUpdate} from '../../api/openApiCase'
+import { dictionaryList } from '../../api/dictionary';
 
 // 定义接口以解决类型错误
 interface TemplateItem {
@@ -234,6 +239,7 @@ interface TemplateDetailItem {
   word_code: string;
   word_name: string;
   value: string;
+  input_type?: string;
 }
 
 interface TemplateDetailData {
@@ -298,6 +304,7 @@ const selectedCaseCodes = ref<string[]>([]);
 
 const templateDetailDialogVisible = ref(false);
 const currentTemplateDetail = ref<TemplateDetailData | null>(null);
+const dictionaryMap = ref<Map<string, any>>(new Map());
 
 // 切换病例选择
 const toggleCaseSelection = (caseCode: string) => {
@@ -310,6 +317,22 @@ const toggleCaseSelection = (caseCode: string) => {
     selectedCaseCodes.value.push(caseCode);
   }
   console.log('当前选中的病例:', selectedCaseCodes.value);
+};
+
+const fetchDictionary = async () => {
+    try {
+        const res = await dictionaryList({ page: 1, page_size: 99999 });
+        // @ts-ignore
+        if (res.data?.code === 200 && res.data?.data?.list) {
+            // @ts-ignore
+            res.data.data.list.forEach(item => {
+                dictionaryMap.value.set(item.word_code, item);
+            });
+        }
+    } catch (error) {
+        console.error('Failed to fetch dictionary', error);
+        ElMessage.error('获取系统词典失败');
+    }
 };
 
 // 获取模板数据 - 分别获取每个病例的模板数据
@@ -580,9 +603,20 @@ const openTemplateDetailDialog = async (templateCode: string, caseCode: string, 
     // 明确类型断言以解决 linter 错误
     const apiResponse = res.data as ApiResponse<TemplateDetailData>;
     if (apiResponse?.code === 200) {
-      currentTemplateDetail.value = apiResponse.data;
+      const augmentedItems = apiResponse.data.items.map(item => {
+        const dictInfo = dictionaryMap.value.get(item.word_code);
+        return {
+          ...item,
+          input_type: dictInfo ? dictInfo.input_type : 'text'
+        };
+      });
+
+      currentTemplateDetail.value = {
+        ...apiResponse.data,
+        items: augmentedItems
+      };
       templateDetailDialogVisible.value = true;
-      console.log('模板详情获取成功:', apiResponse.data);
+      console.log('模板详情获取成功:', currentTemplateDetail.value);
     } else {
       ElMessage.error(`获取模板详情失败: ${apiResponse?.msg || '未知错误'}`);
     }
@@ -590,6 +624,21 @@ const openTemplateDetailDialog = async (templateCode: string, caseCode: string, 
     console.error('获取模板详情失败:', error);
     ElMessage.error('获取模板详情失败');
   }
+};
+
+// 新增：格式化显示值
+const formatDisplayValue = (item: TemplateDetailItem) => {
+  if (item.input_type === 'multi_with_time' && item.value) {
+    try {
+      const data = JSON.parse(item.value);
+      return Object.entries(data)
+        .map(([key, value]) => `${key}: ${value}`)
+        .join('<br>');
+    } catch (e) {
+      return item.value;
+    }
+  }
+  return item.value;
 };
 
 // Combine all sections for timeline view
@@ -654,6 +703,7 @@ const formatTime = (dateTimeStr: string) => {
 // 组件挂载时获取数据
 onMounted(() => {
   fetchTemplateData();
+  fetchDictionary();
 });
 </script>
 
