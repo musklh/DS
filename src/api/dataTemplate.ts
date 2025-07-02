@@ -1,6 +1,6 @@
 // @ts-ignore
 /* eslint-disable */
-import request from '@/request';
+import request from '../request';
 
 /** API endpoint for 临床模板管理. - **Create**: POST /api/data-template/
   - `template_code` 自动生成

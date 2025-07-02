@@ -1,6 +1,6 @@
 // @ts-ignore
 /* eslint-disable */
-import request from '@/request';
+import request from '../request';
 
 /** 传入病例编号、模板编号和检查时间，返回该病例下该模板该次检查的所有词条及其值、检查时间、模板名称。
 

@@ -198,6 +198,17 @@ declare namespace API {
     value: string;
   };
 
+  type dataTableCrudListParams = {
+    /** 病例编号 */
+    case_code: string;
+    /** 模板编号 */
+    template_code: string;
+    /** 词条编号 */
+    word_code: string;
+    /** 检查时间，格式YYYY-MM-DD HH:MM:SS */
+    check_time: string;
+  };
+
   type DataTableDetail = {
     /** Id 自增id */
     id?: number;
@@ -292,6 +303,12 @@ declare namespace API {
     word_belong?: string;
     /** Data type 数据类型，如数值类型、文本类型 */
     data_type?: string;
+    /** 填写方式 */
+    input_type?: 'single' | 'multi' | 'text' | 'multi_with_followup' | 'multi_with_time';
+    /** 主选项 */
+    options?: string;
+    /** 后续选项 */
+    followup_options?: Record<string, any>;
   };
 
   type dictionaryDeleteParams = {

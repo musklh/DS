@@ -103,10 +103,58 @@
             </el-form-item>
             <el-form-item label="是否数值类型" prop="data_type">
               <el-select v-model="formData.data_type" :placeholder="formData.data_type === '' ? '否' : '请选择'">
-                <el-option label="是" value="数值类型" />
-                <el-option label="否" value="" />
+                <el-option label="数值类型" value="数值类型" />
+                <el-option label="文本类型" value="文本类型" />
               </el-select>
             </el-form-item>
+            <el-form-item label="填写方式" prop="input_type">
+              <el-select v-model="formData.input_type" placeholder="请选择填写方式" style="width: 100%;">
+                <el-option label="文本输入" value="text" />
+                <el-option label="单选" value="single" />
+                <el-option label="多选" value="multi" />
+                <el-option label="多选并填写时间" value="multi_with_time" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="主选项" prop="options">
+                <el-input v-model="formData.options" type="textarea" placeholder="多个选项请用英文逗号(,)隔开" />
+            </el-form-item>
+
+            <!-- 动态后续问题生成器 -->
+            <div v-if="mainOptionsArray.length > 0" class="followup-builder">
+              <el-divider>后续问题设置</el-divider>
+              <div v-for="option in mainOptionsArray" :key="option" class="followup-item">
+                <div class="followup-item-header">
+                  <span>主选项: <strong>{{ option }}</strong></span>
+                  <el-button
+                    v-if="!formData.followup_options || !formData.followup_options[option]"
+                    size="small"
+                    type="primary"
+                    plain
+                    icon="Plus"
+                    @click="addFollowUp(option)"
+                  >
+                    添加后续问题
+                  </el-button>
+                  <el-button v-else size="small" type="danger" plain icon="Minus" @click="removeFollowUp(option)">
+                    删除后续问题
+                  </el-button>
+                </div>
+                <div v-if="formData.followup_options && formData.followup_options[option]" class="followup-item-form">
+                  <el-form-item label="问题标签">
+                    <el-input v-model="formData.followup_options[option].label" size="small" placeholder="例如：程度" />
+                  </el-form-item>
+                  <el-form-item label="问题类型">
+                    <el-select v-model="formData.followup_options[option].input_type" size="small" placeholder="请选择">
+                      <el-option label="单选" value="single" />
+                      <el-option label="文本" value="text" />
+                    </el-select>
+                  </el-form-item>
+                  <el-form-item v-if="formData.followup_options[option].input_type === 'single'" label="问题选项">
+                    <el-input v-model="formData.followup_options[option].options" size="small" placeholder="用英文逗号(,)隔开" />
+                  </el-form-item>
+                </div>
+              </div>
+            </div>
           </el-form>
           <template #footer>
             <span class="dialog-footer">
@@ -121,7 +169,7 @@
 </template>
 <script lang="ts">
 import { defineComponent, ref, computed, onMounted, watch } from 'vue'
-import { Plus, Search } from '@element-plus/icons-vue'
+import { Plus, Search, Minus } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { dictionaryList, dictionaryCreate, dictionaryUpdate, dictionaryDelete } from '../../api/dictionary'
 //
@@ -134,6 +182,10 @@ interface DictItem {
   word_apply: string    // 词条应用
   word_belong?: string  // 从属别名
   data_type?: string | null // 新增：数据类型
+  input_type: string
+  options: string
+  followup_options?: Record<string, any>
+  followup_options_str?: string; // 用于UI绑定
 }
 const generateWordCode = (): string => {
   const randomDigits = Math.floor(Math.random() * 1_000_000) // 0 ~ 999999
@@ -143,7 +195,7 @@ const generateWordCode = (): string => {
 
 export default defineComponent({
   name: 'SystemDict',
-  components: { Plus, Search },
+  components: { Plus, Search, Minus },
   setup() {
     // 基础数据
     const searchKeyword = ref('')
@@ -161,7 +213,11 @@ export default defineComponent({
       word_class: '',
       word_apply: '',
       word_belong: '',
-      data_type: null // 默认值设为 null
+      data_type: null, // 默认值设为 null
+      input_type: '',
+      options: '',
+      followup_options: {},
+      followup_options_str: ''
     })
 
     // 表单验证规则
@@ -205,6 +261,27 @@ export default defineComponent({
       currentPage.value = 1
     })
 
+    const mainOptionsArray = computed(() => {
+      if (formData.value.options) {
+        return formData.value.options.split(',').map(o => o.trim()).filter(o => o);
+      }
+      return [];
+    });
+
+    // 监视 followup_options_str 的变化，并尝试解析它
+    watch(() => formData.value.followup_options_str, (newVal) => {
+      try {
+        if (newVal) {
+          formData.value.followup_options = JSON.parse(newVal);
+        } else {
+          formData.value.followup_options = {};
+        }
+      } catch (e) {
+        // 如果JSON无效，可以提示用户或保持 followup_options 不变
+        console.error("Invalid JSON format for followup_options_str");
+      }
+    });
+
     // 获取词条列表函数
     const fetchDictList = async () => {
       try {
@@ -212,10 +289,13 @@ export default defineComponent({
           page: 1, // 获取所有数据
           page_size: 99999
         })
-        if (res?.data?.code === 200 && res.data?.data) {
+        // @ts-ignore
+        if (res?.data?.code === 200 && res.data?.data?.list) {
+          // @ts-ignore
           allDictList.value = res.data.data.list.map((item: any) => ({
             ...item,
-            data_type: item.data_type === '数值类型' ? '是' : '否'
+            data_type: item.data_type === '数值类型' ? '是' : '否',
+            followup_options_str: JSON.stringify(item.followup_options || {}, null, 2)
           }))
         } else {
           allDictList.value = []
@@ -247,7 +327,11 @@ export default defineComponent({
         word_class: '',
         word_apply: '',
         word_belong: '',
-        data_type: '' // 默认值设为 null
+        data_type: '', // 默认值设为 null
+        input_type: '',
+        options: '',
+        followup_options: {},
+        followup_options_str: '{}'
       }
       dialogVisible.value = true
     }
@@ -256,7 +340,11 @@ export default defineComponent({
     const handleEdit = (row: DictItem) => {
       isEdit.value = true
       // 确保 data_type 转换回后端期望的 '数值类型' 或 ""
-      formData.value = { ...row, data_type: row.data_type === '是' ? '数值类型' : "" }
+      formData.value = { 
+        ...row, 
+        data_type: row.data_type === '是' ? '数值类型' : "",
+        followup_options_str: JSON.stringify(row.followup_options || {}, null, 2)
+      }
       dialogVisible.value = true
     }
 
@@ -290,13 +378,14 @@ export default defineComponent({
               ...formData.value,
               data_type: formData.value.data_type || "" // 确保 data_type 为 null 或 undefined 时传空字符串
             }
+            delete submitData.followup_options_str;
 
             if (isEdit.value && submitData.word_code) {
               await dictionaryUpdate({ word_code: submitData.word_code }, submitData as API.Dictionary)
               ElMessage.success('编辑成功')
             } else {
               delete submitData.word_code // 新增时不需要 word_code
-              await dictionaryCreate(submitData as API.Dictionary)
+              await dictionaryCreate(submitData)
               ElMessage.success('添加成功')
             }
 
@@ -319,6 +408,23 @@ export default defineComponent({
       return word_classMap[word_class] || 'info'
     }
 
+    const addFollowUp = (option: string) => {
+      if (!formData.value.followup_options) {
+        formData.value.followup_options = {};
+      }
+      formData.value.followup_options[option] = {
+        label: '',
+        input_type: 'single',
+        options: ''
+      };
+    };
+
+    const removeFollowUp = (option: string) => {
+      if (formData.value.followup_options && formData.value.followup_options[option]) {
+        delete formData.value.followup_options[option];
+      }
+    };
+
     onMounted(() => {
       fetchDictList()
     })
@@ -340,7 +446,10 @@ export default defineComponent({
       pageSize,
       total,
       handlePageChange,
-      handlePageSizeChange
+      handlePageSizeChange,
+      mainOptionsArray,
+      addFollowUp,
+      removeFollowUp,
     }
   }
 })
@@ -361,8 +470,6 @@ export default defineComponent({
 .button-icon {
   margin-right: 5px;
 }
-
-
 
 .dict-container {
   height: 100vh;
@@ -421,5 +528,37 @@ export default defineComponent({
   margin-top: 20px;
   display: flex;
   justify-content: flex-end;
+}
+
+.followup-builder {
+  border-top: 1px solid #e9ecef;
+  margin-top: 20px;
+  padding-top: 15px;
+}
+
+.followup-item {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 10px 15px;
+  margin-bottom: 10px;
+}
+
+.followup-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.followup-item-form {
+  padding-left: 20px;
+  border-left: 3px solid #ced4da;
+  padding-top: 10px;
+  padding-bottom: 1px; /* To contain margins of form items */
+}
+
+.followup-item-form .el-form-item {
+    margin-bottom: 18px;
 }
 </style>

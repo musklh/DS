@@ -2,7 +2,7 @@
 /* eslint-disable */
 import request from '@/request';
 
-/** 根据病例编号查询Y轴选项（所有数值型词条） POST /case-visualization-yaxis-options/ */
+/** 根据病例编号查询Y轴选项（所有数值型词条），按模板分组返回 POST /case-visualization-yaxis-options/ */
 export async function caseVisualizationYaxisOptionsCreate(
   body: {
     /** 病例编号 */
