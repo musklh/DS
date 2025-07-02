@@ -54,36 +54,40 @@
                 <span v-if="item.word_short" class="unit-label">{{ item.word_short }}</span>
               </el-form-item>
 
-              <!-- 多选 -->
-              <el-form-item v-else-if="item.input_type === 'multi'" :prop="`values.${item.word_code}`">
-                 <template #label>
-                  <el-tooltip :content="item.word_name" placement="top" :disabled="item.word_name.length <= 8">
-                    <span class="form-label">{{ item.word_name }}</span>
-                  </el-tooltip>
-                </template>
-                <el-checkbox-group v-model="formData.values[item.word_code]">
-                  <el-checkbox v-for="option in item.options.split(',')" :key="option" :label="option" />
-                </el-checkbox-group>
+              <!-- 单选 -->
+              <el-form-item v-else-if="item.input_type === 'single'" :prop="`values.${item.word_code}`" :label="item.word_name">
+                  <el-radio-group v-model="formData.values[item.word_code]">
+                      <el-radio v-for="option in item.options.split(',')" :key="option" :label="option" />
+                  </el-radio-group>
               </el-form-item>
 
-              <!-- 多选并填写时间 -->
-              <el-form-item v-else-if="item.input_type === 'multi_with_time'" :label="item.word_name">
-                <div class="multi-with-time-group">
-                  <el-checkbox-group v-model="formData.values[item.word_code].selected">
-                    <div v-for="option in item.options.split(',')" :key="option" class="checkbox-time-item">
-                      <el-checkbox :label="option" />
-                      <el-date-picker
-                        v-if="isOptionSelected(item.word_code, option)"
-                        v-model="formData.values[item.word_code].times[option]"
-                        type="datetime"
-                        placeholder="选择时间"
-                        value-format="YYYY-MM-DD HH:mm:ss"
-                        size="small"
-                        style="margin-left: 10px;"
-                      />
+              <!-- 多选 / 多选带时间 / 级联选择 -->
+              <el-form-item v-else-if="item.input_type === 'multi' || item.input_type === 'multi_with_time'" :label="item.word_name" :prop="`values.${item.word_code}`">
+                <el-checkbox-group v-model="formData.values[item.word_code].selected">
+                  <div v-for="option in item.options.split(',')" :key="option" class="checkbox-time-item">
+                    <el-checkbox :label="option" />
+                    
+                    <!-- 多选带时间 -->
+                    <el-date-picker
+                      v-if="item.input_type === 'multi_with_time' && isOptionSelected(item.word_code, option)"
+                      v-model="formData.values[item.word_code].times[option]"
+                      type="datetime"
+                      placeholder="选择时间"
+                      value-format="YYYY-MM-DD HH:mm:ss"
+                      size="small"
+                      style="margin-left: 10px;"
+                    />
+
+                    <!-- 级联子问题 -->
+                    <div v-if="isOptionSelected(item.word_code, option) && item.followup_options && item.followup_options[option]" class="followup-container">
+                        <span class="followup-label">{{ item.followup_options[option].label || option }}:</span>
+                        <el-radio-group v-if="item.followup_options[option].input_type === 'single'" v-model="formData.values[item.word_code].followup[option]">
+                           <el-radio v-for="fu_option in item.followup_options[option].options.split(',')" :key="fu_option" :label="fu_option" />
+                        </el-radio-group>
+                        <el-input v-else v-model="formData.values[item.word_code].followup[option]" size="small" placeholder="请输入" style="width: 150px;"/>
                     </div>
-                  </el-checkbox-group>
-                </div>
+                  </div>
+                </el-checkbox-group>
               </el-form-item>
             </template>
           </el-form>
@@ -198,6 +202,8 @@ import {
   ElTooltip,
   ElCheckboxGroup,
   ElCheckbox,
+  ElRadioGroup,
+  ElRadio,
 } from 'element-plus';
 import { Refresh, InfoFilled, Camera, Upload } from '@element-plus/icons-vue';
 import { dataCreate } from '../../api/data';
@@ -241,12 +247,12 @@ const initializeFormData = () => {
   const newValues = {};
   if (props.selectedTemplate?.dictionaryList) {
     props.selectedTemplate.dictionaryList.forEach(item => {
-      if (item.input_type === 'multi') {
-        newValues[item.word_code] = []; // 多选初始化为空数组
-      } else if (item.input_type === 'multi_with_time') {
-        newValues[item.word_code] = { selected: [], times: {} };
+      if (item.input_type === 'multi' || item.input_type === 'multi_with_time') {
+        newValues[item.word_code] = { selected: [], times: {}, followup: {} };
+      } else if (item.input_type === 'single') {
+        newValues[item.word_code] = '';
       } else {
-        newValues[item.word_code] = ''; // 其他默认为空字符串
+        newValues[item.word_code] = ''; // text
       }
     });
   }
@@ -276,25 +282,35 @@ const formRules = computed(() => {
   if (props.selectedTemplate?.dictionaryList) {
     props.selectedTemplate.dictionaryList.forEach(item => {
       const rule = { required: true, trigger: 'blur' };
-      if (item.input_type === 'multi') {
+      if (item.input_type === 'multi' || item.input_type === 'multi_with_time') {
         rule.message = `请选择${item.word_name}`;
         rule.trigger = 'change';
-        rule.type = 'array'; // 对数组类型进行校验
-      } else if (item.input_type === 'multi_with_time') {
-        rule.message = `请选择${item.word_name}`;
-        rule.trigger = 'change';
-        // 自定义校验规则
+        // 自定义校验
         rule.validator = (rule, value, callback) => {
           if (!value || value.selected.length === 0) {
             return callback(new Error(`请至少选择一个${item.word_name}`));
           }
-          for (const option of value.selected) {
-            if (!value.times[option]) {
-              return callback(new Error(`请为'${option}'选择时间`));
+          // 校验 multi_with_time
+          if (item.input_type === 'multi_with_time') {
+            for (const option of value.selected) {
+              if (!value.times[option]) {
+                return callback(new Error(`请为'${option}'选择时间`));
+              }
+            }
+          }
+          // 校验级联选项
+          if (item.followup_options) {
+            for (const option of value.selected) {
+              if (item.followup_options[option] && !value.followup[option]) {
+                  return callback(new Error(`请完成'${option}'的后续选项`));
+              }
             }
           }
           callback();
         };
+      } else if (item.input_type === 'single') {
+          rule.message = `请选择${item.word_name}`;
+          rule.trigger = 'change';
       } else {
         rule.message = `请输入${item.word_name}`;
       }
@@ -492,21 +508,40 @@ const submitForm = async () => {
         const dataToSubmit = [];
         for (const word_code in formData.values) {
           const value = formData.values[word_code];
-          let formattedValue = value;
+          const item = props.selectedTemplate.dictionaryList.find(i => i.word_code === word_code);
+          
+          if (!item) continue; // 安全起见，如果找不到词条定义则跳过
 
-          // 对多选数组进行格式化
-          if (Array.isArray(value)) {
-            formattedValue = value.join(',');
-          } else if (typeof value === 'object' && value !== null && value.selected) {
-            // 对 multi_with_time 对象进行格式化
-            const timeData = {};
-            value.selected.forEach(option => {
-              timeData[option] = value.times[option];
-            });
-            formattedValue = JSON.stringify(timeData);
+          let formattedValue;
+
+          if (typeof value === 'object' && value !== null && value.hasOwnProperty('selected')) {
+            // 处理多选、多选带时间、级联等复杂类型
+            if (!value.selected || value.selected.length === 0) {
+              formattedValue = '';
+            } else if (item.input_type === 'multi' && !item.followup_options) {
+              // 1. 如果是简单的多选（没有后续问题），则格式化为逗号分隔的字符串
+              formattedValue = value.selected.join(',');
+            } else {
+              // 2. 如果是多选带时间或带后续问题，则格式化为JSON对象
+              const submissionObject = {};
+              value.selected.forEach(option => {
+                if (item.input_type === 'multi_with_time' && value.times && value.times[option]) {
+                  submissionObject[option] = value.times[option];
+                } else if (item.followup_options && item.followup_options[option] && value.followup && value.followup[option]) {
+                  submissionObject[option] = value.followup[option];
+                } else {
+                  submissionObject[option] = true; // 对于没有值的多选项，标记为true
+                }
+              });
+              formattedValue = JSON.stringify(submissionObject);
+            }
+          } else {
+            // 处理文本、单选等简单类型
+            formattedValue = value;
           }
           
-          if (formattedValue && formattedValue !== '{}' && formattedValue !== '[]') { // 只提交有值的数据
+          // 只提交有意义的数据
+          if (formattedValue && formattedValue !== '{}' && formattedValue !== '[]' && formattedValue !== '') {
             dataToSubmit.push({
               word_code: word_code,
               value: formattedValue,
@@ -971,5 +1006,20 @@ const resetForm = () => {
   display: flex;
   align-items: center;
   margin-bottom: 10px;
+}
+
+.followup-container {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 20px;
+  background-color: #f5f7fa;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.followup-label {
+    margin-right: 8px;
+    font-size: 14px;
+    color: #606266;
 }
 </style>

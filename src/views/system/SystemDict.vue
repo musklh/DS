@@ -118,9 +118,43 @@
             <el-form-item label="主选项" prop="options">
                 <el-input v-model="formData.options" type="textarea" placeholder="多个选项请用英文逗号(,)隔开" />
             </el-form-item>
-            <el-form-item label="后续选项" prop="followup_options">
-                <el-input v-model="formData.followup_options_str" type="textarea" placeholder="请输入JSON格式的后续选项" />
-            </el-form-item>
+
+            <!-- 动态后续问题生成器 -->
+            <div v-if="mainOptionsArray.length > 0" class="followup-builder">
+              <el-divider>后续问题设置</el-divider>
+              <div v-for="option in mainOptionsArray" :key="option" class="followup-item">
+                <div class="followup-item-header">
+                  <span>主选项: <strong>{{ option }}</strong></span>
+                  <el-button
+                    v-if="!formData.followup_options || !formData.followup_options[option]"
+                    size="small"
+                    type="primary"
+                    plain
+                    icon="Plus"
+                    @click="addFollowUp(option)"
+                  >
+                    添加后续问题
+                  </el-button>
+                  <el-button v-else size="small" type="danger" plain icon="Minus" @click="removeFollowUp(option)">
+                    删除后续问题
+                  </el-button>
+                </div>
+                <div v-if="formData.followup_options && formData.followup_options[option]" class="followup-item-form">
+                  <el-form-item label="问题标签">
+                    <el-input v-model="formData.followup_options[option].label" size="small" placeholder="例如：程度" />
+                  </el-form-item>
+                  <el-form-item label="问题类型">
+                    <el-select v-model="formData.followup_options[option].input_type" size="small" placeholder="请选择">
+                      <el-option label="单选" value="single" />
+                      <el-option label="文本" value="text" />
+                    </el-select>
+                  </el-form-item>
+                  <el-form-item v-if="formData.followup_options[option].input_type === 'single'" label="问题选项">
+                    <el-input v-model="formData.followup_options[option].options" size="small" placeholder="用英文逗号(,)隔开" />
+                  </el-form-item>
+                </div>
+              </div>
+            </div>
           </el-form>
           <template #footer>
             <span class="dialog-footer">
@@ -135,7 +169,7 @@
 </template>
 <script lang="ts">
 import { defineComponent, ref, computed, onMounted, watch } from 'vue'
-import { Plus, Search } from '@element-plus/icons-vue'
+import { Plus, Search, Minus } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { dictionaryList, dictionaryCreate, dictionaryUpdate, dictionaryDelete } from '../../api/dictionary'
 //
@@ -161,7 +195,7 @@ const generateWordCode = (): string => {
 
 export default defineComponent({
   name: 'SystemDict',
-  components: { Plus, Search },
+  components: { Plus, Search, Minus },
   setup() {
     // 基础数据
     const searchKeyword = ref('')
@@ -226,6 +260,13 @@ export default defineComponent({
     watch(searchKeyword, () => {
       currentPage.value = 1
     })
+
+    const mainOptionsArray = computed(() => {
+      if (formData.value.options) {
+        return formData.value.options.split(',').map(o => o.trim()).filter(o => o);
+      }
+      return [];
+    });
 
     // 监视 followup_options_str 的变化，并尝试解析它
     watch(() => formData.value.followup_options_str, (newVal) => {
@@ -367,6 +408,23 @@ export default defineComponent({
       return word_classMap[word_class] || 'info'
     }
 
+    const addFollowUp = (option: string) => {
+      if (!formData.value.followup_options) {
+        formData.value.followup_options = {};
+      }
+      formData.value.followup_options[option] = {
+        label: '',
+        input_type: 'single',
+        options: ''
+      };
+    };
+
+    const removeFollowUp = (option: string) => {
+      if (formData.value.followup_options && formData.value.followup_options[option]) {
+        delete formData.value.followup_options[option];
+      }
+    };
+
     onMounted(() => {
       fetchDictList()
     })
@@ -388,7 +446,10 @@ export default defineComponent({
       pageSize,
       total,
       handlePageChange,
-      handlePageSizeChange
+      handlePageSizeChange,
+      mainOptionsArray,
+      addFollowUp,
+      removeFollowUp,
     }
   }
 })
@@ -409,8 +470,6 @@ export default defineComponent({
 .button-icon {
   margin-right: 5px;
 }
-
-
 
 .dict-container {
   height: 100vh;
@@ -469,5 +528,37 @@ export default defineComponent({
   margin-top: 20px;
   display: flex;
   justify-content: flex-end;
+}
+
+.followup-builder {
+  border-top: 1px solid #e9ecef;
+  margin-top: 20px;
+  padding-top: 15px;
+}
+
+.followup-item {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 10px 15px;
+  margin-bottom: 10px;
+}
+
+.followup-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.followup-item-form {
+  padding-left: 20px;
+  border-left: 3px solid #ced4da;
+  padding-top: 10px;
+  padding-bottom: 1px; /* To contain margins of form items */
+}
+
+.followup-item-form .el-form-item {
+    margin-bottom: 18px;
 }
 </style>

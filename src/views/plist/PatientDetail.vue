@@ -628,16 +628,21 @@ const openTemplateDetailDialog = async (templateCode: string, caseCode: string, 
 
 // 新增：格式化显示值
 const formatDisplayValue = (item: TemplateDetailItem) => {
-  if (item.input_type === 'multi_with_time' && item.value) {
+  if (item.value && item.value.startsWith('{') && item.value.endsWith('}')) {
     try {
       const data = JSON.parse(item.value);
       return Object.entries(data)
-        .map(([key, value]) => `${key}: ${value}`)
+        .map(([key, value]) => {
+          if (value === true) return key; // 对于没有值的多选项，只显示键名
+          return `${key}: ${value}`;
+        })
         .join('<br>');
     } catch (e) {
+      // JSON 解析失败，返回原始值
       return item.value;
     }
   }
+  // 对于非JSON字符串，直接返回值
   return item.value;
 };
 
