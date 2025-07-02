@@ -12,7 +12,7 @@
           <el-input v-model="search" placeholder="搜索姓名/身份证号" clearable @keyup.enter="fetchPatients" style="width: 240px; margin-right: 12px;" />
           <el-button type="primary" @click="fetchPatients">搜索</el-button>
         </div>
-        <el-table :data="patients" style="width: 100%; margin-top: 16px;" border stripe size="small">
+        <el-table :data="patients" style="width: 100%; margin-top: 16px;" border stripe size="default">
           <el-table-column prop="name" label="姓名" width="120" />
           <el-table-column prop="identity_id" label="身份证号" />
           <el-table-column prop="gender" label="性别" width="80">
@@ -149,13 +149,11 @@ fetchPatients();
 .select-patient-area, .select-case-area {
   padding: 32px 0 0 0;
 }
+
 .search-bar {
   display: flex;
   align-items: center;
   justify-content: flex-end;
 }
 
-.my-large-table {
-  font-size: 24px;
-}
 </style>

@@ -16,18 +16,21 @@
       </el-button>
     </div>
 
+    <!-- 如果有选中的患者，直接显示患者详情（无论是否选择了档案） -->
+    <div v-if="selectedPatient" class="table-card-wrap">
+      <PatientDetail :patient="selectedPatient" @back="goBackToTable" />
+    </div>
+
+    <!-- 如果没有选中档案，显示提示信息 -->
     <el-alert
-      v-if="!selectedCase"
+      v-else-if="!selectedCase"
       title="查看患者列表之前请选择专病档案！"
       type="info"
       show-icon
       class="mt-4"
     />
 
-    <div v-else-if="selectedPatient" class="table-card-wrap">
-      <PatientDetail :patient="selectedPatient" @back="goBackToTable" />
-    </div>
-
+    <!-- 显示患者列表 -->
     <div v-else class="table-card-wrap">
       <el-card class="table-card">
         <div class="card-header">
@@ -59,6 +62,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
+import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import { patientMergedCaseList } from '../../api/patientMergedCase';
 import { caseIdentityCases } from '../../api/openApiCase';
@@ -91,6 +95,8 @@ interface Patient {
   allCases: any[];
 }
 
+const router = useRouter();
+
 const selectedCase = ref('');
 const selectedCaseName = ref('');
 const selectedPatient = ref<Patient | null>(null);
@@ -111,6 +117,28 @@ watch(searchQuery, (newVal, oldVal) => {
 
 // 页面加载时读取 localStorage
 onMounted(() => {
+  // 首先检查是否有从可视化页面传递的患者数据
+  const selectedPatientDetailStr = localStorage.getItem('selectedPatientDetail');
+  if (selectedPatientDetailStr) {
+    try {
+      const patientDetail = JSON.parse(selectedPatientDetailStr);
+      console.log('检测到从可视化页面传递的患者数据:', patientDetail);
+      
+      // 直接显示患者详情
+      selectedPatient.value = patientDetail;
+      
+      // 清除localStorage中的数据，避免重复使用
+      localStorage.removeItem('selectedPatientDetail');
+      
+      // 不需要设置档案选择器状态，因为是直接跳转到详情页
+      return;
+    } catch (error) {
+      console.error('解析患者详情数据失败:', error);
+      localStorage.removeItem('selectedPatientDetail');
+    }
+  }
+  
+  // 正常的档案选择流程
   const archiveCode = localStorage.getItem('selectedCase') || '';
   const archiveName = localStorage.getItem('selectedCaseName') || '';
   if (archiveCode) {
@@ -202,6 +230,11 @@ const handleViewDetail = async (patient: Patient) => {
 
 const goBackToTable = () => {
   selectedPatient.value = null;
+  
+  // 如果没有选择档案，说明是从可视化页面跳转过来的，需要返回到数据分析页面
+  if (!selectedCase.value) {
+    router.push('/dashboard/DataAnalysisView');
+  }
 };
 
 const refreshTable = async () => {

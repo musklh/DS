@@ -9,10 +9,16 @@
       <el-icon class="refresh-icon">
         <Refresh />
       </el-icon>
-      <el-button class="back-button" size="small" @click="emit('go-back-to-selection')">
-        <el-icon><Back /></el-icon>
-        返回选择
-      </el-button>
+      <div class="header-buttons">
+        <el-button class="patient-detail-button" size="small" type="primary" @click="goToPatientDetail">
+          <el-icon><User /></el-icon>
+          查看病例详情
+        </el-button>
+        <el-button class="back-button" size="small" @click="emit('go-back-to-selection')">
+          <el-icon><Back /></el-icon>
+          返回选择
+        </el-button>
+      </div>
     </div>
       <!-- Y轴指标选择区域 -->
       <div class="axis-select-block">
@@ -125,6 +131,7 @@
 
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue';
+import { useRouter } from 'vue-router';
 import {
   ElDivider,
   ElIcon,
@@ -138,9 +145,11 @@ import {
   ElTableColumn,
   ElAlert
 } from 'element-plus';
-import { Refresh, Back, Download } from '@element-plus/icons-vue';
+import { Refresh, Back, Download, User } from '@element-plus/icons-vue';
 import { caseVisualizationDataCreate } from '../../api/caseVisualizationData';
 import { caseVisualizationXaxisOptionsCreate } from '../../api/caseVisualizationXaxisOptions';
+import { caseIdentityCases } from '../../api/openApiCase';
+import { ElMessage } from 'element-plus';
 import VChart from 'vue-echarts';
 import html2canvas from 'html2canvas';
 import * as XLSX from 'xlsx';
@@ -153,6 +162,7 @@ const props = defineProps({
   }
 });
 const emit = defineEmits(['go-back-to-selection']);
+const router = useRouter();
 
 const selectedY = ref(''); // 只允许单选
 const selectedX = ref([]); // 多选
@@ -373,6 +383,59 @@ const handleSelectionChange = async () => {
     chartTitle.value = '';
   }
 };
+
+// 跳转到病例详情页面
+const goToPatientDetail = async () => {
+  try {
+    console.log('准备跳转到病例详情页，患者身份证号:', props.patientData.idCard);
+    
+    // 获取患者的所有病例信息
+    const res = await caseIdentityCases({ identity_id: props.patientData.idCard });
+    console.log('获取病例信息响应:', res.data);
+    
+    if (res.data?.code === 200) {
+      const caseList = res.data.data.list || [];
+      
+      if (caseList.length === 0) {
+        ElMessage.warning('该患者暂无病例信息');
+        return;
+      }
+      
+      // 构造患者详情数据
+      const patientDetail = {
+        identity_name: props.patientData.name,
+        gender: props.patientData.gender === '男' ? 1 : 0,
+        age: parseInt(props.patientData.age) || 0,
+        idCard: props.patientData.idCard,
+        phone_number: '',
+        home_address: '',
+        blood_type: '',
+        rh: '',
+        has_transplant_surgery: '',
+        is_in_transplant_queue: '',
+        main_diagnosis: '',
+        allCases: caseList,
+        // 从第一个病例中获取一些基本信息
+        ...(caseList[0] || {})
+      };
+      
+      console.log('构造的患者详情数据:', patientDetail);
+      
+      // 跳转到患者列表页面并传递患者数据
+      // 通过路由参数或者localStorage传递数据
+      localStorage.setItem('selectedPatientDetail', JSON.stringify(patientDetail));
+      
+      await router.push('/dashboard/patient-list');
+      
+      ElMessage.success('正在跳转到病例详情页面...');
+    } else {
+      ElMessage.error('获取病例信息失败: ' + (res.data?.msg || '未知错误'));
+    }
+  } catch (error) {
+    console.error('跳转到病例详情页面失败:', error);
+    ElMessage.error('跳转失败，请重试');
+  }
+};
 </script>
 
 <style scoped>
@@ -411,8 +474,32 @@ const handleSelectionChange = async () => {
   color: #409eff;
 }
 
+.header-buttons {
+  margin-left: auto; /* Pushes button group to the far right */
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.patient-detail-button {
+  border: 1px solid #409eff;
+  background-color: #409eff;
+  color: white;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.patient-detail-button:hover {
+  background-color: #66b1ff;
+  border-color: #66b1ff;
+}
+
+.patient-detail-button .el-icon {
+  margin-right: 5px;
+  font-size: 16px;
+}
+
 .back-button {
-  margin-left: auto; /* Pushes button to the far right */
   border: none;
   background-color: transparent;
   color: #606266;
