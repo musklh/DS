@@ -14,9 +14,9 @@
           <el-icon><User /></el-icon>
           查看病例详情
         </el-button>
-        <el-button class="back-button" size="small" @click="emit('go-back-to-selection')">
+        <el-button class="back-button" size="small" @click="handleBackNavigation">
           <el-icon><Back /></el-icon>
-          返回选择
+          {{ backButtonText }}
         </el-button>
       </div>
     </div>
@@ -158,7 +158,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick } from 'vue';
+import { ref, computed, watch, nextTick, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import {
   ElDivider,
@@ -202,6 +202,10 @@ const xAxisOptions = ref([]); // 动态获取的X轴时间选项
 const isLoadingXAxis = ref(false); // X轴数据加载状态
 const expandedTemplates = ref({}); // 控制模板展开状态
 const showResult = computed(() => selectedY.value && selectedX.value.length > 0 && chartValues.value.length > 0);
+
+// 检测是否从患者详情页面进入
+const isFromPatientDetail = ref(false);
+const backButtonText = computed(() => isFromPatientDetail.value ? '返回患者详情' : '返回选择');
 
 // 格式化X轴时间选项显示
 const formattedXAxisOptions = computed(() => {
@@ -436,6 +440,28 @@ watch(() => props.axisData.templateData, () => {
   initExpandedTemplates();
 }, { immediate: true, deep: true });
 
+// 检测进入来源并设置返回行为
+const checkEntrySource = () => {
+  // 检查是否有患者详情页面的标记
+  const fromPatientDetail = sessionStorage.getItem('fromPatientDetail');
+  if (fromPatientDetail) {
+    isFromPatientDetail.value = true;
+    // 使用后清除标记
+    sessionStorage.removeItem('fromPatientDetail');
+  }
+};
+
+// 处理返回导航
+const handleBackNavigation = () => {
+  if (isFromPatientDetail.value) {
+    // 返回患者列表页面
+    router.push('/dashboard/patient-list');
+  } else {
+    // 返回选择页面
+    emit('go-back-to-selection');
+  }
+};
+
 // 跳转到病例详情页面
 const goToPatientDetail = async () => {
   try {
@@ -488,6 +514,11 @@ const goToPatientDetail = async () => {
     ElMessage.error('跳转失败，请重试');
   }
 };
+
+// 组件挂载时检测进入来源
+onMounted(() => {
+  checkEntrySource();
+});
 </script>
 
 <style scoped>

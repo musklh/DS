@@ -39,7 +39,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 import { ElSteps, ElStep, ElMessage, ElDivider, ElIcon } from 'element-plus';
 import { UserFilled, Document, DataAnalysis, Refresh } from '@element-plus/icons-vue';
 import DataAnalysisSelectPatientAndCase from './DataAnalysisSelectPatientAndCase.vue';
@@ -104,6 +104,36 @@ const handleClearSelected = () => {
   currentStep.value = 1;
   resetKey.value++;
 };
+
+// 检测从患者详情页面传递的数据
+const checkPatientDataFromDetails = async () => {
+  try {
+    const storedData = localStorage.getItem('visualizationPatientData');
+    if (storedData) {
+      const patientData = JSON.parse(storedData);
+      console.log('检测到从患者详情页面传递的数据:', patientData);
+      
+      // 清除localStorage中的数据
+      localStorage.removeItem('visualizationPatientData');
+      
+      // 设置患者数据并直接调用选择处理函数
+      await handlePatientCaseSelected({
+        patientName: patientData.name,
+        gender: patientData.gender,
+        age: patientData.age,
+        idCard: patientData.idCard,
+        caseId: patientData.caseId
+      });
+    }
+  } catch (error) {
+    console.error('处理从患者详情页面传递的数据失败:', error);
+  }
+};
+
+// 组件挂载时检查是否有传递的数据
+onMounted(() => {
+  checkPatientDataFromDetails();
+});
 </script>
 
 <style scoped>
