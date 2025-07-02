@@ -1,6 +1,6 @@
 // @ts-ignore
 /* eslint-disable */
-import request from '@/request';
+import request from '../request';
 
 /** 传入一个或多个病例编号（case_code），返回这些病例的所有数据模板下的数据，包含模板分类、模板名称、模板编号、检查时间。
 

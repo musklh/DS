@@ -9,6 +9,7 @@ import * as caseVisualizationData from './caseVisualizationData';
 import * as caseVisualizationXaxisOptions from './caseVisualizationXaxisOptions';
 import * as caseVisualizationYaxisOptions from './caseVisualizationYaxisOptions';
 import * as openApiCase from './openApiCase';
+import * as dataTableCrud from './dataTableCrud';
 import * as dataTemplate from './dataTemplate';
 import * as data from './data';
 import * as dictionary from './dictionary';
@@ -18,7 +19,6 @@ import * as patient from './patient';
 import * as register from './register';
 import * as templateCategory from './templateCategory';
 import * as token from './token';
-import * as ocr from './ocr';
 export default {
   archive,
   caseTemplateDetail,
@@ -27,6 +27,7 @@ export default {
   caseVisualizationXaxisOptions,
   caseVisualizationYaxisOptions,
   openApiCase,
+  dataTableCrud,
   dataTemplate,
   data,
   dictionary,
@@ -36,5 +37,4 @@ export default {
   register,
   templateCategory,
   token,
-  ocr,
 };

@@ -1,6 +1,6 @@
 // @ts-ignore
 /* eslint-disable */
-import request from '@/request';
+import request from '../request';
 
 /** API endpoint for 系统词条 (System Dictionary). - **Create**: POST /api/dictionary/
   - `word_code` is auto-generated.
@@ -29,18 +29,44 @@ export async function dictionaryList(
   );
 }
 
-/** API endpoint for 系统词条 (System Dictionary). - **Create**: POST /api/dictionary/
-  - `word_code` is auto-generated.
-  - Required fields: `word_name`, `word_class`, `word_apply`.
-  - Optional fields: `word_eng`, `word_short`, `word_belong`, `data_type`.
-- **List**: GET /api/dictionary/
-  - 支持分页: ?page=1&page_size=10
-- **Retrieve**: GET /api/dictionary/{word_code}/
-- **Update**: PUT /api/dictionary/{word_code}/ (all fields except word_code)
-- **Partial Update**: PATCH /api/dictionary/{word_code}/ (specified fields except word_code)
-- **Delete**: DELETE /api/dictionary/{word_code}/ POST /dictionary/ */
-export async function dictionaryCreate(body: API.Dictionary, options?: { [key: string]: any }) {
-  return request<API.Dictionary>('/dictionary/', {
+/** 创建词条 POST /dictionary/ */
+export async function dictionaryCreate(
+  body: {
+    /** 中文名称 */
+    word_name: string;
+    /** 英文名称 */
+    word_eng?: string;
+    /** 英文缩写 */
+    word_short?: string;
+    /** 词条类型 */
+    word_class: string;
+    /** 词条应用 */
+    word_apply: string;
+    /** 从属别名 */
+    word_belong?: string;
+    /** 数据类型 */
+    data_type?: string;
+    /** 填写方式 */
+    input_type: string;
+    /** 主选项 */
+    options: string;
+    /** 后续选项 */
+    followup_options?: Record<string, any>;
+  },
+  options?: { [key: string]: any }
+) {
+  return request<{
+    word_name: string;
+    word_eng?: string;
+    word_short?: string;
+    word_class: string;
+    word_apply: string;
+    word_belong?: string;
+    data_type?: string;
+    input_type: string;
+    options: string;
+    followup_options?: Record<string, any>;
+  }>('/dictionary/', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

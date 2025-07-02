@@ -1,6 +1,6 @@
 // @ts-ignore
 /* eslint-disable */
-import request from '@/request';
+import request from '../request';
 
 /** 用户登录 POST /login/ */
 export async function loginCreate(body: API.Login, options?: { [key: string]: any }) {

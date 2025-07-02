@@ -103,8 +103,8 @@
             </el-form-item>
             <el-form-item label="是否数值类型" prop="data_type">
               <el-select v-model="formData.data_type" :placeholder="formData.data_type === '' ? '否' : '请选择'">
-                <el-option label="是" value="数值类型" />
-                <el-option label="否" value="" />
+                <el-option label="数值类型" value="数值类型" />
+                <el-option label="文本类型" value="文本类型" />
               </el-select>
             </el-form-item>
           </el-form>

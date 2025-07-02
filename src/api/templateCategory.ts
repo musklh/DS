@@ -1,6 +1,6 @@
 // @ts-ignore
 /* eslint-disable */
-import request from '@/request';
+import request from '../request';
 
 /** API endpoint for 数据模板分类管理. - **Create**: POST /api/template-category/
   - Required: `name`
