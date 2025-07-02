@@ -33,13 +33,14 @@
                 v-model="formData.checkTime"
                 type="datetime"
                 placeholder="请选择"
-                value-format="YYYY-MM-DD HH:mm"
+                value-format="YYYY-MM-DD HH:mm:ss"
                 style="width: 100%"
               />
             </el-form-item>
 
             <template v-for="item in selectedTemplate.dictionaryList" :key="item.word_code">
-              <el-form-item :prop="`values.${item.word_code}`">
+              <!-- 默认文本输入框 -->
+              <el-form-item v-if="!item.input_type || item.input_type === 'text'" :prop="`values.${item.word_code}`">
                 <template #label>
                   <el-tooltip :content="item.word_name" placement="top" :disabled="item.word_name.length <= 8">
                     <span class="form-label">{{ item.word_name }}</span>
@@ -51,6 +52,38 @@
                   :suffix-icon="item.word_short ? '' : undefined"
                 />
                 <span v-if="item.word_short" class="unit-label">{{ item.word_short }}</span>
+              </el-form-item>
+
+              <!-- 多选 -->
+              <el-form-item v-else-if="item.input_type === 'multi'" :prop="`values.${item.word_code}`">
+                 <template #label>
+                  <el-tooltip :content="item.word_name" placement="top" :disabled="item.word_name.length <= 8">
+                    <span class="form-label">{{ item.word_name }}</span>
+                  </el-tooltip>
+                </template>
+                <el-checkbox-group v-model="formData.values[item.word_code]">
+                  <el-checkbox v-for="option in item.options.split(',')" :key="option" :label="option" />
+                </el-checkbox-group>
+              </el-form-item>
+
+              <!-- 多选并填写时间 -->
+              <el-form-item v-else-if="item.input_type === 'multi_with_time'" :label="item.word_name">
+                <div class="multi-with-time-group">
+                  <el-checkbox-group v-model="formData.values[item.word_code].selected">
+                    <div v-for="option in item.options.split(',')" :key="option" class="checkbox-time-item">
+                      <el-checkbox :label="option" />
+                      <el-date-picker
+                        v-if="isOptionSelected(item.word_code, option)"
+                        v-model="formData.values[item.word_code].times[option]"
+                        type="datetime"
+                        placeholder="选择时间"
+                        value-format="YYYY-MM-DD HH:mm:ss"
+                        size="small"
+                        style="margin-left: 10px;"
+                      />
+                    </div>
+                  </el-checkbox-group>
+                </div>
               </el-form-item>
             </template>
           </el-form>
@@ -151,7 +184,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, computed, onMounted } from 'vue';
+import { reactive, ref, computed, onMounted, watch } from 'vue';
 import {
   ElDivider,
   ElIcon,
@@ -163,6 +196,8 @@ import {
   ElButton,
   ElMessage,
   ElTooltip,
+  ElCheckboxGroup,
+  ElCheckbox,
 } from 'element-plus';
 import { Refresh, InfoFilled, Camera, Upload } from '@element-plus/icons-vue';
 import { dataCreate } from '../../api/data';
@@ -200,6 +235,34 @@ const formData = reactive({
   values: {},
 });
 
+// 初始化表单数据
+const initializeFormData = () => {
+  formData.checkTime = '';
+  const newValues = {};
+  if (props.selectedTemplate?.dictionaryList) {
+    props.selectedTemplate.dictionaryList.forEach(item => {
+      if (item.input_type === 'multi') {
+        newValues[item.word_code] = []; // 多选初始化为空数组
+      } else if (item.input_type === 'multi_with_time') {
+        newValues[item.word_code] = { selected: [], times: {} };
+      } else {
+        newValues[item.word_code] = ''; // 其他默认为空字符串
+      }
+    });
+  }
+  formData.values = newValues;
+};
+
+watch(
+  () => props.selectedTemplate,
+  (newTemplate) => {
+    if (newTemplate && newTemplate.dictionaryList) {
+      initializeFormData();
+    }
+  },
+  { immediate: true, deep: true }
+);
+
 // 动态生成表单校验规则
 const formRules = computed(() => {
   const rules = {
@@ -212,9 +275,30 @@ const formRules = computed(() => {
   // 为每个模板字段添加必填校验
   if (props.selectedTemplate?.dictionaryList) {
     props.selectedTemplate.dictionaryList.forEach(item => {
-      rules[`values.${item.word_code}`] = [
-        { required: true, message: `请输入${item.word_name}`, trigger: 'blur' }
-      ];
+      const rule = { required: true, trigger: 'blur' };
+      if (item.input_type === 'multi') {
+        rule.message = `请选择${item.word_name}`;
+        rule.trigger = 'change';
+        rule.type = 'array'; // 对数组类型进行校验
+      } else if (item.input_type === 'multi_with_time') {
+        rule.message = `请选择${item.word_name}`;
+        rule.trigger = 'change';
+        // 自定义校验规则
+        rule.validator = (rule, value, callback) => {
+          if (!value || value.selected.length === 0) {
+            return callback(new Error(`请至少选择一个${item.word_name}`));
+          }
+          for (const option of value.selected) {
+            if (!value.times[option]) {
+              return callback(new Error(`请为'${option}'选择时间`));
+            }
+          }
+          callback();
+        };
+      } else {
+        rule.message = `请输入${item.word_name}`;
+      }
+      rules[`values.${item.word_code}`] = [rule];
     });
   }
 
@@ -386,75 +470,92 @@ const getConfidenceClass = (confidence) => {
   return 'confidence-low';
 };
 
+// Helper function to check if an option is selected for multi_with_time
+const isOptionSelected = (wordCode, option) => {
+  return formData.values[wordCode]?.selected.includes(option);
+};
+
 // 组件挂载时检查摄像头
 onMounted(() => {
+  // initializeFormData(); // Now handled by watch
   checkCamera();
 });
 
 // 提交表单
 const submitForm = async () => {
-  try {
-    // 表单校验
-    const valid = await formRef.value.validate();
-    if (!valid) {
-      ElMessage.warning('请完善所有必填字段');
-      return;
-    }
+  if (!formRef.value) return;
 
-    submitting.value = true;
+  await formRef.value.validate(async (valid) => {
+    if (valid) {
+      submitting.value = true;
+      try {
+        const dataToSubmit = [];
+        for (const word_code in formData.values) {
+          const value = formData.values[word_code];
+          let formattedValue = value;
 
-    // 确保 checkTime 是完整格式（加上秒）
-    let checkTime = formData.checkTime;
-      checkTime += ':00'; // 自动补全秒
+          // 对多选数组进行格式化
+          if (Array.isArray(value)) {
+            formattedValue = value.join(',');
+          } else if (typeof value === 'object' && value !== null && value.selected) {
+            // 对 multi_with_time 对象进行格式化
+            const timeData = {};
+            value.selected.forEach(option => {
+              timeData[option] = value.times[option];
+            });
+            formattedValue = JSON.stringify(timeData);
+          }
+          
+          if (formattedValue && formattedValue !== '{}' && formattedValue !== '[]') { // 只提交有值的数据
+            dataToSubmit.push({
+              word_code: word_code,
+              value: formattedValue,
+              check_time: formData.checkTime,
+            });
+          }
+        }
 
+        if (dataToSubmit.length === 0) {
+          ElMessage.warning('没有需要提交的数据。');
+          submitting.value = false;
+          return;
+        }
 
-    // 构建批量录入数据
-    const dataList = props.selectedTemplate.dictionaryList.map(item => ({
-      word_code: item.word_code,
-      check_time: checkTime,
-      value: formData.values[item.word_code] || ''
-    }));
+        const payload = {
+          case_code: props.patientData.caseId,
+          template_code: props.selectedTemplate.code,
+          data_list: dataToSubmit,
+        };
 
-    const submitData = {
-      case_code: props.patientData.caseId,
-      template_code: props.selectedTemplate.code,
-      data_list: dataList
-    };
-
-    console.log('提交的数据:', submitData);
-
-    // 调用 API
-    const response = await dataCreate(submitData);
-    console.log('API响应:', response);
-
-    // 判断响应是否成功
-    if (response?.data?.code === 200) {
-      ElMessage.success('数据录入成功，即将跳转到患者列表');
-      emit('data-submitted', submitData);
+        const res = await dataCreate(payload);
+        if (res.data.code === 200 || res.data.code === 201) {
+          ElMessage.success('数据录入成功！');
+          emit('data-submitted', formData);
+        } else {
+          ElMessage.error(res.data.msg || '数据录入失败');
+        }
+      } catch (error) {
+        console.error('Submit form error:', error);
+        ElMessage.error('数据录入失败，请检查网络或联系管理员。');
+      } finally {
+        submitting.value = false;
+      }
     } else {
-      ElMessage.error(`数据提交失败: ${response?.data?.message || '未知错误'}`);
+      ElMessage.error('请检查表单是否填写完整。');
     }
-  } catch (error) {
-    console.error('数据提交异常:', error);
-    if (error.message && error.message.includes('validation')) {
-      ElMessage.warning('请完善所有必填字段');
-    } else {
-      ElMessage.error('数据提交异常');
-    }
-  } finally {
-    submitting.value = false;
-  }
+  });
 };
 
-// 重置表单
 const resetForm = () => {
-  formData.checkTime = '';
-  formData.values = {};
-  // 清除表单校验状态
+  initializeFormData();
   if (formRef.value) {
-    formRef.value.clearValidate();
+    formRef.value.resetFields();
   }
-  ElMessage.info('表单已重置');
+  // 清空OCR相关状态
+  uploadedImage.value = '';
+  ocrResults.value = [];
+  matchResults.value = [];
+  matchStatistics.value = null;
 };
 </script>
 
@@ -864,5 +965,11 @@ const resetForm = () => {
   min-width: 60px;
   height: 28px;
   font-size: 12px;
+}
+
+.multi-with-time-group .checkbox-time-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
 }
 </style>

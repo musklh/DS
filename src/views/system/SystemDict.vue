@@ -107,6 +107,20 @@
                 <el-option label="文本类型" value="文本类型" />
               </el-select>
             </el-form-item>
+            <el-form-item label="填写方式" prop="input_type">
+              <el-select v-model="formData.input_type" placeholder="请选择填写方式" style="width: 100%;">
+                <el-option label="文本输入" value="text" />
+                <el-option label="单选" value="single" />
+                <el-option label="多选" value="multi" />
+                <el-option label="多选并填写时间" value="multi_with_time" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="主选项" prop="options">
+                <el-input v-model="formData.options" type="textarea" placeholder="多个选项请用英文逗号(,)隔开" />
+            </el-form-item>
+            <el-form-item label="后续选项" prop="followup_options">
+                <el-input v-model="formData.followup_options_str" type="textarea" placeholder="请输入JSON格式的后续选项" />
+            </el-form-item>
           </el-form>
           <template #footer>
             <span class="dialog-footer">
@@ -134,6 +148,10 @@ interface DictItem {
   word_apply: string    // 词条应用
   word_belong?: string  // 从属别名
   data_type?: string | null // 新增：数据类型
+  input_type: string
+  options: string
+  followup_options?: Record<string, any>
+  followup_options_str?: string; // 用于UI绑定
 }
 const generateWordCode = (): string => {
   const randomDigits = Math.floor(Math.random() * 1_000_000) // 0 ~ 999999
@@ -161,7 +179,11 @@ export default defineComponent({
       word_class: '',
       word_apply: '',
       word_belong: '',
-      data_type: null // 默认值设为 null
+      data_type: null, // 默认值设为 null
+      input_type: '',
+      options: '',
+      followup_options: {},
+      followup_options_str: ''
     })
 
     // 表单验证规则
@@ -205,6 +227,20 @@ export default defineComponent({
       currentPage.value = 1
     })
 
+    // 监视 followup_options_str 的变化，并尝试解析它
+    watch(() => formData.value.followup_options_str, (newVal) => {
+      try {
+        if (newVal) {
+          formData.value.followup_options = JSON.parse(newVal);
+        } else {
+          formData.value.followup_options = {};
+        }
+      } catch (e) {
+        // 如果JSON无效，可以提示用户或保持 followup_options 不变
+        console.error("Invalid JSON format for followup_options_str");
+      }
+    });
+
     // 获取词条列表函数
     const fetchDictList = async () => {
       try {
@@ -212,10 +248,13 @@ export default defineComponent({
           page: 1, // 获取所有数据
           page_size: 99999
         })
-        if (res?.data?.code === 200 && res.data?.data) {
+        // @ts-ignore
+        if (res?.data?.code === 200 && res.data?.data?.list) {
+          // @ts-ignore
           allDictList.value = res.data.data.list.map((item: any) => ({
             ...item,
-            data_type: item.data_type === '数值类型' ? '是' : '否'
+            data_type: item.data_type === '数值类型' ? '是' : '否',
+            followup_options_str: JSON.stringify(item.followup_options || {}, null, 2)
           }))
         } else {
           allDictList.value = []
@@ -247,7 +286,11 @@ export default defineComponent({
         word_class: '',
         word_apply: '',
         word_belong: '',
-        data_type: '' // 默认值设为 null
+        data_type: '', // 默认值设为 null
+        input_type: '',
+        options: '',
+        followup_options: {},
+        followup_options_str: '{}'
       }
       dialogVisible.value = true
     }
@@ -256,7 +299,11 @@ export default defineComponent({
     const handleEdit = (row: DictItem) => {
       isEdit.value = true
       // 确保 data_type 转换回后端期望的 '数值类型' 或 ""
-      formData.value = { ...row, data_type: row.data_type === '是' ? '数值类型' : "" }
+      formData.value = { 
+        ...row, 
+        data_type: row.data_type === '是' ? '数值类型' : "",
+        followup_options_str: JSON.stringify(row.followup_options || {}, null, 2)
+      }
       dialogVisible.value = true
     }
 
@@ -290,13 +337,14 @@ export default defineComponent({
               ...formData.value,
               data_type: formData.value.data_type || "" // 确保 data_type 为 null 或 undefined 时传空字符串
             }
+            delete submitData.followup_options_str;
 
             if (isEdit.value && submitData.word_code) {
               await dictionaryUpdate({ word_code: submitData.word_code }, submitData as API.Dictionary)
               ElMessage.success('编辑成功')
             } else {
               delete submitData.word_code // 新增时不需要 word_code
-              await dictionaryCreate(submitData as API.Dictionary)
+              await dictionaryCreate(submitData)
               ElMessage.success('添加成功')
             }
 
