@@ -23,15 +23,43 @@
       <!-- Y轴指标选择区域 -->
       <div class="axis-select-block">
         <div class="axis-block-title">Y轴指标：</div>
-        <el-radio-group v-model="selectedY" @change="handleSelectionChange">
-          <el-radio-button
-            v-for="item in props.axisData.data"
-            :key="item.word_code"
-            :value="item.word_code"
+        <div v-if="!props.axisData.templateData || props.axisData.templateData.length === 0" class="no-data-hint">
+          <el-alert type="info" :closable="false" show-icon size="small">
+            暂无可选指标数据
+          </el-alert>
+        </div>
+        <div v-else class="template-indicators-container">
+          <div 
+            v-for="template in props.axisData.templateData" 
+            :key="template.template_code" 
+            class="template-group"
           >
-            {{ item.word_name }}
-          </el-radio-button>
-        </el-radio-group>
+            <div 
+              class="template-title-header"
+              @click="toggleTemplate(template.template_code)"
+            >
+              <span class="template-title">{{ template.template_name }}</span>
+              <span class="indicator-count">({{ template.dictionaries?.length || 0 }}项)</span>
+              <el-icon class="expand-icon" :class="{ 'expanded': expandedTemplates[template.template_code] }">
+                <ArrowDown />
+              </el-icon>
+            </div>
+            <el-collapse-transition>
+              <div v-show="expandedTemplates[template.template_code]" class="template-indicators-wrapper">
+                <el-radio-group v-model="selectedY" @change="handleSelectionChange" class="template-indicators">
+                  <el-radio-button
+                    v-for="item in template.dictionaries"
+                    :key="item.word_code"
+                    :value="item.word_code"
+                    class="indicator-button"
+                  >
+                    {{ item.word_name }}
+                  </el-radio-button>
+                </el-radio-group>
+              </div>
+            </el-collapse-transition>
+          </div>
+        </div>
       </div>
 
       <!-- X轴时间选择区域 -->
@@ -143,9 +171,10 @@ import {
   ElCheckboxButton,
   ElTable,
   ElTableColumn,
-  ElAlert
+  ElAlert,
+  ElCollapseTransition
 } from 'element-plus';
-import { Refresh, Back, Download, User } from '@element-plus/icons-vue';
+import { Refresh, Back, Download, User, ArrowDown } from '@element-plus/icons-vue';
 import { caseVisualizationDataCreate } from '../../api/caseVisualizationData';
 import { caseVisualizationXaxisOptionsCreate } from '../../api/caseVisualizationXaxisOptions';
 import { caseIdentityCases } from '../../api/openApiCase';
@@ -158,7 +187,7 @@ const props = defineProps({
   patientData: Object,
   axisData: {
     type: Object,
-    default: () => ({ x_axis_options: [], y_axis_options: [] })
+    default: () => ({ x_axis_options: [], templateData: [] })
   }
 });
 const emit = defineEmits(['go-back-to-selection']);
@@ -171,6 +200,7 @@ const chartValues = ref([]); // y值数组
 const tableData = ref([]);
 const xAxisOptions = ref([]); // 动态获取的X轴时间选项
 const isLoadingXAxis = ref(false); // X轴数据加载状态
+const expandedTemplates = ref({}); // 控制模板展开状态
 const showResult = computed(() => selectedY.value && selectedX.value.length > 0 && chartValues.value.length > 0);
 
 // 格式化X轴时间选项显示
@@ -384,6 +414,28 @@ const handleSelectionChange = async () => {
   }
 };
 
+// 切换模板展开状态
+const toggleTemplate = (templateCode) => {
+  expandedTemplates.value[templateCode] = !expandedTemplates.value[templateCode];
+};
+
+// 初始化模板展开状态
+const initExpandedTemplates = () => {
+  if (props.axisData.templateData && props.axisData.templateData.length > 0) {
+    const newExpandedState = {};
+    props.axisData.templateData.forEach((template, index) => {
+      // 默认展开第一个模板，其他收起
+      newExpandedState[template.template_code] = index === 0;
+    });
+    expandedTemplates.value = newExpandedState;
+  }
+};
+
+// 监听axisData变化，重新初始化展开状态
+watch(() => props.axisData.templateData, () => {
+  initExpandedTemplates();
+}, { immediate: true, deep: true });
+
 // 跳转到病例详情页面
 const goToPatientDetail = async () => {
   try {
@@ -536,6 +588,103 @@ const goToPatientDetail = async () => {
   font-weight: bold;
   color: #409EFF;
   margin-bottom: 12px;
+}
+
+.no-data-hint {
+  width: 100%;
+}
+
+.template-indicators-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.template-group {
+  border: 1px solid #e4e7ed;
+  border-radius: 6px;
+  background-color: #fff;
+  overflow: hidden;
+}
+
+.template-title-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  cursor: pointer;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e4e7ed;
+  transition: background-color 0.3s ease;
+}
+
+.template-title-header:hover {
+  background-color: #f0f2f5;
+}
+
+.template-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.indicator-count {
+  font-size: 12px;
+  color: #909399;
+  margin-left: 8px;
+}
+
+.expand-icon {
+  font-size: 14px;
+  color: #909399;
+  transition: transform 0.3s ease;
+}
+
+.expand-icon.expanded {
+  transform: rotate(180deg);
+}
+
+.template-indicators-wrapper {
+  padding: 12px 16px;
+}
+
+.template-indicators {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.indicator-button {
+  margin: 0 !important;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .template-indicators {
+    gap: 6px;
+  }
+  
+  .indicator-button :deep(.el-radio-button__inner) {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  
+  .template-title {
+    font-size: 13px;
+  }
+  
+  .template-title-header {
+    padding: 10px 12px;
+  }
+  
+  .template-indicators-wrapper {
+    padding: 10px 12px;
+  }
+  
+  .indicator-count {
+    font-size: 11px;
+  }
 }
 
 
