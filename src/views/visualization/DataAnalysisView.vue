@@ -71,16 +71,16 @@ const handlePatientCaseSelected = async (data) => {
     const res = await caseVisualizationYaxisOptionsCreate({ case_code: data.caseId });
     if (res.data.code === 200 ) {
       axisData.value = { 
-        data: res.data.data, // Y轴指标数据
+        templateData: res.data.data, // 按模板分类的词条数据
         x_axis_options: [] // X轴时间数据，目前为空，需要后续获取
       };
     } else {
       console.log('获取Y轴数据失败:', res.data)
-      axisData.value = { data: [], x_axis_options: [] };
+      axisData.value = { templateData: [], x_axis_options: [] };
     }
   } catch (e) {
     console.error('获取Y轴数据异常:', e);
-    axisData.value = { data: [], x_axis_options: [] };
+    axisData.value = { templateData: [], x_axis_options: [] };
   }
   ElMessage.success('患者和病例已选择，进入结果展示');
   currentStep.value = 2;
