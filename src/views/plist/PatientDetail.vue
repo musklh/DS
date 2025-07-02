@@ -4,6 +4,7 @@
       <el-button icon="Back" @click="goBack"> 返回列表 </el-button>
       <div class="right-toolbar">
         <el-button icon="Edit" type="primary" @click="openEditDialog"> 编辑信息 </el-button>
+        <el-button icon="DataAnalysis" type="success" @click="goToVisualization"> 数据可视化 </el-button>
         <div class="view-switch">
         <!-- 自定义图标：列表视图 -->
         <el-button
@@ -203,6 +204,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, PropType } from 'vue';
+import { useRouter } from 'vue-router';
 import { ElMessage, ElButton, ElDialog, ElTable, ElTableColumn, ElDivider, ElAlert, ElTag, ElIcon, ElCard } from 'element-plus';
 import { Right } from '@element-plus/icons-vue';
 import { caseTemplateSummaryCreate } from '../../api/caseTemplateSummary';
@@ -288,6 +290,7 @@ const editForm = reactive({
 });
 
 const emit = defineEmits(['back']);
+const router = useRouter();
 const templateData = ref<CaseTemplateData[]>([]);
 
 // 新增：选中的病例编号列表
@@ -516,6 +519,47 @@ const saveEdit = async () => {
 // Go back to list
 const goBack = () => {
   emit('back');
+  };
+
+// 跳转到数据可视化页面
+const goToVisualization = async () => {
+  if (selectedCaseCodes.value.length === 0) {
+    ElMessage.warning('请至少选择一个病例');
+    return;
+  }
+  
+  if (selectedCaseCodes.value.length > 1) {
+    ElMessage.warning('数据可视化目前只支持单个病例，请选择一个病例');
+    return;
+  }
+  
+  try {
+    // 构造患者和病例数据
+    const selectedCaseCode = selectedCaseCodes.value[0];
+    const patientData = {
+      name: props.patient.identity_name,
+      gender: props.patient.gender === 1 ? '男' : '女',
+      age: props.patient.age.toString(),
+      idCard: props.patient.idCard,
+      caseId: selectedCaseCode
+    };
+    
+    console.log('准备跳转到数据可视化页面，患者数据:', patientData);
+    
+    // 通过localStorage传递数据到可视化页面
+    localStorage.setItem('visualizationPatientData', JSON.stringify(patientData));
+    
+    // 设置来源标记
+    sessionStorage.setItem('fromPatientDetail', 'true');
+    
+    // 跳转到数据可视化页面
+    await router.push('/dashboard/DataAnalysisView');
+    
+    ElMessage.success('正在跳转到数据可视化页面...');
+  } catch (error) {
+    console.error('跳转到数据可视化页面失败:', error);
+    ElMessage.error('跳转失败，请重试');
+  }
 };
 
 // 新增：打开模板详情对话框
