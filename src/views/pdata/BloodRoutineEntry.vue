@@ -90,14 +90,14 @@
               </el-form-item>
 
               <!-- 多选 / 多选带时间 / 级联选择 -->
-              <el-form-item v-else-if="item.input_type === 'multi' || item.input_type === 'multi_with_time'" :label="item.word_name" :prop="`values.${item.word_code}`">
+              <el-form-item v-else-if="item.input_type === 'multi' || item.input_type === 'multi_with_date'" :label="item.word_name" :prop="`values.${item.word_code}`">
                 <el-checkbox-group v-model="formData.values[item.word_code].selected">
                   <div v-for="option in item.options.split(',')" :key="option" class="checkbox-time-item">
                     <el-checkbox :label="option" />
                     
                     <!-- 多选带时间 -->
                     <el-date-picker
-                      v-if="item.input_type === 'multi_with_time' && isOptionSelected(item.word_code, option)"
+                      v-if="item.input_type === 'multi_with_date' && isOptionSelected(item.word_code, option)"
                       v-model="formData.values[item.word_code].times[option]"
                       type="datetime"
                       placeholder="选择时间"
@@ -294,7 +294,7 @@ const initializeFormData = () => {
   const newValues = {};
   if (props.selectedTemplate?.dictionaryList) {
     props.selectedTemplate.dictionaryList.forEach(item => {
-      if (item.input_type === 'multi' || item.input_type === 'multi_with_time') {
+      if (item.input_type === 'multi' || item.input_type === 'multi_with_date') {
         newValues[item.word_code] = { selected: [], times: {}, followup: {} };
       } else if (item.input_type === 'single') {
         newValues[item.word_code] = '';
@@ -335,7 +335,7 @@ const formRules = computed(() => {
   if (props.selectedTemplate?.dictionaryList) {
     props.selectedTemplate.dictionaryList.forEach(item => {
       const rule = { required: true, trigger: 'blur' };
-      if (item.input_type === 'multi' || item.input_type === 'multi_with_time') {
+      if (item.input_type === 'multi' || item.input_type === 'multi_with_date') {
         rule.message = `请选择${item.word_name}`;
         rule.trigger = 'change';
         // 自定义校验
@@ -343,8 +343,8 @@ const formRules = computed(() => {
           if (!value || value.selected.length === 0) {
             return callback(new Error(`请至少选择一个${item.word_name}`));
           }
-          // 校验 multi_with_time
-          if (item.input_type === 'multi_with_time') {
+          // 校验 multi_with_date
+          if (item.input_type === 'multi_with_date') {
             for (const option of value.selected) {
               if (!value.times[option]) {
                 return callback(new Error(`请为'${option}'选择时间`));
@@ -563,7 +563,7 @@ const getConfidenceClass = (confidence) => {
   return 'confidence-low';
 };
 
-// Helper function to check if an option is selected for multi_with_time
+// Helper function to check if an option is selected for multi_with_date
 const isOptionSelected = (wordCode, option) => {
   return formData.values[wordCode]?.selected.includes(option);
 };
@@ -639,7 +639,7 @@ const submitForm = async () => {
               value.selected.forEach(option => {
                 const fu1 = item.followup_options && item.followup_options[option];
 
-                if (item.input_type === 'multi_with_time' && value.times && value.times[option]) {
+                if (item.input_type === 'multi_with_date' && value.times && value.times[option]) {
                   submissionObject[option] = value.times[option];
                 } else if (fu1) {
                   const fu1_answer = value.followup[option];
