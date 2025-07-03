@@ -115,10 +115,10 @@
                 <el-option label="单选" value="single" />
                 <el-option label="单选(含其他)" value="single_with_other" />
                 <el-option label="多选" value="multi" />
-                <el-option label="多选并填写时间" value="multi_with_time" />
+                <el-option label="多选并填写时间" value="multi_with_data" />
               </el-select>
             </el-form-item>
-            <el-form-item v-if="['single', 'multi', 'multi_with_time', 'single_with_other'].includes(formData.input_type)" label="主选项" prop="options">
+            <el-form-item v-if="['single', 'multi', 'multi_with_data', 'single_with_other'].includes(formData.input_type)" label="主选项" prop="options">
                 <el-input v-model="formData.options" type="textarea" placeholder="多个选项请用英文逗号(,)隔开" />
             </el-form-item>
 
