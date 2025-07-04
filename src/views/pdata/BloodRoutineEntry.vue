@@ -298,7 +298,9 @@ const matchStatistics = ref(null);
 // 获取当前时间的辅助函数
 const getCurrentDateTime = () => {
   const now = new Date();
-  return now.toISOString().slice(0, 19).replace('T', ' ');
+  // 获取本地时间（考虑时区偏移）
+  const localTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+  return localTime.toISOString().slice(0, 19).replace('T', ' ');
 };
 
 // 表单数据
