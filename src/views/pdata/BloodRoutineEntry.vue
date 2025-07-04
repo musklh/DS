@@ -29,13 +29,23 @@
         <div class="left-form-section">
           <el-form :model="formData" :rules="formRules" ref="formRef" label-width="auto" label-position="left" class="adaptive-form">
             <el-form-item label="检查时间" prop="checkTime">
-              <el-date-picker
-                v-model="formData.checkTime"
-                type="datetime"
-                placeholder="请选择"
-                value-format="YYYY-MM-DD HH:mm:ss"
-                style="width: 100%"
-              />
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <el-date-picker
+                  v-model="formData.checkTime"
+                  type="datetime"
+                  placeholder="请选择"
+                  value-format="YYYY-MM-DD HH:mm:ss"
+                  style="flex: 1"
+                />
+                <el-button 
+                  type="primary" 
+                  size="small" 
+                  @click="formData.checkTime = getCurrentDateTime()"
+                  title="重置为当前时间"
+                >
+                  当前时间
+                </el-button>
+              </div>
             </el-form-item>
 
             <template v-for="item in selectedTemplate.dictionaryList" :key="item.word_code">
@@ -285,15 +295,22 @@ const matchStatistics = ref(null);
 
 
 
+// 获取当前时间的辅助函数
+const getCurrentDateTime = () => {
+  const now = new Date();
+  return now.toISOString().slice(0, 19).replace('T', ' ');
+};
+
 // 表单数据
 const formData = reactive({
-  checkTime: '',
+  checkTime: getCurrentDateTime(),
   values: {},
 });
 
 // 初始化表单数据
 const initializeFormData = () => {
-  formData.checkTime = '';
+  // 设置默认检查时间为当前时间
+  formData.checkTime = getCurrentDateTime();
   const newValues = {};
   if (props.selectedTemplate?.dictionaryList) {
     props.selectedTemplate.dictionaryList.forEach(item => {
