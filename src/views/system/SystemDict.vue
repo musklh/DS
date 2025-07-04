@@ -110,12 +110,15 @@
             <el-form-item label="填写方式" prop="input_type">
               <el-select v-model="formData.input_type" placeholder="请选择填写方式" style="width: 100%;">
                 <el-option label="文本输入" value="text" />
+                <el-option label="数值输入" value="number" />
+                <el-option label="日期选择" value="date" />
                 <el-option label="单选" value="single" />
+                <el-option label="单选(含其他)" value="single_with_other" />
                 <el-option label="多选" value="multi" />
-                <el-option label="多选并填写时间" value="multi_with_time" />
+                <el-option label="多选并填写时间" value="multi_with_date" />
               </el-select>
             </el-form-item>
-            <el-form-item label="主选项" prop="options">
+            <el-form-item v-if="['single', 'multi', 'multi_with_date', 'single_with_other'].includes(formData.input_type)" label="主选项" prop="options">
                 <el-input v-model="formData.options" type="textarea" placeholder="多个选项请用英文逗号(,)隔开" />
             </el-form-item>
 
@@ -131,11 +134,11 @@
                     type="primary"
                     plain
                     icon="Plus"
-                    @click="addFollowUp(option)"
+                    @click="addFollowUp(option, formData)"
                   >
                     添加后续问题
                   </el-button>
-                  <el-button v-else size="small" type="danger" plain icon="Minus" @click="removeFollowUp(option)">
+                  <el-button v-else size="small" type="danger" plain icon="Minus" @click="removeFollowUp(option, formData)">
                     删除后续问题
                   </el-button>
                 </div>
@@ -147,11 +150,52 @@
                     <el-select v-model="formData.followup_options[option].input_type" size="small" placeholder="请选择">
                       <el-option label="单选" value="single" />
                       <el-option label="文本" value="text" />
+                      <el-option label="数值" value="number" />
+                      <el-option label="日期" value="date" />
                     </el-select>
                   </el-form-item>
                   <el-form-item v-if="formData.followup_options[option].input_type === 'single'" label="问题选项">
                     <el-input v-model="formData.followup_options[option].options" size="small" placeholder="用英文逗号(,)隔开" />
                   </el-form-item>
+
+                  <!-- LEVEL 2 FOLLOWUP -->
+                  <div v-if="formData.followup_options[option].input_type === 'single' && formData.followup_options[option].options">
+                    <div v-for="sub_option in getOptionsArray(formData.followup_options[option].options || '')" :key="sub_option" class="followup-item-nested">
+                      <div class="followup-item-header">
+                        <span>子选项: <strong>{{ sub_option }}</strong></span>
+                         <el-button
+                            v-if="!formData.followup_options[option].followup_options || !formData.followup_options[option].followup_options[sub_option]"
+                            size="small"
+                            type="primary"
+                            plain
+                            icon="Plus"
+                            @click="addFollowUp(sub_option, formData.followup_options[option])"
+                          >
+                            添加后续问题
+                          </el-button>
+                          <el-button v-else size="small" type="danger" plain icon="Minus" @click="removeFollowUp(sub_option, formData.followup_options[option])">
+                            删除后续问题
+                          </el-button>
+                      </div>
+                      <div v-if="formData.followup_options[option].followup_options && formData.followup_options[option].followup_options[sub_option]" class="followup-item-form">
+                          <el-form-item label="问题标签">
+                            <el-input v-model="formData.followup_options[option].followup_options[sub_option].label" size="small" placeholder="例如：程度" />
+                          </el-form-item>
+                          <el-form-item label="问题类型">
+                            <el-select v-model="formData.followup_options[option].followup_options[sub_option].input_type" size="small" placeholder="请选择">
+                              <el-option label="单选" value="single" />
+                              <el-option label="文本" value="text" />
+                              <el-option label="数值" value="number" />
+                              <el-option label="日期" value="date" />
+                            </el-select>
+                          </el-form-item>
+                          <el-form-item v-if="formData.followup_options[option].followup_options[sub_option].input_type === 'single'" label="问题选项">
+                            <el-input v-model="formData.followup_options[option].followup_options[sub_option].options" size="small" placeholder="用英文逗号(,)隔开" />
+                          </el-form-item>
+                      </div>
+                    </div>
+                  </div>
+
                 </div>
               </div>
             </div>
@@ -172,7 +216,14 @@ import { defineComponent, ref, computed, onMounted, watch } from 'vue'
 import { Plus, Search, Minus } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { dictionaryList, dictionaryCreate, dictionaryUpdate, dictionaryDelete } from '../../api/dictionary'
-//
+
+interface FollowUp {
+  label: string
+  input_type: string
+  options?: string
+  followup_options?: Record<string, FollowUp>
+}
+
 interface DictItem {
   word_name: string     // 中文名称
   word_eng?: string     // 英文名称
@@ -184,7 +235,7 @@ interface DictItem {
   data_type?: string | null // 新增：数据类型
   input_type: string
   options: string
-  followup_options?: Record<string, any>
+  followup_options?: Record<string, FollowUp>
   followup_options_str?: string; // 用于UI绑定
 }
 const generateWordCode = (): string => {
@@ -328,7 +379,7 @@ export default defineComponent({
         word_apply: '',
         word_belong: '',
         data_type: '', // 默认值设为 null
-        input_type: '',
+        input_type: 'text',
         options: '',
         followup_options: {},
         followup_options_str: '{}'
@@ -408,22 +459,29 @@ export default defineComponent({
       return word_classMap[word_class] || 'info'
     }
 
-    const addFollowUp = (option: string) => {
-      if (!formData.value.followup_options) {
-        formData.value.followup_options = {};
+    const addFollowUp = (option: string, parent: { followup_options?: Record<string, FollowUp> }) => {
+      if (!parent.followup_options) {
+        parent.followup_options = {};
       }
-      formData.value.followup_options[option] = {
+      parent.followup_options[option] = {
         label: '',
         input_type: 'single',
         options: ''
       };
     };
 
-    const removeFollowUp = (option: string) => {
-      if (formData.value.followup_options && formData.value.followup_options[option]) {
-        delete formData.value.followup_options[option];
+    const removeFollowUp = (option: string, parent: { followup_options?: Record<string, FollowUp> }) => {
+      if (parent.followup_options && parent.followup_options[option]) {
+        delete parent.followup_options[option];
       }
     };
+
+    const getOptionsArray = (optionsStr: string) => {
+      if (optionsStr) {
+        return optionsStr.split(',').map(o => o.trim()).filter(o => o)
+      }
+      return []
+    }
 
     onMounted(() => {
       fetchDictList()
@@ -450,6 +508,7 @@ export default defineComponent({
       mainOptionsArray,
       addFollowUp,
       removeFollowUp,
+      getOptionsArray,
     }
   }
 })
@@ -542,6 +601,14 @@ export default defineComponent({
   border-radius: 4px;
   padding: 10px 15px;
   margin-bottom: 10px;
+}
+
+.followup-item-nested {
+  background-color: #ffffff;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin-top: 10px;
 }
 
 .followup-item-header {

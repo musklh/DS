@@ -238,7 +238,7 @@ interface CaseTemplateData {
 interface TemplateDetailItem {
   word_code: string;
   word_name: string;
-  value: string;
+  value: any;
   input_type?: string;
 }
 
@@ -628,22 +628,37 @@ const openTemplateDetailDialog = async (templateCode: string, caseCode: string, 
 
 // 新增：格式化显示值
 const formatDisplayValue = (item: TemplateDetailItem) => {
-  if (item.value && item.value.startsWith('{') && item.value.endsWith('}')) {
+  const { value } = item;
+
+  // Helper to format key-value pairs from an object
+  const formatObject = (obj: object) => {
+    return Object.entries(obj)
+      .map(([key, val]) => {
+        if (val === true) {
+          return key; // For multi-select options without a specific value
+        }
+        return `${key}: ${val}`;
+      })
+      .join('<br>');
+  };
+
+  // Case 1: The value is already a JavaScript object
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return formatObject(value);
+  }
+
+  // Case 2: The value is a string that can be parsed into a JSON object
+  if (value && typeof value === 'string' && value.startsWith('{') && value.endsWith('}')) {
     try {
-      const data = JSON.parse(item.value);
-      return Object.entries(data)
-        .map(([key, value]) => {
-          if (value === true) return key; // 对于没有值的多选项，只显示键名
-          return `${key}: ${value}`;
-        })
-        .join('<br>');
+      const data = JSON.parse(value);
+      return formatObject(data);
     } catch (e) {
-      // JSON 解析失败，返回原始值
-      return item.value;
+      // If parsing fails, fall through to return the raw string
     }
   }
-  // 对于非JSON字符串，直接返回值
-  return item.value;
+
+  // Fallback for primitive values (string, number, etc.)
+  return value;
 };
 
 // Combine all sections for timeline view

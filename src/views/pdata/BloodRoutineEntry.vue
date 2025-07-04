@@ -39,8 +39,13 @@
             </el-form-item>
 
             <template v-for="item in selectedTemplate.dictionaryList" :key="item.word_code">
+              <!-- 日期 (优先判断) -->
+              <el-form-item v-if="item.input_type === 'date' || (item.word_name && item.word_name.includes('时间'))" :prop="`values.${item.word_code}`" :label="item.word_name">
+                <el-date-picker v-model="formData.values[item.word_code]" type="date" placeholder="请选择日期" value-format="YYYY-MM-DD" style="width: 100%;" />
+              </el-form-item>
+
               <!-- 默认文本输入框 -->
-              <el-form-item v-if="!item.input_type || item.input_type === 'text'" :prop="`values.${item.word_code}`">
+              <el-form-item v-else-if="!item.input_type || item.input_type === 'text'" :prop="`values.${item.word_code}`">
                 <template #label>
                   <el-tooltip :content="item.word_name" placement="top" :disabled="item.word_name.length <= 8">
                     <span class="form-label">{{ item.word_name }}</span>
@@ -54,6 +59,12 @@
                 <span v-if="item.word_short" class="unit-label">{{ item.word_short }}</span>
               </el-form-item>
 
+              <!-- 数值 -->
+              <el-form-item v-else-if="item.input_type === 'number'" :prop="`values.${item.word_code}`" :label="item.word_name">
+                <el-input-number v-model="formData.values[item.word_code]" :controls="false" placeholder="请输入数值" style="width: 100%;" />
+                <span v-if="item.word_short" class="unit-label">{{ item.word_short }}</span>
+              </el-form-item>
+
               <!-- 单选 -->
               <el-form-item v-else-if="item.input_type === 'single'" :prop="`values.${item.word_code}`" :label="item.word_name">
                   <el-radio-group v-model="formData.values[item.word_code]">
@@ -61,15 +72,32 @@
                   </el-radio-group>
               </el-form-item>
 
+              <!-- 单选（含其他） -->
+              <el-form-item v-else-if="item.input_type === 'single_with_other'" :prop="`values.${item.word_code}`" :label="item.word_name">
+                <div class="single-with-other-container">
+                    <el-radio-group v-model="formData.values[item.word_code].selected">
+                        <el-radio v-for="option in item.options.split(',')" :key="option" :label="option" />
+                        <el-radio label="__other__">其他</el-radio>
+                    </el-radio-group>
+                    <el-input
+                      v-if="formData.values[item.word_code] && formData.values[item.word_code].selected === '__other__'"
+                      v-model="formData.values[item.word_code].other"
+                      placeholder="请输入"
+                      size="small"
+                      class="other-input"
+                    />
+                </div>
+              </el-form-item>
+
               <!-- 多选 / 多选带时间 / 级联选择 -->
-              <el-form-item v-else-if="item.input_type === 'multi' || item.input_type === 'multi_with_time'" :label="item.word_name" :prop="`values.${item.word_code}`">
+              <el-form-item v-else-if="item.input_type === 'multi' || item.input_type === 'multi_with_date'" :label="item.word_name" :prop="`values.${item.word_code}`">
                 <el-checkbox-group v-model="formData.values[item.word_code].selected">
                   <div v-for="option in item.options.split(',')" :key="option" class="checkbox-time-item">
                     <el-checkbox :label="option" />
                     
                     <!-- 多选带时间 -->
                     <el-date-picker
-                      v-if="item.input_type === 'multi_with_time' && isOptionSelected(item.word_code, option)"
+                      v-if="item.input_type === 'multi_with_date' && isOptionSelected(item.word_code, option)"
                       v-model="formData.values[item.word_code].times[option]"
                       type="datetime"
                       placeholder="选择时间"
@@ -79,12 +107,30 @@
                     />
 
                     <!-- 级联子问题 -->
-                    <div v-if="isOptionSelected(item.word_code, option) && item.followup_options && item.followup_options[option]" class="followup-container">
+                    <div v-if="isOptionSelected(item.word_code, option) && item.followup_options && item.followup_options[option]">
+                      <div class="followup-container">
                         <span class="followup-label">{{ item.followup_options[option].label || option }}:</span>
+                        <!-- Level 1 Followup Input -->
                         <el-radio-group v-if="item.followup_options[option].input_type === 'single'" v-model="formData.values[item.word_code].followup[option]">
-                           <el-radio v-for="fu_option in item.followup_options[option].options.split(',')" :key="fu_option" :label="fu_option" />
+                          <el-radio v-for="fu_option in getOptionsArray(item.followup_options[option].options)" :key="fu_option" :label="fu_option" />
                         </el-radio-group>
-                        <el-input v-else v-model="formData.values[item.word_code].followup[option]" size="small" placeholder="请输入" style="width: 150px;"/>
+                        <el-input v-else-if="item.followup_options[option].input_type === 'text'" v-model="formData.values[item.word_code].followup[option]" size="small" placeholder="请输入" style="width: 150px;"/>
+                        <el-input-number v-else-if="item.followup_options[option].input_type === 'number'" v-model="formData.values[item.word_code].followup[option]" size="small" :controls="false" placeholder="请输入数值" style="width: 150px;"/>
+                        <el-date-picker v-else-if="item.followup_options[option].input_type === 'date'" v-model="formData.values[item.word_code].followup[option]" type="date" size="small" placeholder="选择日期" value-format="YYYY-MM-DD" style="width: 150px;"/>
+                      </div>
+
+                      <!-- Level 2 Followup (Nested) -->
+                      <div v-if="isNestedFollowupVisible(item, option)" class="followup-container-nested">
+                        <template v-if="getNestedFollowup(item, option)">
+                           <span class="followup-label">{{ getNestedFollowup(item, option).label }}:</span>
+                           <el-radio-group v-if="getNestedFollowup(item, option).input_type === 'single'" v-model="formData.values[item.word_code].followup[getNestedFollowupKey(option, formData.values[item.word_code].followup[option])]">
+                              <el-radio v-for="fu2_option in getOptionsArray(getNestedFollowup(item, option).options)" :key="fu2_option" :label="fu2_option" />
+                           </el-radio-group>
+                           <el-input v-else-if="getNestedFollowup(item, option).input_type === 'text'" v-model="formData.values[item.word_code].followup[getNestedFollowupKey(option, formData.values[item.word_code].followup[option])]" size="small" placeholder="请输入" style="width: 150px;"/>
+                           <el-input-number v-else-if="getNestedFollowup(item, option).input_type === 'number'" v-model="formData.values[item.word_code].followup[getNestedFollowupKey(option, formData.values[item.word_code].followup[option])]" size="small" :controls="false" placeholder="请输入数值" style="width: 150px;"/>
+                           <el-date-picker v-else-if="getNestedFollowup(item, option).input_type === 'date'" v-model="formData.values[item.word_code].followup[getNestedFollowupKey(option, formData.values[item.word_code].followup[option])]" type="date" size="small" placeholder="选择日期" value-format="YYYY-MM-DD" style="width: 150px;"/>
+                        </template>
+                      </div>
                     </div>
                   </div>
                 </el-checkbox-group>
@@ -204,6 +250,7 @@ import {
   ElCheckbox,
   ElRadioGroup,
   ElRadio,
+  ElInputNumber,
 } from 'element-plus';
 import { Refresh, InfoFilled, Camera, Upload } from '@element-plus/icons-vue';
 import { dataCreate } from '../../api/data';
@@ -247,9 +294,15 @@ const initializeFormData = () => {
   const newValues = {};
   if (props.selectedTemplate?.dictionaryList) {
     props.selectedTemplate.dictionaryList.forEach(item => {
-      if (item.input_type === 'multi' || item.input_type === 'multi_with_time') {
+      if (item.input_type === 'multi' || item.input_type === 'multi_with_date') {
         newValues[item.word_code] = { selected: [], times: {}, followup: {} };
       } else if (item.input_type === 'single') {
+        newValues[item.word_code] = '';
+      } else if (item.input_type === 'single_with_other') {
+        newValues[item.word_code] = { selected: '', other: '' };
+      } else if (item.input_type === 'number') {
+        newValues[item.word_code] = undefined;
+      } else if (item.input_type === 'date') {
         newValues[item.word_code] = '';
       } else {
         newValues[item.word_code] = ''; // text
@@ -282,7 +335,7 @@ const formRules = computed(() => {
   if (props.selectedTemplate?.dictionaryList) {
     props.selectedTemplate.dictionaryList.forEach(item => {
       const rule = { required: true, trigger: 'blur' };
-      if (item.input_type === 'multi' || item.input_type === 'multi_with_time') {
+      if (item.input_type === 'multi' || item.input_type === 'multi_with_date') {
         rule.message = `请选择${item.word_name}`;
         rule.trigger = 'change';
         // 自定义校验
@@ -290,8 +343,8 @@ const formRules = computed(() => {
           if (!value || value.selected.length === 0) {
             return callback(new Error(`请至少选择一个${item.word_name}`));
           }
-          // 校验 multi_with_time
-          if (item.input_type === 'multi_with_time') {
+          // 校验 multi_with_date
+          if (item.input_type === 'multi_with_date') {
             for (const option of value.selected) {
               if (!value.times[option]) {
                 return callback(new Error(`请为'${option}'选择时间`));
@@ -301,8 +354,18 @@ const formRules = computed(() => {
           // 校验级联选项
           if (item.followup_options) {
             for (const option of value.selected) {
-              if (item.followup_options[option] && !value.followup[option]) {
+              const fu1 = item.followup_options[option];
+              if (fu1 && !value.followup[option]) {
                   return callback(new Error(`请完成'${option}'的后续选项`));
+              }
+              // 校验二级级联
+              if (fu1 && fu1.input_type === 'single' && value.followup[option]) {
+                  const selected_fu1_option = value.followup[option];
+                  const fu2 = fu1.followup_options && fu1.followup_options[selected_fu1_option];
+                  const fu2_key = `${option}_${selected_fu1_option}`;
+                  if (fu2 && !value.followup[fu2_key]) {
+                      return callback(new Error(`请完成'${selected_fu1_option}'的后续选项`));
+                  }
               }
             }
           }
@@ -311,6 +374,20 @@ const formRules = computed(() => {
       } else if (item.input_type === 'single') {
           rule.message = `请选择${item.word_name}`;
           rule.trigger = 'change';
+      } else if (item.input_type === 'single_with_other') {
+        rule.message = `请选择${item.word_name}`;
+        rule.trigger = 'change';
+        rule.validator = (rule, value, callback) => {
+          if (!value || !value.selected) {
+            return callback(new Error(`请选择${item.word_name}`));
+          }
+          if (value.selected === '__other__' && !value.other) {
+            return callback(new Error('请输入其他内容'));
+          }
+          callback();
+        };
+      } else if (item.input_type === 'number' || item.input_type === 'date') {
+        rule.message = `请输入${item.word_name}`;
       } else {
         rule.message = `请输入${item.word_name}`;
       }
@@ -486,9 +563,38 @@ const getConfidenceClass = (confidence) => {
   return 'confidence-low';
 };
 
-// Helper function to check if an option is selected for multi_with_time
+// Helper function to check if an option is selected for multi_with_date
 const isOptionSelected = (wordCode, option) => {
   return formData.values[wordCode]?.selected.includes(option);
+};
+
+const getOptionsArray = (optionsStr) => {
+  if (optionsStr && typeof optionsStr === 'string') {
+    return optionsStr.split(',').map(o => o.trim()).filter(o => o);
+  }
+  return [];
+};
+
+// --- 级联选择辅助函数 ---
+const isNestedFollowupVisible = (item, option) => {
+  const wordCode = item.word_code;
+  const fu1_answer = formData.values[wordCode]?.followup?.[option];
+  if (!fu1_answer) return false;
+
+  const fu1 = item.followup_options?.[option];
+  return fu1?.input_type === 'single' && fu1.followup_options?.[fu1_answer];
+};
+
+const getNestedFollowup = (item, option) => {
+  const wordCode = item.word_code;
+  const fu1_answer = formData.values[wordCode]?.followup?.[option];
+  if (!fu1_answer) return null;
+  
+  return item.followup_options?.[option]?.followup_options?.[fu1_answer];
+};
+
+const getNestedFollowupKey = (option, fu1_answer) => {
+  return `${option}_${fu1_answer}`;
 };
 
 // 组件挂载时检查摄像头
@@ -514,7 +620,13 @@ const submitForm = async () => {
 
           let formattedValue;
 
-          if (typeof value === 'object' && value !== null && value.hasOwnProperty('selected')) {
+          if (item.input_type === 'single_with_other') {
+            if (value && value.selected) {
+              formattedValue = value.selected === '__other__' ? value.other : value.selected;
+            } else {
+              formattedValue = '';
+            }
+          } else if (typeof value === 'object' && value !== null && value.hasOwnProperty('selected')) {
             // 处理多选、多选带时间、级联等复杂类型
             if (!value.selected || value.selected.length === 0) {
               formattedValue = '';
@@ -525,10 +637,21 @@ const submitForm = async () => {
               // 2. 如果是多选带时间或带后续问题，则格式化为JSON对象
               const submissionObject = {};
               value.selected.forEach(option => {
-                if (item.input_type === 'multi_with_time' && value.times && value.times[option]) {
+                const fu1 = item.followup_options && item.followup_options[option];
+
+                if (item.input_type === 'multi_with_date' && value.times && value.times[option]) {
                   submissionObject[option] = value.times[option];
-                } else if (item.followup_options && item.followup_options[option] && value.followup && value.followup[option]) {
-                  submissionObject[option] = value.followup[option];
+                } else if (fu1) {
+                  const fu1_answer = value.followup[option];
+                  const fu2 = fu1.input_type === 'single' && fu1_answer && fu1.followup_options && fu1.followup_options[fu1_answer];
+                  
+                  if (fu2) {
+                    const fu2_key = `${option}_${fu1_answer}`;
+                    const fu2_answer = value.followup[fu2_key];
+                    submissionObject[option] = { [fu1_answer]: fu2_answer };
+                  } else {
+                    submissionObject[option] = fu1_answer;
+                  }
                 } else {
                   submissionObject[option] = true; // 对于没有值的多选项，标记为true
                 }
@@ -1021,5 +1144,26 @@ const resetForm = () => {
     margin-right: 8px;
     font-size: 14px;
     color: #606266;
+}
+
+.single-with-other-container {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.other-input {
+  width: 150px !important;
+}
+
+.followup-container-nested {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 40px; /* 更多缩进 */
+  margin-top: 8px;
+  background-color: #f0f2f5;
+  padding: 4px 8px;
+  border-radius: 4px;
 }
 </style>
