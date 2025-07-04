@@ -31,6 +31,12 @@ export default defineConfig({
         target: process.env.VITE_API_URL || 'http://127.0.0.1:8000',
         changeOrigin: true,
       },
+      // OCR服务代理配置
+      '/getOcrData': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/getOcrData/, '/getOcrData'),
+      },
     },
   },
   preview: {
