@@ -63,6 +63,13 @@
         <p><strong>是否在移植排队: </strong>{{ patient.is_in_transplant_queue }}</p>
       </div>
       <p><strong>主要诊断: </strong>{{ patient.main_diagnosis }}</p>
+      <!-- 评分结果展示 -->
+      <ScoringResultList
+        v-if="selectedCaseCodes.length"
+        :caseCode="selectedCaseCodes[0]"
+        ref="scoringResultList"
+        class="mb-4"
+      />
     </el-card>
 
 
@@ -215,6 +222,7 @@ import { caseTemplateSummaryCreate } from '../../api/caseTemplateSummary';
 import { caseTemplateDetailCreate } from '../../api/caseTemplateDetail';
 import { caseUpdate} from '../../api/openApiCase'
 import { dictionaryList } from '../../api/dictionary';
+import ScoringResultList from '@/components/ScoringResultList.vue';
 
 // 定义接口以解决类型错误
 interface TemplateItem {
@@ -725,6 +733,12 @@ onMounted(() => {
   fetchTemplateData();
   fetchDictionary();
 });
+
+// 数据录入成功后自动刷新评分结果
+function onDataSubmitSuccess() {
+  const scoringRef = (this.$refs.scoringResultList as any);
+  if (scoringRef && scoringRef.refresh) scoringRef.refresh();
+}
 </script>
 
 <style scoped>

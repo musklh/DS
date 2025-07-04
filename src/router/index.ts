@@ -115,6 +115,15 @@ const routes = [
           requiresAuth: true,
         },
       },
+      {
+        path: 'scoring-test',
+        name: 'ScoringTest',
+        component: () => import('../views/test/ScoringTest.vue'),
+        meta: {
+          title: '评分测试',
+          requiresAuth: true,
+        },
+      },
     ],
   },
 ];

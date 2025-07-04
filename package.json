@@ -8,7 +8,7 @@
     "build": "vue-tsc -b && vite build",
     "build-pure": "vite build",
     "preview": "vite preview",
-    "openapi": "node openapi.config.js",
+    "openapi": "node openapi.config.cjs",
     "coverage": "vitest run --coverage",
     "lint": "eslint . --ext .vue,.js,.ts,.jsx,.tsx --fix",
     "format": "prettier --write \"src/**/*.{vue,ts,js,json,md}\""
@@ -24,7 +24,7 @@
     "sass": "^1.85.1",
     "vue": "^3.5.13",
     "vue-chartjs": "^5.3.2",
-    "vue-echarts": "^7.0.3",
+    "vue-echarts": "^6.7.3",
     "vue-router": "^4.5.0",
     "xlsx": "^0.18.5"
   },
