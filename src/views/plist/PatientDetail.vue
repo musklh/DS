@@ -84,6 +84,18 @@
                 </template>
               </el-table-column>
               <el-table-column prop="time" label="检查时间" />
+              <el-table-column label="操作" width="80">
+                <template #default="{ row }">
+                  <el-button 
+                    type="danger" 
+                    size="small" 
+                    link 
+                    @click="deleteTemplate(row.label, [row])"
+                  >
+                    <el-icon><Delete /></el-icon>
+                  </el-button>
+                </template>
+              </el-table-column>
             </el-table>
           </el-card>
         </el-col>
@@ -103,6 +115,18 @@
                 </template>
               </el-table-column>
               <el-table-column prop="time" label="检查时间" />
+              <el-table-column label="操作" width="80">
+                <template #default="{ row }">
+                  <el-button 
+                    type="danger" 
+                    size="small" 
+                    link 
+                    @click="deleteTemplate(row.label, [row])"
+                  >
+                    <el-icon><Delete /></el-icon>
+                  </el-button>
+                </template>
+              </el-table-column>
             </el-table>
           </el-card>
         </el-col>
@@ -130,14 +154,22 @@
                   v-for="item in entry.items" 
                   :key="`${item.template_code}-${item.case_code}-${item.time}`"
                   class="timeline-item"
-                  @click="openTemplateDetailDialog(item.template_code, item.case_code, item.time)"
                 >
-                  <div class="item-info">
+                  <div class="item-info" @click="openTemplateDetailDialog(item.template_code, item.case_code, item.time)">
                     <span class="item-name">{{ item.label }}</span>
                     <span class="item-time">{{ formatTime(item.time) }}</span>
                   </div>
                   <div class="item-meta">
                     <el-tag size="small" type="info">{{ item.case_code }}</el-tag>
+                    <el-button 
+                      type="danger" 
+                      size="small" 
+                      link 
+                      @click.stop="deleteTemplate(item.label, [item])"
+                      style="margin-left: 8px;"
+                    >
+                      <el-icon><Delete /></el-icon>
+                    </el-button>
                     <el-icon class="click-icon"><Right /></el-icon>
                   </div>
                 </div>
@@ -182,16 +214,99 @@
     </el-dialog>
 
     <!-- 模板详情对话框 -->
-    <el-dialog v-model="templateDetailDialogVisible" title="模板详情" width="600px">
+    <el-dialog v-model="templateDetailDialogVisible" title="模板详情" width="800px">
       <div v-if="currentTemplateDetail">
         <p><strong>模板名称: </strong>{{ currentTemplateDetail.template_name }}</p>
         <p><strong>检查时间: </strong>{{ currentTemplateDetail.check_time }}</p>
         <el-divider />
         <el-table :data="currentTemplateDetail.items" border stripe size="small">
-          <el-table-column prop="word_name" label="词条名称" />
-          <el-table-column label="值">
+          <el-table-column prop="word_name" label="词条名称" width="180" />
+          <el-table-column label="值" width="350">
             <template #default="{ row }">
-              <span v-html="formatDisplayValue(row)"></span>
+              <span v-if="!row.isEditing" v-html="formatDisplayValue(row)"></span>
+              <div v-else>
+                <!-- Text (default) -->
+                <el-input v-if="!row.input_type || row.input_type === 'text'" v-model="row.editingValue" size="small" placeholder="请输入"/>
+                <!-- Date -->
+                <el-date-picker 
+                  v-else-if="row.input_type === 'date'" 
+                  v-model="row.editingValue" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" size="small" style="width: 100%"/>
+                <!-- Number -->
+                <el-input-number 
+                  v-else-if="row.input_type === 'number'" 
+                  v-model="row.editingValue" :controls="false" placeholder="请输入数值" size="small" style="width: 100%"/>
+                <!-- Single Select -->
+                <el-radio-group v-else-if="row.input_type === 'single'" v-model="row.editingValue">
+                    <el-radio v-for="option in getOptions(row.word_code)" :key="option" :label="option" :value="option" />
+                </el-radio-group>
+                <!-- Single With Other -->
+                <div v-else-if="row.input_type === 'single_with_other'">
+                    <el-radio-group v-model="row.editingValue.selected">
+                        <el-radio v-for="option in getOptions(row.word_code)" :key="option" :label="option" :value="option" />
+                        <el-radio label="__other__" value="__other__">其他</el-radio>
+                    </el-radio-group>
+                    <el-input v-if="row.editingValue.selected === '__other__'" v-model="row.editingValue.other" placeholder="请输入" size="small" style="margin-top: 5px;"/>
+                </div>
+                <!-- Multi Select -->
+                <el-checkbox-group v-else-if="row.input_type === 'multi'" v-model="row.editingValue.selected">
+                    <div v-for="option in getOptions(row.word_code)" :key="option" style="margin-bottom: 8px;">
+                        <el-checkbox :label="option" :value="option" />
+                        <!-- Show followup input if this option is selected and has a followup value -->
+                        <div v-if="row.editingValue.selected.includes(option) && hasFollowupForOption(row.word_code, option)" style="margin-left: 25px; margin-top: 5px;">
+                            <span style="font-size: 12px; color: #666; margin-right: 8px;">{{ getFollowupLabel(row.word_code, option) }}:</span>
+                            <!-- Check if it's a select type followup -->
+                            <el-select 
+                                v-if="getFollowupType(row.word_code, option) === 'single'"
+                                v-model="row.editingValue.followup[option]" 
+                                size="small" 
+                                style="width: 120px;"
+                                placeholder="请选择">
+                                <el-option 
+                                    v-for="subOption in getFollowupOptions(row.word_code, option)" 
+                                    :key="subOption" 
+                                    :label="subOption" 
+                                    :value="subOption" />
+                            </el-select>
+                            <!-- Default to text input for other types -->
+                            <el-input 
+                                v-else
+                                v-model="row.editingValue.followup[option]" 
+                                size="small" 
+                                style="width: 120px;" 
+                                placeholder="请输入" />
+                        </div>
+                    </div>
+                </el-checkbox-group>
+                <!-- Multi With Date -->
+                <div v-else-if="row.input_type === 'multi_with_date'">
+                    <el-checkbox-group v-model="row.editingValue.selected">
+                        <div v-for="option in getOptions(row.word_code)" :key="option" style="display: flex; align-items: center; margin-bottom: 5px;">
+                            <el-checkbox :label="option" :value="option" />
+                            <el-date-picker
+                                v-if="row.editingValue.selected.includes(option)"
+                                v-model="row.editingValue.times[option]"
+                                type="datetime"
+                                placeholder="选择时间"
+                                value-format="YYYY-MM-DD HH:mm:ss"
+                                size="small"
+                                style="margin-left: 10px; width: 180px;"
+                            />
+                        </div>
+                    </el-checkbox-group>
+                </div>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="150" fixed="right">
+            <template #default="{ row }">
+              <div v-if="row.isEditing">
+                <el-button type="success" size="small" @click="saveItem(row)">保存</el-button>
+                <el-button type="info" size="small" @click="cancelEdit(row)">取消</el-button>
+              </div>
+              <div v-else>
+                <el-button type="primary" size="small" link @click="startEdit(row)">编辑</el-button>
+                <el-button type="danger" size="small" link @click="deleteItem(row)">删除</el-button>
+              </div>
             </template>
           </el-table-column>
         </el-table>
@@ -209,12 +324,14 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, PropType } from 'vue';
 import { useRouter } from 'vue-router';
-import { ElMessage, ElButton, ElDialog, ElTable, ElTableColumn, ElDivider, ElAlert, ElTag, ElIcon, ElCard } from 'element-plus';
-import { Right } from '@element-plus/icons-vue';
+import { ElMessage, ElButton, ElDialog, ElTable, ElTableColumn, ElDivider, ElAlert, ElTag, ElIcon, ElCard, ElMessageBox, ElInput, ElInputNumber, ElDatePicker, ElRadioGroup, ElRadio, ElCheckboxGroup, ElCheckbox, ElSelect, ElOption } from 'element-plus';
+import { Right, Delete } from '@element-plus/icons-vue';
 import { caseTemplateSummaryCreate } from '../../api/caseTemplateSummary';
 import { caseTemplateDetailCreate } from '../../api/caseTemplateDetail';
 import { caseUpdate} from '../../api/openApiCase'
 import { dictionaryList } from '../../api/dictionary';
+import { dataTableCrudUpdate, dataTableCrudDelete } from '../../api/dataTableCrud';
+import { dataList, dataDelete } from '../../api/data';
 
 // 定义接口以解决类型错误
 interface TemplateItem {
@@ -222,6 +339,8 @@ interface TemplateItem {
   template_code: string; // 确保这里包含 template_code
   check_time: string;
   case_code: string; // 添加病例编号字段
+  label: string;
+  time: string;
 }
 
 interface TemplateCategoryData {
@@ -240,6 +359,10 @@ interface TemplateDetailItem {
   word_name: string;
   value: any;
   input_type?: string;
+  options?: string;
+  followup_options?: { [key: string]: { label: string; options: string; input_type: string } };
+  isEditing?: boolean;
+  editingValue?: any;
 }
 
 interface TemplateDetailData {
@@ -305,6 +428,11 @@ const selectedCaseCodes = ref<string[]>([]);
 const templateDetailDialogVisible = ref(false);
 const currentTemplateDetail = ref<TemplateDetailData | null>(null);
 const dictionaryMap = ref<Map<string, any>>(new Map());
+
+// Add refs for current context
+const currentCaseCode = ref('');
+const currentTemplateCode = ref('');
+const currentCheckTime = ref('');
 
 // 切换病例选择
 const toggleCaseSelection = (caseCode: string) => {
@@ -593,6 +721,9 @@ const openTemplateDetailDialog = async (templateCode: string, caseCode: string, 
   }
   
   console.log(`正在获取模板详情 - 病例编号: ${caseCode}, 模板编号: ${templateCode}, 检查时间: ${check_time}`);
+  currentCaseCode.value = caseCode;
+  currentTemplateCode.value = templateCode;
+  currentCheckTime.value = check_time;
   try {
     const res = await caseTemplateDetailCreate({
       case_code: caseCode,
@@ -607,7 +738,11 @@ const openTemplateDetailDialog = async (templateCode: string, caseCode: string, 
         const dictInfo = dictionaryMap.value.get(item.word_code);
         return {
           ...item,
-          input_type: dictInfo ? dictInfo.input_type : 'text'
+          input_type: item.input_type || (dictInfo ? dictInfo.input_type : 'text'),
+          options: item.options || (dictInfo ? dictInfo.options : undefined),
+          followup_options: item.followup_options || (dictInfo ? dictInfo.followup_options : undefined),
+          isEditing: false,
+          editingValue: '',
         };
       });
 
@@ -624,6 +759,281 @@ const openTemplateDetailDialog = async (templateCode: string, caseCode: string, 
     console.error('获取模板详情失败:', error);
     ElMessage.error('获取模板详情失败');
   }
+};
+
+// 新增：开始编辑
+const startEdit = (row: TemplateDetailItem) => {
+  row.isEditing = true;
+  const inputType = row.input_type || 'text';
+
+  // For complex types, parse the value if it's a string
+  let initialValue = row.value;
+  if (typeof initialValue === 'string' && (initialValue.startsWith('{') || initialValue.startsWith('['))) {
+      try {
+          initialValue = JSON.parse(initialValue);
+      } catch (e) {
+          console.warn('Failed to parse JSON value:', initialValue);
+          initialValue = row.value;
+      }
+  }
+
+  switch (inputType) {
+    case 'multi':
+      if (typeof initialValue === 'object' && initialValue !== null) {
+          // Handle complex multi-select with followup options
+          const selected: string[] = [];
+          const followup: { [key: string]: any } = {};
+          
+          Object.entries(initialValue).forEach(([key, val]) => {
+              if (val !== null && val !== undefined) {
+                  selected.push(key);
+                  // If the value is not just true/false, it might be a followup value
+                  if (val !== true && val !== false) {
+                      followup[key] = val;
+                  }
+              }
+          });
+          row.editingValue = { selected, followup };
+      } else if (Array.isArray(initialValue)) {
+          row.editingValue = { selected: [...initialValue], followup: {} };
+      } else {
+          row.editingValue = { selected: [], followup: {} };
+      }
+      break;
+    case 'multi_with_date':
+      const selected: string[] = [];
+      const times: { [key: string]: string } = {};
+      if (typeof initialValue === 'object' && initialValue !== null) {
+          Object.entries(initialValue).forEach(([key, val]) => {
+              if (val) {
+                  selected.push(key);
+                  if (typeof val === 'string') {
+                      times[key] = val;
+                  }
+              }
+          });
+      }
+      row.editingValue = { selected, times };
+      break;
+    case 'single_with_other':
+      const options = getOptions(row.word_code);
+      if (initialValue && options.includes(initialValue)) {
+          row.editingValue = { selected: initialValue, other: '' };
+      } else {
+          row.editingValue = { selected: '__other__', other: initialValue || '' };
+      }
+      break;
+    default:
+      row.editingValue = initialValue;
+      break;
+  }
+};
+
+// 新增：取消编辑
+const cancelEdit = (row: TemplateDetailItem) => {
+  row.isEditing = false;
+  row.editingValue = '';
+};
+
+// 新增：保存项目
+const saveItem = async (row: TemplateDetailItem) => {
+  let formattedValue: any;
+  const value = row.editingValue;
+  const inputType = row.input_type || 'text';
+
+  switch (inputType) {
+    case 'single_with_other':
+      if (value && value.selected) {
+        formattedValue = value.selected === '__other__' ? value.other : value.selected;
+      } else {
+        formattedValue = '';
+      }
+      break;
+    case 'multi':
+      if (!value || !value.selected || !value.selected.length) {
+        formattedValue = '';
+      } else {
+        const submissionObject: { [key: string]: any } = {};
+        value.selected.forEach((option: string) => {
+          // Check if there's a followup value for this option
+          if (value.followup && value.followup[option] !== undefined && value.followup[option] !== '') {
+            submissionObject[option] = value.followup[option];
+          } else {
+            submissionObject[option] = true;
+          }
+        });
+        formattedValue = JSON.stringify(submissionObject);
+      }
+      break;
+    case 'multi_with_date':
+      if (!value || !value.selected || !value.selected.length) {
+        formattedValue = '';
+      } else {
+        const submissionObject: { [key: string]: any } = {};
+        value.selected.forEach((option: string) => {
+          if (value.times && value.times[option]) {
+            submissionObject[option] = value.times[option];
+          } else {
+            submissionObject[option] = true;
+          }
+        });
+        formattedValue = JSON.stringify(submissionObject);
+      }
+      break;
+    default:
+      formattedValue = value;
+      break;
+  }
+
+  // Ensure non-string values are stringified
+  if (typeof formattedValue !== 'string') {
+    formattedValue = JSON.stringify(formattedValue);
+  }
+
+  try {
+    const res = await dataTableCrudUpdate({
+      case_code: currentCaseCode.value,
+      template_code: currentTemplateCode.value,
+      word_code: row.word_code,
+      check_time: currentCheckTime.value,
+      value: formattedValue,
+    });
+    // @ts-ignore
+    if (res.data?.code === 200) {
+      ElMessage.success('更新成功');
+      try {
+        row.value = JSON.parse(formattedValue);
+      } catch (e) {
+        row.value = formattedValue;
+      }
+      row.isEditing = false;
+    } else {
+      // @ts-ignore
+      ElMessage.error(res.data?.msg || '更新失败');
+    }
+  } catch (error) {
+    console.error('更新失败', error);
+    ElMessage.error('更新操作失败');
+  }
+};
+
+// 新增：删除项目
+const deleteItem = async (row: TemplateDetailItem) => {
+  try {
+    await ElMessageBox.confirm('您确定要删除此项数据吗？', '确认删除', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+    });
+
+    const res = await dataTableCrudDelete({
+      case_code: currentCaseCode.value,
+      template_code: currentTemplateCode.value,
+      word_code: row.word_code,
+      check_time: currentCheckTime.value
+    });
+    // @ts-ignore
+    if (res.data?.code === 200) {
+      ElMessage.success('删除成功');
+      if (currentTemplateDetail.value) {
+        const index = currentTemplateDetail.value.items.findIndex(item => item.word_code === row.word_code);
+        if (index > -1) {
+          currentTemplateDetail.value.items.splice(index, 1);
+        }
+      }
+      // 重新获取模板数据以刷新主视图
+      await fetchTemplateData();
+    } else {
+       // @ts-ignore
+      ElMessage.error(res.data?.msg || '删除失败');
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('删除失败:', error);
+      ElMessage.error('删除操作失败');
+    }
+  }
+};
+
+const getOptions = (word_code: string) => {
+    // 首先检查当前模板详情数据
+    if (currentTemplateDetail.value?.items) {
+        const item = currentTemplateDetail.value.items.find(i => i.word_code === word_code);
+        if (item && item.options && typeof item.options === 'string') {
+            return item.options.split(',').map((o: string) => o.trim()).filter((o: string) => o);
+        }
+    }
+    // 如果模板详情中没有，再检查字典数据
+    const dictInfo = dictionaryMap.value.get(word_code);
+    if (dictInfo && dictInfo.options && typeof dictInfo.options === 'string') {
+        return dictInfo.options.split(',').map((o: string) => o.trim()).filter((o: string) => o);
+    }
+    return [];
+};
+
+// 检查某个选项是否有二级选项
+const hasFollowupForOption = (word_code: string, option: string) => {
+    // 首先检查当前模板详情数据
+    if (currentTemplateDetail.value?.items) {
+        const item = currentTemplateDetail.value.items.find(i => i.word_code === word_code);
+        if (item && item.followup_options && item.followup_options[option]) {
+            return true;
+        }
+    }
+    // 如果模板详情中没有，再检查字典数据
+    const dictInfo = dictionaryMap.value.get(word_code);
+    return dictInfo?.followup_options?.[option] !== undefined;
+};
+
+// 获取二级选项的类型
+const getFollowupType = (word_code: string, option: string) => {
+    // 首先检查当前模板详情数据
+    if (currentTemplateDetail.value?.items) {
+        const item = currentTemplateDetail.value.items.find(i => i.word_code === word_code);
+        if (item && item.followup_options && item.followup_options[option]) {
+            return item.followup_options[option].input_type || 'text';
+        }
+    }
+    // 如果模板详情中没有，再检查字典数据
+    const dictInfo = dictionaryMap.value.get(word_code);
+    const followup = dictInfo?.followup_options?.[option];
+    return followup?.input_type || 'text';
+};
+
+// 获取二级选项的选项列表
+const getFollowupOptions = (word_code: string, option: string) => {
+    // 首先检查当前模板详情数据
+    if (currentTemplateDetail.value?.items) {
+        const item = currentTemplateDetail.value.items.find(i => i.word_code === word_code);
+        if (item && item.followup_options && item.followup_options[option]) {
+            const followup = item.followup_options[option];
+            if (followup.options && typeof followup.options === 'string') {
+                return followup.options.split(',').map((o: string) => o.trim()).filter((o: string) => o);
+            }
+        }
+    }
+    // 如果模板详情中没有，再检查字典数据
+    const dictInfo = dictionaryMap.value.get(word_code);
+    const followup = dictInfo?.followup_options?.[option];
+    if (followup && followup.options && typeof followup.options === 'string') {
+        return followup.options.split(',').map((o: string) => o.trim()).filter((o: string) => o);
+    }
+    return [];
+};
+
+// 获取二级选项的标签
+const getFollowupLabel = (word_code: string, option: string) => {
+    // 首先检查当前模板详情数据
+    if (currentTemplateDetail.value?.items) {
+        const item = currentTemplateDetail.value.items.find(i => i.word_code === word_code);
+        if (item && item.followup_options && item.followup_options[option]) {
+            return item.followup_options[option].label || `${option}详情`;
+        }
+    }
+    // 如果模板详情中没有，再检查字典数据
+    const dictInfo = dictionaryMap.value.get(word_code);
+    const followup = dictInfo?.followup_options?.[option];
+    return followup?.label || `${option}详情`;
 };
 
 // 新增：格式化显示值
@@ -725,6 +1135,54 @@ onMounted(() => {
   fetchTemplateData();
   fetchDictionary();
 });
+
+// 新增：删除模板
+const deleteTemplate = async (templateName: string, items: any[]) => {
+  try {
+    await ElMessageBox.confirm(`您确定要删除模板 "${templateName}" 的所有数据吗？`, '确认删除', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+    });
+
+    // 获取模板的详细信息，包含所有词条数据
+    const templateCode = items[0].template_code;
+    const caseCode = items[0].case_code;
+    const checkTime = items[0].time;
+    
+    // 获取模板详情，这里包含了所有的词条数据
+    const templateDetailRes = await caseTemplateDetailCreate({
+      case_code: caseCode,
+      template_code: templateCode,
+      check_time: checkTime
+    });
+
+    const apiResponse = templateDetailRes.data as any;
+    if (apiResponse?.code === 200 && apiResponse.data?.items) {
+      const deletePromises = apiResponse.data.items.map((item: any) => 
+        dataTableCrudDelete({
+          case_code: caseCode,
+          template_code: templateCode,
+          word_code: item.word_code,
+          check_time: checkTime
+        })
+      );
+      
+      await Promise.all(deletePromises);
+      ElMessage.success(`成功删除模板 "${templateName}" 的 ${apiResponse.data.items.length} 条数据`);
+      
+      // 重新获取模板数据以刷新主视图
+      await fetchTemplateData();
+    } else {
+      ElMessage.warning('未找到该模板的数据记录');
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('删除模板失败:', error);
+      ElMessage.error('删除操作失败');
+    }
+  }
+};
 </script>
 
 <style scoped>
@@ -891,6 +1349,7 @@ onMounted(() => {
   padding: 8px 16px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   line-height: 1.7;
 }
 
