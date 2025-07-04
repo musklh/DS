@@ -2,9 +2,17 @@
 /* eslint-disable */
 // OCR 识别相关接口
 import request from '../request';
+import axios from 'axios';
+
+// 为OCR请求创建单独的axios实例，避免默认配置的干扰
+const ocrAxios = axios.create({
+  timeout: 150000, // 5分钟超时
+  withCredentials: false, // OCR服务不需要cookie
+  baseURL: '', // 明确设置空的baseURL，避免继承任何默认配置
+});
 
 export interface OcrUploadParams {
-  image: File;
+  file: File;
   template_code?: string; // 可选的模板代码，用于更精确的匹配
 }
 
@@ -56,14 +64,13 @@ export interface OcrResponse {
  */
 export const ocrUpload = (params: OcrUploadParams): Promise<{ data: OcrResponse }> => {
   const formData = new FormData();
-  formData.append('image', params.image);
+  formData.append('file', params.file);
   if (params.template_code) {
     formData.append('template_code', params.template_code);
   }
 
-  // TODO: 替换为实际的OCR接口地址
-  return request({
-    url: '/api/ocr/upload', // 待后端提供实际地址
+  return ocrAxios({
+    url: '/getOcrData', // 使用代理路径
     method: 'POST',
     data: formData,
     headers: {

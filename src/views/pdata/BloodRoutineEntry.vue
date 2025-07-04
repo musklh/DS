@@ -254,12 +254,13 @@ import {
 } from 'element-plus';
 import { Refresh, InfoFilled, Camera, Upload } from '@element-plus/icons-vue';
 import { dataCreate } from '../../api/data';
-import { mockOcrRecognition } from '../../api/ocr';
+import { ocrUpload } from '../../api/ocr';
 import { 
   matchOcrWithTemplate, 
   convertMatchesToFormData, 
   getMatchStatistics
 } from '../../utils/ocrMatcher';
+
 
 const props = defineProps({
   patientData: Object,
@@ -281,6 +282,8 @@ const ocrResults = ref([]);
 const isProcessingOcr = ref(false);
 const matchResults = ref([]);
 const matchStatistics = ref(null);
+
+
 
 // 表单数据
 const formData = reactive({
@@ -445,8 +448,8 @@ const processImage = (file) => {
   const reader = new FileReader();
   reader.onload = (e) => {
     uploadedImage.value = e.target.result;
-    // 开始OCR识别过程
-    performOcrRecognition();
+    // 开始OCR识别过程，传入文件
+    performOcrRecognition(file);
   };
   reader.readAsDataURL(file);
 };
@@ -461,19 +464,37 @@ const removeImage = () => {
 };
 
 // OCR识别处理
-const performOcrRecognition = async () => {
+const performOcrRecognition = async (file) => {
   isProcessingOcr.value = true;
   
   try {
     ElMessage.info('正在进行OCR识别...');
     
-    // 调用模拟OCR接口
-    const response = await mockOcrRecognition();
-    
+    // 调用真实OCR接口
+    const response = await ocrUpload({ file });
+
+    console.log("OCR原始响应:", response.data)
+
     if (response.data.code === 200) {
-      const testResults = response.data.msg.test_results;
+      // 解析msg字段，因为OCR服务返回的是JSON字符串
+      let msgData;
+      try {
+        msgData = typeof response.data.msg === 'string' ? JSON.parse(response.data.msg) : response.data.msg;
+      } catch (parseError) {
+        console.error('解析OCR响应数据失败:', parseError);
+        throw new Error('OCR响应数据格式错误');
+      }
       
-      // 将模板字段转换为匹配器需要的格式
+      const testResults = msgData.test_results;
+      
+             if (!testResults || !Array.isArray(testResults)) {
+         throw new Error('OCR识别结果格式错误');
+       }
+       
+       console.log("解析后的OCR数据:", msgData);
+       console.log("检测结果数组:", testResults);
+       
+       // 将模板字段转换为匹配器需要的格式
       const templateFields = props.selectedTemplate.dictionaryList.map(item => ({
         word_code: item.word_code,
         word_name: item.word_name,
