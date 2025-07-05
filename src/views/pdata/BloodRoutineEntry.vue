@@ -49,13 +49,8 @@
             </el-form-item>
 
             <template v-for="item in selectedTemplate.dictionaryList" :key="item.word_code">
-              <!-- 日期 (优先判断) -->
-              <el-form-item v-if="item.input_type === 'date' || (item.word_name && item.word_name.includes('时间'))" :prop="`values.${item.word_code}`" :label="item.word_name">
-                <el-date-picker v-model="formData.values[item.word_code]" type="date" placeholder="请选择日期" value-format="YYYY-MM-DD" style="width: 100%;" />
-              </el-form-item>
-
               <!-- 默认文本输入框 -->
-              <el-form-item v-else-if="!item.input_type || item.input_type === 'text'" :prop="`values.${item.word_code}`">
+              <el-form-item v-if="!item.input_type || item.input_type === 'text'" :prop="`values.${item.word_code}`">
                 <template #label>
                   <el-tooltip :content="item.word_name" placement="top" :disabled="item.word_name.length <= 8">
                     <span class="form-label">{{ item.word_name }}</span>
@@ -68,6 +63,14 @@
                 />
                 <span v-if="item.word_short" class="unit-label">{{ item.word_short }}</span>
               </el-form-item>
+
+              <!-- 日期 (优先判断) -->
+              <el-form-item v-else-if="item.input_type === 'date' || (item.word_name && item.word_name.includes('时间'))" :prop="`values.${item.word_code}`" :label="item.word_name">
+                <el-date-picker v-model="formData.values[item.word_code]" type="date" placeholder="请选择日期" value-format="YYYY-MM-DD" style="width: 100%;" />
+              </el-form-item>
+
+
+
 
               <!-- 数值 -->
               <el-form-item v-else-if="item.input_type === 'number'" :prop="`values.${item.word_code}`" :label="item.word_name">
