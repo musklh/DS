@@ -5,15 +5,29 @@ import * as XLSX from 'xlsx'
 export function useDataExport() {
   // 导出图表为图片
   const exportChartToImage = async (chartRef, chartTitle) => {
+    console.log('exportChartToImage 被调用')
+    console.log('chartRef:', chartRef)
+    console.log('chartTitle:', chartTitle)
+    
     await nextTick()
-    const chartEl = chartRef.value?.$el
-    if (!chartEl) return
+    
+    // chartRef 已经是 ref 对象，直接访问 $el
+    const chartEl = chartRef?.$el
+    console.log('chartEl:', chartEl)
+    
+    if (!chartEl) {
+      console.log('chartEl 不存在，无法导出')
+      return
+    }
     
     html2canvas(chartEl, { backgroundColor: '#fff' }).then(canvas => {
       const link = document.createElement('a')
       link.href = canvas.toDataURL('image/png')
       link.download = `${chartTitle || '图表'}.png`
       link.click()
+      console.log('图表导出完成')
+    }).catch(error => {
+      console.error('图表导出失败:', error)
     })
   }
 

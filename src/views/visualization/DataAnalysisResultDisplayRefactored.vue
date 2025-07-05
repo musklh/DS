@@ -127,9 +127,20 @@ const handleBackNavigation = () => {
 }
 
 // 处理图表导出
-const handleExportChart = () => {
+const handleExportChart = async () => {
+  console.log('开始导出图表')
+  console.log('chartDisplayRef.value:', chartDisplayRef.value)
+  
+  // 直接获取子组件中的 chartRef
   const chartRef = chartDisplayRef.value?.chartRef
-  exportChartToImage(chartRef, chartTitle.value)
+  console.log('chartRef:', chartRef)
+  
+  if (!chartRef) {
+    console.log('chartRef 不存在，无法导出')
+    return
+  }
+  
+  await exportChartToImage(chartRef, chartTitle.value)
 }
 
 // 处理表格导出
