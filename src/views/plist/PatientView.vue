@@ -18,7 +18,7 @@
 
     <!-- 如果有选中的患者，直接显示患者详情（无论是否选择了档案） -->
     <div v-if="selectedPatient" class="table-card-wrap">
-      <PatientDetail :patient="selectedPatient" @back="goBackToTable" />
+      <PatientDetailRefactored :patient="selectedPatient" @back="goBackToTable" />
     </div>
 
     <!-- 如果没有选中档案，显示提示信息 -->
@@ -70,7 +70,7 @@ import { RefreshRight } from '@element-plus/icons-vue';
 
 import CaseSelector from './CaseSelector.vue';
 import PatientTable from './PatientTable.vue';
-import PatientDetail from './PatientDetail.vue';
+import PatientDetailRefactored from './PatientDetailRefactored.vue';
 
 interface Patient {
   id: string;
