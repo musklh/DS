@@ -14,6 +14,55 @@ export const isOptionSelected = (formData, wordCode, option) => {
 }
 
 // 获取选项数组
+export const getOptions = (wordCode, selectedTemplate) => {
+  if (!selectedTemplate?.dictionaryList) return []
+  
+  const item = selectedTemplate.dictionaryList.find(i => i.word_code === wordCode)
+  if (item && item.options && typeof item.options === 'string') {
+    return item.options.split(',').map(o => o.trim()).filter(o => o)
+  }
+  return []
+}
+
+// 检查某个选项是否有二级选项
+export const hasFollowupForOption = (wordCode, option, selectedTemplate) => {
+  if (!selectedTemplate?.dictionaryList) return false
+  
+  const item = selectedTemplate.dictionaryList.find(i => i.word_code === wordCode)
+  return item?.followup_options?.[option] !== undefined
+}
+
+// 获取二级选项的类型
+export const getFollowupType = (wordCode, option, selectedTemplate) => {
+  if (!selectedTemplate?.dictionaryList) return 'text'
+  
+  const item = selectedTemplate.dictionaryList.find(i => i.word_code === wordCode)
+  const followup = item?.followup_options?.[option]
+  return followup?.input_type || 'text'
+}
+
+// 获取二级选项的选项列表
+export const getFollowupOptions = (wordCode, option, selectedTemplate) => {
+  if (!selectedTemplate?.dictionaryList) return []
+  
+  const item = selectedTemplate.dictionaryList.find(i => i.word_code === wordCode)
+  const followup = item?.followup_options?.[option]
+  if (followup && followup.options && typeof followup.options === 'string') {
+    return followup.options.split(',').map(o => o.trim()).filter(o => o)
+  }
+  return []
+}
+
+// 获取二级选项的标签
+export const getFollowupLabel = (wordCode, option, selectedTemplate) => {
+  if (!selectedTemplate?.dictionaryList) return `${option}详情`
+  
+  const item = selectedTemplate.dictionaryList.find(i => i.word_code === wordCode)
+  const followup = item?.followup_options?.[option]
+  return followup?.label || `${option}详情`
+}
+
+// 获取选项数组（从字符串分割）
 export const getOptionsArray = (optionsStr) => {
   if (optionsStr && typeof optionsStr === 'string') {
     return optionsStr.split(',').map(o => o.trim()).filter(o => o)
@@ -56,16 +105,16 @@ export const getNestedFollowupKey = (option, fu1_answer) => {
 }
 
 // 表单字段类型判断
-export const isTextField = (item) => {
-  return !item.input_type || item.input_type === 'text' || item.input_type === null
+export const isTextField = (inputType) => {
+  return !inputType || inputType === 'text' || inputType === null
 }
 
-export const isDateField = (item) => {
-  return item.input_type === 'date'
+export const isDateField = (inputType, wordName) => {
+  return inputType === 'date' || (wordName && wordName.includes('时间') && inputType !== 'text')
 }
 
-export const isNumberField = (item) => {
-  return item.input_type === 'number'
+export const isNumberField = (inputType) => {
+  return inputType === 'number'
 }
 
 export const isSingleSelectField = (item) => {

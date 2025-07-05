@@ -34,12 +34,24 @@
             />
 
             <!-- 动态表单字段 -->
-            <DynamicFormField
-              v-for="item in selectedTemplate.dictionaryList" 
+            <el-form-item
+              v-for="item in selectedTemplate.dictionaryList"
               :key="item.word_code"
-              :item="item"
-              :model-value="formData.values"
-            />
+              :label="item.word_name"
+              :prop="`values.${item.word_code}`"
+            >
+              <DynamicFormField
+                :model-value="formData.values[item.word_code]"
+                @update:model-value="formData.values[item.word_code] = $event"
+                :input-type="item.input_type"
+                :word-code="item.word_code"
+                :get-options="getOptions"
+                :has-followup-for-option="hasFollowupForOption"
+                :get-followup-type="getFollowupType"
+                :get-followup-options="getFollowupOptions"
+                :get-followup-label="getFollowupLabel"
+              />
+            </el-form-item>
           </el-form>
         </div>
 
@@ -75,12 +87,21 @@
 
 <script setup>
 import { ref, onMounted, toRef } from 'vue'
-import { ElCard, ElForm } from 'element-plus'
+import { ElCard, ElForm, ElFormItem } from 'element-plus'
 
 // 组合式函数
 import { useFormData } from '../../composables/useFormData'
 import { useOcrRecognition } from '../../composables/useOcrRecognition'
 import { useFormSubmission } from '../../composables/useFormSubmission'
+
+// 工具函数
+import { 
+  getOptions as getOptionsUtil,
+  hasFollowupForOption as hasFollowupForOptionUtil,
+  getFollowupType as getFollowupTypeUtil,
+  getFollowupOptions as getFollowupOptionsUtil,
+  getFollowupLabel as getFollowupLabelUtil
+} from '../../utils/formHelpers'
 
 // 子组件
 import PatientCaseHeader from './components/PatientCaseHeader.vue'
@@ -139,6 +160,13 @@ const {
   submitting,
   submitForm
 } = useFormSubmission()
+
+// 辅助函数包装器
+const getOptions = (wordCode) => getOptionsUtil(wordCode, props.selectedTemplate)
+const hasFollowupForOption = (wordCode, option) => hasFollowupForOptionUtil(wordCode, option, props.selectedTemplate)
+const getFollowupType = (wordCode, option) => getFollowupTypeUtil(wordCode, option, props.selectedTemplate)
+const getFollowupOptions = (wordCode, option) => getFollowupOptionsUtil(wordCode, option, props.selectedTemplate)
+const getFollowupLabel = (wordCode, option) => getFollowupLabelUtil(wordCode, option, props.selectedTemplate)
 
 // 事件处理
 const handleRefresh = () => {
