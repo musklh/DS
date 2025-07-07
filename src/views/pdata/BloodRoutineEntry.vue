@@ -64,13 +64,10 @@
                 <span v-if="item.word_short" class="unit-label">{{ item.word_short }}</span>
               </el-form-item>
 
-              <!-- 日期 (优先判断) -->
+              <!-- 日期  -->
               <el-form-item v-else-if="item.input_type === 'date' || (item.word_name && item.word_name.includes('时间'))" :prop="`values.${item.word_code}`" :label="item.word_name">
                 <el-date-picker v-model="formData.values[item.word_code]" type="date" placeholder="请选择日期" value-format="YYYY-MM-DD" style="width: 100%;" />
               </el-form-item>
-
-
-
 
               <!-- 数值 -->
               <el-form-item v-else-if="item.input_type === 'number'" :prop="`values.${item.word_code}`" :label="item.word_name">

@@ -54,7 +54,7 @@ import { UserFilled, Tickets, Edit } from '@element-plus/icons-vue';
 // Import child components
 import SelectPatientAndCase from './SelectPatientAndCase.vue';
 import SelectClinicalTemplate from './SelectClinicalTemplate.vue';
-import BloodRoutineEntry from './BloodRoutineEntry.vue';
+import BloodRoutineEntry from './BloodRoutineEntryRefactored.vue';
 
 // import { caseIdentityCases } from '../../api/openApiCase'; // This import seems unused, can be removed if not needed elsewhere
 
