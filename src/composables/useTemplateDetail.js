@@ -3,6 +3,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { caseTemplateDetailCreate } from '../api/caseTemplateDetail'
 import { dictionaryList } from '../api/dictionary'
 import { dataTableCrudUpdate, dataTableCrudDelete } from '../api/dataTableCrud'
+import { escapeHtml } from '../utils/escapeHtml'
 
 export function useTemplateDetail() {
   // 模板详情对话框状态
@@ -397,7 +398,11 @@ export function useTemplateDetail() {
     // Helper to format key-value pairs from an object, used for both main group and followup groups
     const formatGroup = (groupObj) => {
       return Object.entries(groupObj)
-        .map(([fieldKey, fieldVal]) => `<strong>${fieldKey}</strong>: ${fieldVal === undefined || fieldVal === null ? '未填写' : fieldVal}`)
+        .map(([fieldKey, fieldVal]) => {
+          const cleanKey = escapeHtml(String(fieldKey));
+          const cleanVal = fieldVal === undefined || fieldVal === null || fieldVal === '' ? '未填写' : escapeHtml(String(fieldVal));
+          return `<strong>${cleanKey}</strong>: ${cleanVal}`
+        })
         .join(', ');
     };
 
@@ -405,16 +410,17 @@ export function useTemplateDetail() {
     const formatObject = (obj) => {
       return Object.entries(obj)
         .map(([key, val]) => {
+          const cleanKey = escapeHtml(String(key));
           if (val === true) {
-            return `<strong>${key}</strong>`;
+            return `<strong>${cleanKey}</strong>`;
           }
           
           // Check if this is a group type followup
           if (typeof val === 'object' && val !== null) {
-            return `<strong>${key}</strong>: [${formatGroup(val)}]`;
+            return `<strong>${cleanKey}</strong>: [${formatGroup(val)}]`;
           }
           
-          return `<strong>${key}</strong>: ${val}`;
+          return `<strong>${cleanKey}</strong>: ${escapeHtml(String(val))}`;
         })
         .join('<br>');
     };

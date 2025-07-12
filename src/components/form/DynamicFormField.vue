@@ -75,14 +75,15 @@
           <!-- Group type followup - RENDER MULTIPLE FIELDS -->
           <div v-if="getFollowupType(wordCode, option) === 'group'" class="followup-group">
             <div v-for="field in getFollowupFields(wordCode, option)" :key="field.label" class="followup-group-field">
-              <label class="followup-field-label">{{ field.label }}:</label>
+              <label class="followup-field-label" :for="`followup-field-${option}-${field.label}`">{{ field.label }}:</label>
               <!-- Select field -->
               <el-select 
                 v-if="field.input_type === 'select'"
+                :id="`followup-field-${option}-${field.label}`"
                 :modelValue="modelValue.followup[option][field.label]"
                 @update:modelValue="updateFollowupGroup(option, field.label, $event)"
                 size="small" 
-                style="width: 120px; margin-left: 8px;"
+                class="followup-group-input"
                 placeholder="请选择">
                 <el-option 
                   v-for="selectOption in getFieldOptions(field)" 
@@ -93,31 +94,34 @@
               <!-- Date field -->
               <el-date-picker 
                 v-else-if="field.input_type === 'date'"
+                :id="`followup-field-${option}-${field.label}`"
                 :modelValue="modelValue.followup[option][field.label]"
                 @update:modelValue="updateFollowupGroup(option, field.label, $event)"
                 type="date"
                 size="small"
                 placeholder="选择日期"
                 value-format="YYYY-MM-DD"
-                style="width: 120px; margin-left: 8px;"
+                class="followup-group-input"
               />
               <!-- Number field -->
               <el-input-number 
                 v-else-if="field.input_type === 'number'"
+                :id="`followup-field-${option}-${field.label}`"
                 :modelValue="modelValue.followup[option][field.label]"
                 @update:modelValue="updateFollowupGroup(option, field.label, $event)"
                 size="small"
                 :controls="false"
                 placeholder="请输入数值"
-                style="width: 120px; margin-left: 8px;"
+                class="followup-group-input"
               />
               <!-- Text field -->
               <el-input 
                 v-else
+                :id="`followup-field-${option}-${field.label}`"
                 :modelValue="modelValue.followup[option][field.label]"
                 @update:modelValue="updateFollowupGroup(option, field.label, $event)"
                 size="small" 
-                style="width: 120px; margin-left: 8px;" 
+                class="followup-group-input" 
                 placeholder="请输入" />
             </div>
           </div>
@@ -325,5 +329,10 @@ const updateTime = (option, value) => {
   font-size: 12px;
   color: #303133;
   margin-right: 4px;
+}
+
+.followup-group-input {
+  width: 120px;
+  margin-left: 8px;
 }
 </style> 

@@ -126,6 +126,16 @@ export function useFormData(selectedTemplate) {
                             } else if (!value.followup[option]) {
                                 return callback(new Error(`请完成'${option}'的后续选项`));
                             }
+
+                            // 恢复二级级联校验
+                            if (followupDef.input_type === 'single' && value.followup[option]) {
+                                const selectedFollowupOption = value.followup[option];
+                                const secondLevelFollowupDef = followupDef.followup_options && followupDef.followup_options[selectedFollowupOption];
+                                const secondLevelFollowupKey = `${option}_${selectedFollowupOption}`;
+                                if (secondLevelFollowupDef && !value.followup[secondLevelFollowupKey]) {
+                                    return callback(new Error(`请完成'${selectedFollowupOption}'的后续选项`));
+                                }
+                            }
                         }
                     }
                 }
