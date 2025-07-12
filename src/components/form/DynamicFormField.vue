@@ -295,34 +295,35 @@ const updateTime = (option, value) => {
 .followup-container {
   display: inline-flex;
   align-items: center;
-  margin-left: 20px;
-  margin-top: 5px;
-  background-color: #f5f7fa;
-  padding: 8px;
+  margin-left: 16px;
+  gap: 8px;
+  padding: 4px 8px;
   border-radius: 4px;
+  background-color: #f5f7fa;
+  border: 1px solid #e4e7ed;
 }
 
 .followup-label {
-    margin-right: 8px;
-    font-size: 14px;
-    color: #606266;
+  font-size: 13px;
+  color: #606266;
+  font-weight: 500;
 }
 
 .followup-group {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  margin-left: 8px;
 }
 
 .followup-group-field {
   display: flex;
   align-items: center;
-  gap: 5px;
 }
 
 .followup-field-label {
-  font-size: 14px;
-  color: #606266;
-  min-width: 60px;
+  font-size: 12px;
+  color: #303133;
+  margin-right: 4px;
 }
 </style> 

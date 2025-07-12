@@ -79,94 +79,75 @@ export function useFormData(selectedTemplate) {
       selectedTemplate.value.dictionaryList.forEach(item => {
         const rule = { required: true, trigger: 'blur' }
         
-        if (item.input_type === 'group') {
-          rule.message = `请完成${item.word_name}的所有字段`;
-          rule.trigger = 'change';
-          rule.validator = (rule, value, callback) => {
-            if (!value || typeof value !== 'object') {
-              return callback(new Error(`请完成${item.word_name}的相关信息`));
-            }
-            // 校验组合字段是否都已填写
-            if (item.fields) {
-              for (const field of item.fields) {
-                if (!value[field.label]) {
-                  return callback(new Error(`请完成'${field.label}'`));
+        const inputType = item.input_type;
+
+        if (inputType === 'group') {
+            rule.validator = (rule, value, callback) => {
+                if (value === null || value === undefined || typeof value !== 'object') {
+                    return callback(new Error(`请完成${item.word_name}的相关信息`));
                 }
-              }
-            }
-            callback();
-          };
-        } else if (item.input_type === 'multi' || item.input_type === 'multi_with_date') {
-          rule.message = `请选择${item.word_name}`
-          rule.trigger = 'change'
-          rule.validator = (rule, value, callback) => {
-            if (!value || value.selected.length === 0) {
-              return callback(new Error(`请至少选择一个${item.word_name}`))
-            }
-            
-            // 校验 multi_with_date
-            if (item.input_type === 'multi_with_date') {
-              for (const option of value.selected) {
-                if (!value.times[option]) {
-                  return callback(new Error(`请为'${option}'选择时间`))
-                }
-              }
-            }
-            
-            // 校验级联选项
-            if (item.followup_options) {
-              for (const option of value.selected) {
-                const fu1 = item.followup_options[option]
-                if (fu1) {
-                  if (fu1.input_type === 'group') {
-                    // 校验 group 类型的字段
-                    if (!value.followup[option] || typeof value.followup[option] !== 'object') {
-                      return callback(new Error(`请完成'${option}'的相关信息`));
-                    }
-                    if (fu1.fields) {
-                      for (const field of fu1.fields) {
-                        if (!value.followup[option][field.label]) {
-                          return callback(new Error(`请完成'${option}'中的'${field.label}'`));
+                if (item.fields) {
+                    for (const field of item.fields) {
+                        if (value[field.label] === null || value[field.label] === undefined || value[field.label] === '') {
+                            return callback(new Error(`请完成'${field.label}'`));
                         }
-                      }
                     }
-                  } else if (!value.followup[option]) {
-                    return callback(new Error(`请完成'${option}'的后续选项`));
-                  }
-                  
-                  // 校验二级级联
-                  if (fu1.input_type === 'single' && value.followup[option]) {
-                    const selected_fu1_option = value.followup[option];
-                    const fu2 = fu1.followup_options && fu1.followup_options[selected_fu1_option];
-                    const fu2_key = `${option}_${selected_fu1_option}`;
-                    if (fu2 && !value.followup[fu2_key]) {
-                      return callback(new Error(`请完成'${selected_fu1_option}'的后续选项`));
-                    }
-                  }
                 }
-              }
-            }
-            callback()
-          }
-        } else if (item.input_type === 'single') {
-          rule.message = `请选择${item.word_name}`
-          rule.trigger = 'change'
-        } else if (item.input_type === 'single_with_other') {
-          rule.message = `请选择${item.word_name}`
-          rule.trigger = 'change'
-          rule.validator = (rule, value, callback) => {
-            if (!value || !value.selected) {
-              return callback(new Error(`请选择${item.word_name}`))
-            }
-            if (value.selected === '__other__' && !value.other) {
-              return callback(new Error('请输入其他内容'))
-            }
-            callback()
-          }
-        } else if (item.input_type === 'number' || item.input_type === 'date') {
-          rule.message = `请输入${item.word_name}`
+                callback();
+            };
+        } else if (inputType === 'multi' || inputType === 'multi_with_date') {
+            rule.message = `请选择${item.word_name}`;
+            rule.trigger = 'change';
+            rule.validator = (rule, value, callback) => {
+                if (!value || value.selected.length === 0) {
+                    return callback(new Error(`请至少选择一个${item.word_name}`));
+                }
+                if (inputType === 'multi_with_date') {
+                    for (const option of value.selected) {
+                        if (!value.times[option]) {
+                            return callback(new Error(`请为'${option}'选择时间`));
+                        }
+                    }
+                }
+                if (item.followup_options) {
+                    for (const option of value.selected) {
+                        const followupDef = item.followup_options[option];
+                        if (followupDef) {
+                            if (followupDef.input_type === 'group' && followupDef.fields) {
+                                if (!value.followup[option] || typeof value.followup[option] !== 'object') {
+                                    return callback(new Error(`请完成'${option}'的详细信息`));
+                                }
+                                for (const field of followupDef.fields) {
+                                    const fieldValue = value.followup[option][field.label];
+                                    if (fieldValue === null || fieldValue === undefined || fieldValue === '') {
+                                        return callback(new Error(`请完成'${option}'中的'${field.label}'`));
+                                    }
+                                }
+                            } else if (!value.followup[option]) {
+                                return callback(new Error(`请完成'${option}'的后续选项`));
+                            }
+                        }
+                    }
+                }
+                callback();
+            };
+        } else if (inputType === 'single') {
+            rule.message = `请选择${item.word_name}`;
+            rule.trigger = 'change';
+        } else if (inputType === 'single_with_other') {
+            rule.message = `请选择${item.word_name}`;
+            rule.trigger = 'change';
+            rule.validator = (rule, value, callback) => {
+                if (!value || !value.selected) {
+                    return callback(new Error(`请选择${item.word_name}`));
+                }
+                if (value.selected === '__other__' && !value.other) {
+                    return callback(new Error('请输入其他内容'));
+                }
+                callback();
+            };
         } else {
-          rule.message = `请输入${item.word_name}`
+            rule.message = `请输入${item.word_name}`;
         }
         
         rules[`values.${item.word_code}`] = [rule]
