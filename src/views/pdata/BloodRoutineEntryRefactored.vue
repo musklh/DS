@@ -50,6 +50,8 @@
                 :get-followup-type="getFollowupType"
                 :get-followup-options="getFollowupOptions"
                 :get-followup-label="getFollowupLabel"
+                :get-followup-fields="getFollowupFields"
+                :get-field-options="getFieldOptions"
               />
             </el-form-item>
           </el-form>
@@ -100,7 +102,9 @@ import {
   hasFollowupForOption as hasFollowupForOptionUtil,
   getFollowupType as getFollowupTypeUtil,
   getFollowupOptions as getFollowupOptionsUtil,
-  getFollowupLabel as getFollowupLabelUtil
+  getFollowupLabel as getFollowupLabelUtil,
+  getFollowupFields as getFollowupFieldsUtil,
+  getFieldOptions as getFieldOptionsUtil
 } from '../../utils/formHelpers'
 
 // 子组件
@@ -167,6 +171,8 @@ const hasFollowupForOption = (wordCode, option) => hasFollowupForOptionUtil(word
 const getFollowupType = (wordCode, option) => getFollowupTypeUtil(wordCode, option, props.selectedTemplate)
 const getFollowupOptions = (wordCode, option) => getFollowupOptionsUtil(wordCode, option, props.selectedTemplate)
 const getFollowupLabel = (wordCode, option) => getFollowupLabelUtil(wordCode, option, props.selectedTemplate)
+const getFollowupFields = (wordCode, option) => getFollowupFieldsUtil(wordCode, option, props.selectedTemplate)
+const getFieldOptions = (field) => getFieldOptionsUtil(field)
 
 // 事件处理
 const handleRefresh = () => {

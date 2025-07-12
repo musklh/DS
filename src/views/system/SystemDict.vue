@@ -122,6 +122,45 @@
                 <el-input v-model="formData.options" type="textarea" placeholder="多个选项请用英文逗号(,)隔开" />
             </el-form-item>
 
+            <!-- 主词条组合输入字段配置 -->
+            <div v-if="formData.input_type === 'group'" class="main-group-fields-config">
+              <el-divider>组合字段配置</el-divider>
+              <div v-if="!formData.fields">
+                <el-button size="small" type="success" @click="initMainGroupFields()" icon="Plus">
+                  初始化组合字段
+                </el-button>
+              </div>
+              <div v-else>
+                <div v-for="(field, fieldIndex) in formData.fields" :key="fieldIndex" class="group-field-item">
+                  <div class="group-field-header">
+                    <span>字段 {{ fieldIndex + 1 }}</span>
+                    <el-button size="small" type="danger" @click="removeMainGroupField(fieldIndex)" icon="Minus">
+                      删除字段
+                    </el-button>
+                  </div>
+                  <div class="group-field-form">
+                    <el-form-item label="字段标签">
+                      <el-input v-model="field.label" size="small" placeholder="例如：第几次" />
+                    </el-form-item>
+                    <el-form-item label="字段类型">
+                      <el-select v-model="field.input_type" size="small" placeholder="请选择">
+                        <el-option label="文本" value="text" />
+                        <el-option label="数值" value="number" />
+                        <el-option label="日期" value="date" />
+                        <el-option label="单选" value="select" />
+                      </el-select>
+                    </el-form-item>
+                    <el-form-item v-if="field.input_type === 'select'" label="选项">
+                      <el-input v-model="field.options" size="small" placeholder="用英文逗号(,)隔开" />
+                    </el-form-item>
+                  </div>
+                </div>
+                <el-button size="small" type="primary" @click="addMainGroupField()" icon="Plus">
+                  添加字段
+                </el-button>
+              </div>
+            </div>
+
             <!-- 动态后续问题生成器 -->
             <div v-if="mainOptionsArray.length > 0" class="followup-builder">
               <el-divider>后续问题设置</el-divider>
@@ -152,13 +191,55 @@
                       <el-option label="文本" value="text" />
                       <el-option label="数值" value="number" />
                       <el-option label="日期" value="date" />
+                      <el-option label="组合输入" value="group" />
                     </el-select>
                   </el-form-item>
+                  
+                  <!-- 常规单选选项 -->
                   <el-form-item v-if="formData.followup_options[option].input_type === 'single'" label="问题选项">
                     <el-input v-model="formData.followup_options[option].options" size="small" placeholder="用英文逗号(,)隔开" />
                   </el-form-item>
 
-                  <!-- LEVEL 2 FOLLOWUP -->
+                  <!-- 组合输入字段配置 -->
+                  <div v-if="formData.followup_options[option].input_type === 'group'" class="group-fields-config">
+                    <el-divider style="margin: 10px 0;">组合字段配置</el-divider>
+                    <div v-if="!formData.followup_options[option].fields">
+                      <el-button size="small" type="success" @click="initGroupFields(option)" icon="Plus">
+                        初始化组合字段
+                      </el-button>
+                    </div>
+                    <div v-else>
+                      <div v-for="(field, fieldIndex) in formData.followup_options[option].fields" :key="fieldIndex" class="group-field-item">
+                        <div class="group-field-header">
+                          <span>字段 {{ fieldIndex + 1 }}</span>
+                          <el-button size="small" type="danger" @click="removeGroupField(option, fieldIndex)" icon="Minus">
+                            删除字段
+                          </el-button>
+                        </div>
+                        <div class="group-field-form">
+                          <el-form-item label="字段标签">
+                            <el-input v-model="field.label" size="small" placeholder="例如：第几次" />
+                          </el-form-item>
+                          <el-form-item label="字段类型">
+                            <el-select v-model="field.input_type" size="small" placeholder="请选择">
+                              <el-option label="文本" value="text" />
+                              <el-option label="数值" value="number" />
+                              <el-option label="日期" value="date" />
+                              <el-option label="单选" value="select" />
+                            </el-select>
+                          </el-form-item>
+                          <el-form-item v-if="field.input_type === 'select'" label="选项">
+                            <el-input v-model="field.options" size="small" placeholder="用英文逗号(,)隔开" />
+                          </el-form-item>
+                        </div>
+                      </div>
+                      <el-button size="small" type="primary" @click="addGroupField(option)" icon="Plus">
+                        添加字段
+                      </el-button>
+                    </div>
+                  </div>
+
+                  <!-- LEVEL 2 FOLLOWUP (原有的二级选项逻辑，仅对单选类型) -->
                   <div v-if="formData.followup_options[option].input_type === 'single' && formData.followup_options[option].options">
                     <div v-for="sub_option in getOptionsArray(formData.followup_options[option].options || '')" :key="sub_option" class="followup-item-nested">
                       <div class="followup-item-header">
@@ -217,10 +298,17 @@ import { Plus, Search, Minus } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { dictionaryList, dictionaryCreate, dictionaryUpdate, dictionaryDelete } from '../../api/dictionary'
 
+interface GroupField {
+  label: string
+  input_type: string
+  options?: string
+}
+
 interface FollowUp {
   label: string
   input_type: string
   options?: string
+  fields?: GroupField[]  // 新增：组合字段
   followup_options?: Record<string, FollowUp>
 }
 
@@ -235,6 +323,7 @@ interface DictItem {
   data_type?: string | null // 新增：数据类型
   input_type: string
   options: string
+  fields?: GroupField[]  // 新增：主词条组合字段
   followup_options?: Record<string, FollowUp>
   followup_options_str?: string; // 用于UI绑定
 }
@@ -267,8 +356,9 @@ export default defineComponent({
       data_type: null, // 默认值设为 null
       input_type: '',
       options: '',
+      fields: [],
       followup_options: {},
-      followup_options_str: ''
+      followup_options_str: '{}'
     })
 
     // 表单验证规则
@@ -381,6 +471,7 @@ export default defineComponent({
         data_type: '', // 默认值设为 null
         input_type: 'text',
         options: '',
+        fields: [],
         followup_options: {},
         followup_options_str: '{}'
       }
@@ -394,6 +485,7 @@ export default defineComponent({
       formData.value = { 
         ...row, 
         data_type: row.data_type === '是' ? '数值类型' : "",
+        fields: row.fields || [],
         followup_options_str: JSON.stringify(row.followup_options || {}, null, 2)
       }
       dialogVisible.value = true
@@ -432,16 +524,30 @@ export default defineComponent({
             delete submitData.followup_options_str;
 
             if (isEdit.value && submitData.word_code) {
-              await dictionaryUpdate({ word_code: submitData.word_code }, submitData as API.Dictionary)
-              ElMessage.success('编辑成功')
+              const res = await dictionaryUpdate({ word_code: submitData.word_code }, submitData as API.Dictionary)
+              // @ts-ignore
+              if (res.data?.code === 200) {
+                ElMessage.success('编辑成功')
+                await fetchDictList()
+                dialogVisible.value = false
+              } else {
+                // @ts-ignore
+                ElMessage.error(res.data?.msg || '编辑失败')
+              }
             } else {
               delete submitData.word_code // 新增时不需要 word_code
-              await dictionaryCreate(submitData)
-              ElMessage.success('添加成功')
+              const res = await dictionaryCreate(submitData)
+              // @ts-ignore
+              if (res.data?.code === 200) {
+                ElMessage.success('添加成功')
+                await fetchDictList()
+                dialogVisible.value = false
+              } else {
+                 // @ts-ignore
+                 console.log(res.data);
+                 ElMessage.error(res.data?.msg || '添加失败')
+              }
             }
-
-            await fetchDictList()
-            dialogVisible.value = false
           }
         })
       } catch (error) {
@@ -473,6 +579,64 @@ export default defineComponent({
     const removeFollowUp = (option: string, parent: { followup_options?: Record<string, FollowUp> }) => {
       if (parent.followup_options && parent.followup_options[option]) {
         delete parent.followup_options[option];
+      }
+    };
+
+    // 新增：组合字段相关函数
+    const initGroupFields = (option: string) => {
+      if (!formData.value.followup_options) {
+        formData.value.followup_options = {};
+      }
+      if (!formData.value.followup_options[option].fields) {
+        formData.value.followup_options[option].fields = [
+          { label: '第几次', input_type: 'select', options: '第1次,第2次,第3次,第4次,第5次,第6次,第7次,第8次,第9次,第10次' },
+          { label: '时间', input_type: 'date' }
+        ];
+      }
+    };
+
+    const addGroupField = (option: string) => {
+      if (!formData.value.followup_options) {
+        formData.value.followup_options = {};
+      }
+      if (!formData.value.followup_options[option].fields) {
+        formData.value.followup_options[option].fields = [];
+      }
+      formData.value.followup_options[option].fields.push({
+        label: '',
+        input_type: 'text'
+      });
+    };
+
+    const removeGroupField = (option: string, fieldIndex: number) => {
+      if (formData.value.followup_options && formData.value.followup_options[option].fields) {
+        formData.value.followup_options[option].fields.splice(fieldIndex, 1);
+      }
+    };
+
+    // 新增：主词条组合字段相关函数
+    const initMainGroupFields = () => {
+      if (!formData.value.fields) {
+        formData.value.fields = [
+          { label: '第几次', input_type: 'select', options: '第1次,第2次,第3次,第4次,第5次,第6次,第7次,第8次,第9次,第10次' },
+          { label: '时间', input_type: 'date' }
+        ];
+      }
+    };
+
+    const addMainGroupField = () => {
+      if (!formData.value.fields) {
+        formData.value.fields = [];
+      }
+      formData.value.fields.push({
+        label: '',
+        input_type: 'text'
+      });
+    };
+
+    const removeMainGroupField = (fieldIndex: number) => {
+      if (formData.value.fields) {
+        formData.value.fields.splice(fieldIndex, 1);
       }
     };
 
@@ -509,6 +673,12 @@ export default defineComponent({
       addFollowUp,
       removeFollowUp,
       getOptionsArray,
+      initGroupFields,
+      addGroupField,
+      removeGroupField,
+      initMainGroupFields,
+      addMainGroupField,
+      removeMainGroupField,
     }
   }
 })
@@ -627,5 +797,41 @@ export default defineComponent({
 
 .followup-item-form .el-form-item {
     margin-bottom: 18px;
+}
+
+/* 新增：组合字段配置样式 */
+.group-fields-config,
+.main-group-fields-config {
+  background-color: #f0f4f8;
+  border: 1px solid #d1d9e6;
+  border-radius: 6px;
+  padding: 12px;
+  margin-top: 10px;
+}
+
+.group-field-item {
+  background-color: white;
+  border: 1px solid #e1e5e9;
+  border-radius: 4px;
+  padding: 10px;
+  margin-bottom: 8px;
+}
+
+.group-field-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  font-weight: 500;
+  color: #303133;
+}
+
+.group-field-form {
+  padding-left: 15px;
+  border-left: 2px solid #409eff;
+}
+
+.group-field-form .el-form-item {
+  margin-bottom: 12px;
 }
 </style>

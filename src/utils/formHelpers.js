@@ -1,74 +1,122 @@
-// 表单相关的工具函数
+// src/utils/formHelpers.js
 
-// Helper function to check if an option is selected for multi_with_date
-export const isOptionSelected = (formData, wordCode, option) => {
-  // 处理两种情况：formData.values[wordCode] 或直接传入 values 对象
-  if (!formData) return false
-  
-  const fieldData = formData.values ? formData.values[wordCode] : formData[wordCode]
-  if (!fieldData || !fieldData.selected || !Array.isArray(fieldData.selected)) {
-    return false
+/**
+ * 获取词条定义
+ * @param {string} wordCode - 词条代码
+ * @param {object} template - 当前选择的模板
+ * @returns {object|null} - 词条的定义
+ */
+const getDictInfo = (wordCode, template) => {
+  return template?.dictionaryList?.find(item => item.word_code === wordCode) || null;
+}
+
+/**
+ * 获取词条的选项列表 (用于 select, radio, checkbox)
+ * @param {string} wordCode - 词条代码
+ * @param {object} template - 当前选择的模板
+ * @returns {string[]} - 选项数组
+ */
+export const getOptions = (wordCode, template) => {
+  const dictInfo = getDictInfo(wordCode, template);
+  if (dictInfo && dictInfo.options && typeof dictInfo.options === 'string') {
+    return dictInfo.options.split(',').map(o => o.trim()).filter(o => o);
   }
-  
-  return fieldData.selected.includes(option)
-}
+  return [];
+};
 
-// 获取选项数组
-export const getOptions = (wordCode, selectedTemplate) => {
-  if (!selectedTemplate?.dictionaryList) return []
-  
-  const item = selectedTemplate.dictionaryList.find(i => i.word_code === wordCode)
-  if (item && item.options && typeof item.options === 'string') {
-    return item.options.split(',').map(o => o.trim()).filter(o => o)
+/**
+ * 检查一个选项是否有后续问题
+ * @param {string} wordCode - 词条代码
+ * @param {string} option - 选项
+ * @param {object} template - 当前选择的模板
+ * @returns {boolean}
+ */
+export const hasFollowupForOption = (wordCode, option, template) => {
+  const dictInfo = getDictInfo(wordCode, template);
+  return !!dictInfo?.followup_options?.[option];
+};
+
+/**
+ * 获取后续问题的完整定义
+ * @param {string} wordCode - 词条代码
+ * @param {string} option - 选项
+ * @param {object} template - 当前选择的模板
+ * @returns {object|null}
+ */
+const getFollowupDefinition = (wordCode, option, template) => {
+  const dictInfo = getDictInfo(wordCode, template);
+  return dictInfo?.followup_options?.[option] || null;
+};
+
+/**
+ * 获取后续问题的输入类型
+ * @param {string} wordCode - 词条代码
+ * @param {string} option - 选项
+ * @param {object} template - 当前选择的模板
+ * @returns {string}
+ */
+export const getFollowupType = (wordCode, option, template) => {
+  const followupDef = getFollowupDefinition(wordCode, option, template);
+  // 兼容性处理：如果存在 fields 数组，即使 input_type 不是 group，也将其视为 group
+  if (followupDef?.fields && Array.isArray(followupDef.fields)) {
+    return 'group';
   }
-  return []
-}
+  return followupDef?.input_type || 'text';
+};
 
-// 检查某个选项是否有二级选项
-export const hasFollowupForOption = (wordCode, option, selectedTemplate) => {
-  if (!selectedTemplate?.dictionaryList) return false
-  
-  const item = selectedTemplate.dictionaryList.find(i => i.word_code === wordCode)
-  return item?.followup_options?.[option] !== undefined
-}
-
-// 获取二级选项的类型
-export const getFollowupType = (wordCode, option, selectedTemplate) => {
-  if (!selectedTemplate?.dictionaryList) return 'text'
-  
-  const item = selectedTemplate.dictionaryList.find(i => i.word_code === wordCode)
-  const followup = item?.followup_options?.[option]
-  return followup?.input_type || 'text'
-}
-
-// 获取二级选项的选项列表
-export const getFollowupOptions = (wordCode, option, selectedTemplate) => {
-  if (!selectedTemplate?.dictionaryList) return []
-  
-  const item = selectedTemplate.dictionaryList.find(i => i.word_code === wordCode)
-  const followup = item?.followup_options?.[option]
-  if (followup && followup.options && typeof followup.options === 'string') {
-    return followup.options.split(',').map(o => o.trim()).filter(o => o)
+/**
+ * 获取后续问题的选项列表 (仅用于 single 类型)
+ * @param {string} wordCode - 词条代码
+ * @param {string} option - 选项
+ * @param {object} template - 当前选择的模板
+ * @returns {string[]}
+ */
+export const getFollowupOptions = (wordCode, option, template) => {
+  const followupDef = getFollowupDefinition(wordCode, option, template);
+  if (followupDef && followupDef.options && typeof followupDef.options === 'string') {
+    return followupDef.options.split(',').map(o => o.trim()).filter(o => o);
   }
-  return []
-}
+  return [];
+};
 
-// 获取二级选项的标签
-export const getFollowupLabel = (wordCode, option, selectedTemplate) => {
-  if (!selectedTemplate?.dictionaryList) return `${option}详情`
-  
-  const item = selectedTemplate.dictionaryList.find(i => i.word_code === wordCode)
-  const followup = item?.followup_options?.[option]
-  return followup?.label || `${option}详情`
-}
+/**
+ * 获取后续问题的标签
+ * @param {string} wordCode - 词条代码
+ * @param {string} option - 选项
+ * @param {object} template - 当前选择的模板
+ * @returns {string}
+ */
+export const getFollowupLabel = (wordCode, option, template) => {
+  const followupDef = getFollowupDefinition(wordCode, option, template);
+  return followupDef?.label || `${option}详情`;
+};
 
-// 获取选项数组（从字符串分割）
-export const getOptionsArray = (optionsStr) => {
-  if (optionsStr && typeof optionsStr === 'string') {
-    return optionsStr.split(',').map(o => o.trim()).filter(o => o)
+/**
+ * 获取后续问题的组合字段列表 (仅用于 group 类型)
+ * @param {string} wordCode - 词条代码
+ * @param {string} option - 选项
+ * @param {object} template - 当前选择的模板
+ * @returns {any[]}
+ */
+export const getFollowupFields = (wordCode, option, template) => {
+  const followupDef = getFollowupDefinition(wordCode, option, template);
+  return followupDef?.fields || [];
+};
+
+/**
+ * 获取组合字段中 select 的选项列表
+ * @param {object} field - 字段定义
+ * @returns {string[]}
+ */
+export const getFieldOptions = (field) => {
+  if (field && field.options && typeof field.options === 'string') {
+    return field.options.split(',').map(o => o.trim()).filter(o => o);
   }
-  return []
-}
+  if (field && Array.isArray(field.options)) {
+    return field.options; // 直接返回数组
+  }
+  return [];
+};
 
 // --- 级联选择辅助函数 ---
 export const isNestedFollowupVisible = (item, option, formData) => {
