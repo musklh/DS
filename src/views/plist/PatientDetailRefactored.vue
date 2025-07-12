@@ -67,6 +67,8 @@
       :get-followup-type="getFollowupType"
       :get-followup-options="getFollowupOptions"
       :get-followup-label="getFollowupLabel"
+      :get-followup-fields="getFollowupFields"
+      :get-field-options="getFieldOptions"
       @start-edit="startEdit"
       @cancel-edit="cancelEdit"
       @save-item="handleSaveItem"
@@ -139,6 +141,8 @@ const {
   getFollowupType,
   getFollowupOptions,
   getFollowupLabel,
+  getFollowupFields,
+  getFieldOptions,
   formatDisplayValue
 } = useTemplateDetail()
 

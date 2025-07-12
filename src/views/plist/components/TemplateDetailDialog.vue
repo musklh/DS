@@ -19,6 +19,8 @@
               :getFollowupType="getFollowupType"
               :getFollowupOptions="getFollowupOptions"
               :getFollowupLabel="getFollowupLabel"
+              :getFollowupFields="getFollowupFields"
+              :getFieldOptions="getFieldOptions"
               @update:modelValue="row.editingValue = $event"
             />
           </template>
@@ -81,6 +83,14 @@ const props = defineProps({
     required: true
   },
   getFollowupLabel: {
+    type: Function,
+    required: true
+  },
+  getFollowupFields: {
+    type: Function,
+    required: true
+  },
+  getFieldOptions: {
     type: Function,
     required: true
   }
