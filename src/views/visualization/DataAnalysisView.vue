@@ -28,7 +28,7 @@
         @clear-selected="handleClearSelected"
       />
 
-      <DataAnalysisResultDisplay
+      <DataAnalysisResultDisplayRefactored
         v-if="currentStep === 2"
         :patient-data="selectedPatientData"
         :axis-data="axisData"
@@ -43,7 +43,7 @@ import { ref, reactive, onMounted } from 'vue';
 import { ElSteps, ElStep, ElMessage, ElDivider, ElIcon } from 'element-plus';
 import { UserFilled, Document, DataAnalysis, Refresh } from '@element-plus/icons-vue';
 import DataAnalysisSelectPatientAndCase from './DataAnalysisSelectPatientAndCase.vue';
-import DataAnalysisResultDisplay from './DataAnalysisResultDisplayRefactored.vue';
+import DataAnalysisResultDisplayRefactored from './DataAnalysisResultDisplayRefactored.vue';
 import { caseVisualizationYaxisOptionsCreate } from '../../api/caseVisualizationYaxisOptions';
 
 const currentStep = ref(1); // 1: 选择患者和病例, 2: 结果展示

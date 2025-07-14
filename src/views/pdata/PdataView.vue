@@ -14,12 +14,14 @@
         @patient-case-selected="handlePatientCaseSelected"
       >
         <template #header>
-          <div class="card-header-content" style="justify-content: space-between;">
+          <div class="card-header-content" style="justify-content: space-between">
             <div>
               <el-icon><Tickets /></el-icon>
               <span>选择病例</span>
             </div>
-            <el-button type="text" @click="handleBackToPatient" style="color: #409eff;">返回</el-button>
+            <el-button type="text" @click="handleBackToPatient" style="color: #409eff"
+              >返回</el-button
+            >
           </div>
         </template>
       </SelectPatientAndCase>
@@ -31,7 +33,7 @@
         @go-back-to-case="handleBackToCase"
       />
 
-      <BloodRoutineEntry
+      <BloodRoutineEntryRefactored
         v-if="currentStep === 2"
         :patient-data="selectedPatientData"
         :selected-template="selectedTemplate"
@@ -54,7 +56,7 @@ import { UserFilled, Tickets, Edit } from '@element-plus/icons-vue';
 // Import child components
 import SelectPatientAndCase from './SelectPatientAndCase.vue';
 import SelectClinicalTemplate from './SelectClinicalTemplate.vue';
-import BloodRoutineEntry from './BloodRoutineEntryRefactored.vue';
+import BloodRoutineEntryRefactored from './BloodRoutineEntryRefactored.vue';
 
 // import { caseIdentityCases } from '../../api/openApiCase'; // This import seems unused, can be removed if not needed elsewhere
 
@@ -88,7 +90,7 @@ const handlePatientCaseSelected = (data) => {
       gender: data.patientData.gender === 0 ? '女' : '男',
       age: data.patientData.age || '',
       identity_id: data.patientData.identity_id || '',
-      caseId: data.patientData.caseId || ''
+      caseId: data.patientData.caseId || '',
     });
     
     console.log('PdataView: 更新后的患者数据:', selectedPatientData);
@@ -109,7 +111,7 @@ const handleTemplateSelected = (templateData) => {
     id: templateData.templateId,
     code: templateData.templateCode,
     name: templateData.templateName,
-    dictionaryList: templateData.dictionaryList
+    dictionaryList: templateData.dictionaryList,
   };
   ElMessage.success(`临床模板 "${templateData.templateName}" 已选择，进入数据录入`);
   currentStep.value = 2;
