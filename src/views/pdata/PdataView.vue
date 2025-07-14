@@ -33,7 +33,7 @@
         @go-back-to-case="handleBackToCase"
       />
 
-      <BloodRoutineEntryRefactored
+      <BloodRoutineEntryWithRating
         v-if="currentStep === 2"
         :patient-data="selectedPatientData"
         :selected-template="selectedTemplate"
@@ -56,7 +56,7 @@ import { UserFilled, Tickets, Edit } from '@element-plus/icons-vue';
 // Import child components
 import SelectPatientAndCase from './SelectPatientAndCase.vue';
 import SelectClinicalTemplate from './SelectClinicalTemplate.vue';
-import BloodRoutineEntryRefactored from './BloodRoutineEntryRefactored.vue';
+import BloodRoutineEntryWithRating from './BloodRoutineEntryWithRating.vue';
 
 // import { caseIdentityCases } from '../../api/openApiCase'; // This import seems unused, can be removed if not needed elsewhere
 
