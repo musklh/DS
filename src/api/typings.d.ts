@@ -304,11 +304,13 @@ declare namespace API {
     /** Data type 数据类型，如数值类型、文本类型 */
     data_type?: string;
     /** 填写方式 */
-    input_type?: 'single' | 'multi' | 'text' | 'multi_with_followup' | 'multi_with_time';
+    input_type?: 'single' | 'multi' | 'text' | 'multi_with_followup' | 'multi_with_time' | 'group';
     /** 主选项 */
     options?: string;
     /** 后续选项 */
     followup_options?: Record<string, any>;
+    /** 组合字段 */
+    fields?: Record<string, any>[];
   };
 
   type dictionaryDeleteParams = {

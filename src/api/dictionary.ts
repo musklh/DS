@@ -52,6 +52,8 @@ export async function dictionaryCreate(
     options: string;
     /** 后续选项 */
     followup_options?: Record<string, any>;
+    /** 组合字段 */
+    fields?: Record<string, any>[];
   },
   options?: { [key: string]: any }
 ) {
@@ -66,6 +68,8 @@ export async function dictionaryCreate(
     input_type: string;
     options: string;
     followup_options?: Record<string, any>;
+    /** 组合字段 */
+    fields?: Record<string, any>[];
   }>('/dictionary/', {
     method: 'POST',
     headers: {
