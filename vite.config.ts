@@ -28,7 +28,8 @@ export default defineConfig({
     proxy: {
       // 开发环境代理配置
       '/api': {
-        target: process.env.VITE_API_URL || 'http://127.0.0.1:8000',
+        //target: process.env.VITE_API_URL || 'http://127.0.0.1:8000',
+        target: 'http://118.89.187.153:8000',
         changeOrigin: true,
       },
       // OCR服务代理配置

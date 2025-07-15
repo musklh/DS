@@ -52,6 +52,14 @@ export async function dictionaryCreate(
     options: string;
     /** 后续选项 */
     followup_options?: Record<string, any>;
+    /** 是否有单位 0-无 1-有 */
+    has_unit?: number;
+    /** 词条单位 */
+    unit?: string;
+    /** 是否为评分词条 0-不是 1-是 */
+    is_score?: number;
+    /** 评分计算方式 */
+    score_func?: string;
   },
   options?: { [key: string]: any }
 ) {
@@ -66,6 +74,10 @@ export async function dictionaryCreate(
     input_type: string;
     options: string;
     followup_options?: Record<string, any>;
+    has_unit?: number;
+    unit?: string;
+    is_score?: number;
+    score_func?: string;
   }>('/dictionary/', {
     method: 'POST',
     headers: {
@@ -112,8 +124,23 @@ export async function dictionaryRead(
 export async function dictionaryUpdate(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
   params: API.dictionaryUpdateParams,
-  body: API.Dictionary,
-  options?: { [key: string]: any }
+  body: {
+    word_name: string;
+    word_eng?: string;
+    word_short?: string;
+    word_class: string;
+    word_apply: string;
+    word_belong?: string;
+    data_type?: string;
+    input_type: string;
+    options: string;
+    followup_options?: Record<string, any>;
+    has_unit?: number;
+    unit?: string;
+    is_score?: number;
+    score_func?: string;
+  },
+  options?: { [key:string]: any }
 ) {
   const { word_code: param0, ...queryParams } = params;
   return request<API.Dictionary>(`/dictionary/${param0}/`, {

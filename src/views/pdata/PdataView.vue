@@ -7,19 +7,21 @@
         <el-step title="数据录入" icon="Edit" />
       </el-steps>
     </div>
-    
+
     <div class="workflow-content">
       <SelectPatientAndCase
         v-if="currentStep === 0"
         @patient-case-selected="handlePatientCaseSelected"
       >
         <template #header>
-          <div class="card-header-content" style="justify-content: space-between;">
+          <div class="card-header-content" style="justify-content: space-between">
             <div>
               <el-icon><Tickets /></el-icon>
               <span>选择病例</span>
             </div>
-            <el-button type="text" @click="handleBackToPatient" style="color: #409eff;">返回</el-button>
+            <el-button type="text" @click="handleBackToPatient" style="color: #409eff"
+              >返回</el-button
+            >
           </div>
         </template>
       </SelectPatientAndCase>
@@ -33,6 +35,13 @@
 
       <BloodRoutineEntry
         v-if="currentStep === 2"
+        :patient-data="selectedPatientData"
+        :selected-template="selectedTemplate"
+        @data-submitted="handleDataSubmitted"
+        @go-back-to-template="currentStep = 1"
+      />
+      <BloodRoutineEntryWithRating
+        v-if="currentStep === 3"
         :patient-data="selectedPatientData"
         :selected-template="selectedTemplate"
         @data-submitted="handleDataSubmitted"
@@ -54,7 +63,8 @@ import { UserFilled, Tickets, Edit } from '@element-plus/icons-vue';
 // Import child components
 import SelectPatientAndCase from './SelectPatientAndCase.vue';
 import SelectClinicalTemplate from './SelectClinicalTemplate.vue';
-import BloodRoutineEntry from './BloodRoutineEntryRefactored.vue';
+import BloodRoutineEntry from './BloodRoutineEntry.vue';
+import BloodRoutineEntryWithRating from './BloodRoutineEntryWithRating.vue';
 
 // import { caseIdentityCases } from '../../api/openApiCase'; // This import seems unused, can be removed if not needed elsewhere
 
@@ -75,28 +85,27 @@ const handlePatientCaseSelected = (data) => {
   try {
     console.log('PdataView: 开始接收患者和病例数据');
     console.log('PdataView: 接收到的数据:', data);
-    
+
     if (!data || !data.patientData) {
       console.error('接收到的数据格式不正确');
       ElMessage.error('数据格式错误');
       return;
     }
-    
+
     // 更新选中的患者数据
     Object.assign(selectedPatientData, {
       name: data.patientData.name || '',
       gender: data.patientData.gender === 0 ? '女' : '男',
       age: data.patientData.age || '',
       identity_id: data.patientData.identity_id || '',
-      caseId: data.patientData.caseId || ''
+      caseId: data.patientData.caseId || '',
     });
-    
+
     console.log('PdataView: 更新后的患者数据:', selectedPatientData);
     ElMessage.success('患者和病例已选择，进入下一步');
-    
-    currentStep.value = 1; 
-    console.log('PdataView: 步骤已更新到1');
 
+    currentStep.value = 1;
+    console.log('PdataView: 步骤已更新到1');
   } catch (error) {
     console.error('处理患者和病例数据失败:', error);
     ElMessage.error('处理数据失败');
@@ -109,10 +118,11 @@ const handleTemplateSelected = (templateData) => {
     id: templateData.templateId,
     code: templateData.templateCode,
     name: templateData.templateName,
-    dictionaryList: templateData.dictionaryList
+    dictionaryList: templateData.dictionaryList,
   };
   ElMessage.success(`临床模板 "${templateData.templateName}" 已选择，进入数据录入`);
-  currentStep.value = 2;
+  if (templateData.templateName.includes('评分')) currentStep.value = 3;
+  else currentStep.value = 2;
 };
 
 const handleDataSubmitted = (formData) => {

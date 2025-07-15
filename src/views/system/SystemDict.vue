@@ -45,6 +45,18 @@
           <el-table-column prop="word_apply" label="词条应用" width="120" />
           <el-table-column prop="word_belong" label="从属别名" width="120" />
           <el-table-column prop="data_type" label="数值类型" width="120" />
+          <el-table-column prop="has_unit" label="有单位" width="80">
+            <template #default="{ row }">
+              <span>{{ row.has_unit === 1 ? '是' : '否' }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="unit" label="单位" width="100" />
+          <el-table-column prop="is_score" label="是评分" width="80">
+            <template #default="{ row }">
+              <span>{{ row.is_score === 1 ? '是' : '否' }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="score_func" label="评分方式" width="150" />
           <el-table-column prop="actions" label="操作" width="200" fixed="right">
             <template #default="{ row }">
               <el-button size="small" @click="handleEdit(row)">编辑</el-button>
@@ -117,6 +129,24 @@
                 <el-option label="多选" value="multi" />
                 <el-option label="多选并填写时间" value="multi_with_date" />
               </el-select>
+            </el-form-item>
+            <el-form-item label="是否有单位" prop="has_unit">
+                <el-radio-group v-model="formData.has_unit">
+                  <el-radio :label="1">是</el-radio>
+                  <el-radio :label="0">否</el-radio>
+                </el-radio-group>
+            </el-form-item>
+            <el-form-item v-if="formData.has_unit === 1" label="词条单位" prop="unit">
+              <el-input v-model="formData.unit" placeholder="请输入单位" />
+            </el-form-item>
+            <el-form-item label="是否为评分" prop="is_score">
+              <el-radio-group v-model="formData.is_score">
+                <el-radio :label="1">是</el-radio>
+                <el-radio :label="0">否</el-radio>
+              </el-radio-group>
+            </el-form-item>
+            <el-form-item v-if="formData.is_score === 1" label="评分计算方式" prop="score_func">
+              <el-input v-model="formData.score_func" type="textarea" placeholder="请输入评分计算方式" />
             </el-form-item>
             <el-form-item v-if="['single', 'multi', 'multi_with_date', 'single_with_other'].includes(formData.input_type)" label="主选项" prop="options">
                 <el-input v-model="formData.options" type="textarea" placeholder="多个选项请用英文逗号(,)隔开" />
@@ -326,6 +356,10 @@ interface DictItem {
   fields?: GroupField[]  // 新增：主词条组合字段
   followup_options?: Record<string, FollowUp>
   followup_options_str?: string; // 用于UI绑定
+  has_unit?: number
+  unit?: string
+  is_score?: number
+  score_func?: string
 }
 const generateWordCode = (): string => {
   const randomDigits = Math.floor(Math.random() * 1_000_000) // 0 ~ 999999
@@ -358,7 +392,11 @@ export default defineComponent({
       options: '',
       fields: [],
       followup_options: {},
-      followup_options_str: '{}'
+      followup_options_str: '{}',
+      has_unit: 0,
+      unit: '',
+      is_score: 0,
+      score_func: ''
     })
 
     // 表单验证规则
@@ -473,7 +511,11 @@ export default defineComponent({
         options: '',
         fields: [],
         followup_options: {},
-        followup_options_str: '{}'
+        followup_options_str: '{}',
+        has_unit: 0,
+        unit: '',
+        is_score: 0,
+        score_func: ''
       }
       dialogVisible.value = true
     }
@@ -521,10 +563,16 @@ export default defineComponent({
               ...formData.value,
               data_type: formData.value.data_type || "" // 确保 data_type 为 null 或 undefined 时传空字符串
             }
+            if (submitData.has_unit === 0) {
+              submitData.unit = ''
+            }
+            if (submitData.is_score === 0) {
+              submitData.score_func = ''
+            }
             delete submitData.followup_options_str;
 
             if (isEdit.value && submitData.word_code) {
-              const res = await dictionaryUpdate({ word_code: submitData.word_code }, submitData as API.Dictionary)
+              const res = await dictionaryUpdate({ word_code: submitData.word_code }, submitData as any)
               // @ts-ignore
               if (res.data?.code === 200) {
                 ElMessage.success('编辑成功')
@@ -532,11 +580,11 @@ export default defineComponent({
                 dialogVisible.value = false
               } else {
                 // @ts-ignore
-                ElMessage.error(res.data?.msg || '编辑失败')
+                ElMessage.error((res.data as any)?.msg || '编辑失败')
               }
             } else {
               delete submitData.word_code // 新增时不需要 word_code
-              const res = await dictionaryCreate(submitData)
+              const res = await dictionaryCreate(submitData as any)
               // @ts-ignore
               if (res.data?.code === 200) {
                 ElMessage.success('添加成功')
@@ -545,7 +593,7 @@ export default defineComponent({
               } else {
                  // @ts-ignore
                  console.log(res.data);
-                 ElMessage.error(res.data?.msg || '添加失败')
+                 ElMessage.error((res.data as any)?.msg || '添加失败')
               }
             }
           }

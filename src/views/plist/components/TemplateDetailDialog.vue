@@ -106,4 +106,64 @@ const visible = computed({
 
 <style scoped>
 /* 对话框样式可以根据需要调整 */
+.edit-value-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px; /* 为每个选项增加一些间距 */
+}
+
+.follow-up-container {
+  display: flex;
+  align-items: center;
+  margin-left: 20px;
+}
+
+.follow-up-label {
+  white-space: nowrap;
+  color: #606266;
+  font-size: 14px;
+}
+
+.main-follow-up-label {
+  align-self: flex-start; /* 顶端对齐 */
+  margin-top: 12px; /* 与第一个输入框大致对齐 */
+}
+
+.follow-up-group-wrapper {
+  display: flex;
+  align-items: flex-start; /* 整体顶端对齐 */
+  gap: 8px;
+}
+
+.follow-up-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px; /* 增加组内行间距 */
+  background-color: #f8f9fa;
+  padding: 12px;
+  border-radius: 4px;
+  border: 1px solid #e9ecef;
+}
+
+.follow-up-group-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.follow-up-field-label {
+  width: 60px; /* 固定标签宽度 */
+  text-align: right;
+  white-space: nowrap;
+  font-size: 14px;
+  color: #606266;
+}
+.follow-up-group-input {
+  width: 160px; /* 固定输入框宽度 */
+}
+
+.dialog-footer {
+  text-align: right;
+}
 </style> 

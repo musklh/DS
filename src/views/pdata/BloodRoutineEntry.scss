@@ -1,0 +1,497 @@
+/* ===== 患者数据视图样式文件 ===== */
+/* 该文件定义了患者数据页面的所有样式，包括患者信息展示、评分表单、规则配置等组件的样式 */
+
+/* ===== SCSS 变量定义 ===== */
+
+.blood-routine-entry-container {
+  padding: 0;
+  background-color: #f5f7fa;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.patient-case-header {
+  background-color: #fff;
+  padding: 15px 20px;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  color: #303133;
+}
+
+.patient-case-header span {
+  margin-right: 15px;
+}
+
+.patient-case-header .patient-name {
+  font-weight: bold;
+}
+
+.refresh-icon {
+  margin-left: 5px;
+  cursor: pointer;
+  color: #409eff;
+}
+
+.content-card {
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.content-card :deep(.el-card__header) {
+  padding: 15px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.content-card .card-header-content {
+  display: flex;
+  align-items: center;
+  font-weight: bold;
+  font-size: 18px;
+  color: #303133;
+  flex-grow: 1;
+}
+
+.content-card .in-progress-text {
+  color: #909399;
+  margin-right: 8px;
+  font-size: 16px;
+}
+
+.content-card .template-name {
+  margin-right: 15px;
+}
+
+.content-card .card-header-content .refresh-icon {
+  margin-left: 0;
+  margin-right: 10px;
+}
+
+.back-to-template-btn {
+  margin-left: auto;
+}
+// 定义全局颜色变量，便于统一管理和维护
+$primary-blue: #409eff;      // 主要蓝色，用于按钮、链接等主要交互元素
+$deep-blue: #0f578a;         // 深蓝色，用于重要文本和标题
+$error-red: #f56c6c;         // 错误红色，用于必填项标识和错误提示
+$text-dark: #333;            // 深色文本，用于主要内容文字
+$border-light: #f0f0f0;      // 浅色边框，用于分割线和容器边框
+$background-light: #f5f6fa;  // 浅色背景，用于标签和次要背景
+$border-dashed: #bbb;        // 虚线边框颜色，用于规则表格边框
+
+/* ===== 页面主容器样式 ===== */
+.pdata-container {
+  margin-left: 16px;   // 左边距，与侧边栏保持间距
+ // 顶部边距，与顶部导航保持间距
+  padding: 0;          // 内边距为0，子元素自行控制间距
+}
+
+/* ===== 患者基本信息展示区域 ===== */
+.patient-info {
+  display: flex;              // 使用弹性布局，水平排列患者信息
+  align-items: center;        // 垂直居中对齐
+  font-size: 20px;           // 较大字体，突出患者信息的重要性
+  font-weight: bold;         // 粗体显示，增强视觉效果
+  margin-bottom: 0;          // 底部无边距，紧贴下方内容
+  background: #fff;          // 白色背景，与页面背景区分
+  border-radius: 8px;        // 圆角边框，现代化设计
+  padding: 18px 24px;        // 内边距，确保内容不贴边
+  border-bottom: 1px solid $border-light; // 底部边框，与下方内容分隔
+
+  // 患者ID样式
+  .id {
+    color: $deep-blue;    // 使用深蓝色，突出患者ID的重要性
+    margin-left: 14px;    // 左边距，与前面内容保持间距
+    font-weight: bold;    // 粗体显示
+  }
+
+  // 性别和年龄样式
+  .gender,
+  .age {
+    margin-left: 14px;    // 左边距，保持信息间的间距
+    font-weight: bold;    // 粗体显示
+  }
+
+  // 病例标签样式
+  .case-label {
+    margin-left: 24px;           // 较大左边距，与基本信息区分
+    font-size: 16px;             // 稍小字体，次要信息
+    background: $background-light; // 浅色背景，标签效果
+    border-radius: 4px;          // 小圆角
+    padding: 8px 16px;           // 内边距，形成标签效果
+  }
+
+  // 刷新图标样式
+  .refresh-icon {
+    margin-left: 8px;     // 左边距
+    cursor: pointer;      // 鼠标指针，表示可点击
+  }
+}
+
+/* ===== 章节标题区域样式 ===== */
+.section-title {
+  font-size: 18px;              // 标题字体大小
+  margin: 16px 0;               // 上下边距，与其他内容保持间距
+  display: flex;                // 弹性布局
+  align-items: center;          // 垂直居中
+  background: #ffffff;          // 白色背景
+  border-radius: 8px;           // 圆角边框
+  padding: 22px 24px;           // 内边距
+  border-bottom: 1px solid $border-light; // 底部分隔线
+  // 标题中的粗体文本
+  b {
+    margin: 0 8px;       // 左右边距
+  }
+
+  // 刷新图标
+  .refresh-icon {
+    margin-left: 8px;     // 左边距
+    cursor: pointer;      // 可点击样式
+  }
+}
+
+/* ===== 主要内容区域布局 ===== */
+.main-content {
+  display: flex;                // 弹性布局，左右分栏
+  gap: 10%;
+  background: #ffffff;          // 白色背景
+  padding: 0 32px;               // 内边距
+                    // 子元素间距
+}
+
+/* ===== 评分表单区域样式 ===== */
+.score-form {
+  background: #fff;        // 白色背景
+  border-radius: 8px;      // 圆角边框
+  padding: 24px 32px;      // 内边距
+  min-width: 480px;        // 最小宽度，确保表单不会过窄
+
+  // 评分表格容器
+  .score-table {
+    margin-bottom: 16px;   // 底部边距
+  }
+
+  // 评分行样式
+  .score-row {
+    display: flex;         // 弹性布局，水平排列
+    align-items: center;   // 垂直居中
+    margin-bottom: 12px;   // 行间距
+  }
+
+  // 评分标签样式
+  .score-label {
+    width: 130px;          // 固定宽度，保持对齐
+    font-size: 15px;      // 字体大小
+  }
+
+  // 必填项标识
+  .required {
+    color: $error-red;     // 红色，表示必填
+    margin-left: 2px;     // 小间距
+  }
+
+  // 评分选择器和数值选择器
+  .score-select,
+  .value-select {
+    width: 90px;          // 固定宽度
+    margin: 8px;          // 外边距
+  }
+
+  // 选择数值链接
+  .choose-value {
+    color: $primary-blue;  // 主题蓝色
+    margin-left: 8px;     // 左边距
+    text-decoration: none; // 去除下划线
+    font-size: 16px;      // 字体大小
+    cursor: pointer;      // 可点击样式
+  }
+
+  // 评分结果显示
+  .score-result {
+    margin-bottom: 20px;  // 底部边距
+    font-size: 15px;      // 字体大小
+  }
+
+  // 评分数值样式
+  .score-value {
+    font-weight: bold;    // 粗体，突出显示
+    margin: 0 8px;        // 左右边距
+    font-size: 16px;      // 字体大小
+    color: $primary-blue; // 主题蓝色
+  }
+
+  // 计算链接样式
+  .calc-link {
+    color: $primary-blue; // 主题蓝色
+    margin-left: 8px;     // 左边距
+    font-size: 13px;      // 较小字体
+    cursor: pointer;      // 可点击样式
+  }
+
+  // 评分标签
+  .score-tag {
+    margin-bottom: 16px;  // 底部边距
+    font-size: 15px;      // 字体大小
+  }
+
+  // 评分描述
+  .score-desc {
+    font-weight: bold;    // 粗体
+    color: $text-dark;    // 深色文本
+    margin-left: 8px;     // 左边距
+  }
+
+  // 表单操作按钮区域
+  .form-actions {
+    display: flex;        // 弹性布局
+    justify-content: center; // 居中对齐
+    gap: 16px;           // 按钮间距
+    margin-top: 32px;    // 顶部边距
+  }
+}
+
+/* ===== 评分规则配置区域样式 ===== */
+.score-rule-box {
+  background: #ffffff;   // 白色背景
+  border-radius: 8px;    // 圆角边框
+  padding: 24px 32px;    // 内边距
+  min-width: 820px;      // 最小宽度，确保规则表格有足够空间
+
+  // 规则标题
+  .rule-title {
+    font-size: 16px;      // 字体大小
+    font-weight: bold;    // 粗体
+    margin-bottom: 12px;  // 底部边距
+  }
+
+  // 规则表格容器
+  .rule-table {
+    border: 1px dashed $border-dashed; // 虚线边框，表示可编辑区域
+    border-radius: 8px;               // 圆角
+    padding: 16px 24px;               // 内边距
+    margin-bottom: 16px;              // 底部边距
+
+    // 规则表格头部
+    .rule-thead {
+      width: 100%;         // 全宽
+      display: flex;       // 弹性布局
+      margin-bottom: 24px; // 底部边距
+
+      // 表头项目容器
+      .item-box {
+        width: 25%;         // 四等分宽度
+        padding-left: 20px; // 左内边距
+      }
+    }
+
+    // 规则行样式
+    .rule-row {
+      display: flex;       // 弹性布局
+      align-items: center; // 垂直居中
+      margin-bottom: 20px; // 行间距
+      gap: 40px;          // 元素间距
+
+      // 弹性容器
+      .flex-1 {
+        width: 25%;         // 四等分宽度
+        display: flex;      // 弹性布局
+        justify-items: center; // 内容居中
+
+        // 添加按钮样式
+        .add {
+          cursor: pointer;   // 可点击
+          font-size: 30px;   // 大字体
+          width: 50px;       // 固定宽度
+          height: 32px;      // 固定高度
+          color: #086698;    // 蓝色，表示添加操作
+        }
+
+        // 删除按钮样式
+        .remove {
+          width: 50px;       // 固定宽度
+          height: 32px;      // 固定高度
+          cursor: pointer;   // 可点击
+          font-size: 30px;   // 大字体
+          color: #d81e06;    // 红色，表示删除操作
+        }
+      }
+    }
+  }
+
+  // 规则应用区域
+  .applicationOfRules {
+    width: 100%;           // 全宽
+    display: flex;         // 弹性布局
+    justify-content: center; // 居中对齐
+  }
+
+  // 规则选择器
+  .rule-select {
+    width: 110px;          // 固定宽度
+  }
+
+  // 应用规则按钮
+  .apply-rule-btn {
+    margin-top: 8px;       // 顶部边距
+  }
+}
+
+/* ===== 数值选择对话框样式 ===== */
+.value-dialog-content {
+  // 数值列表容器
+  .value-list {
+    max-height: 300px;     // 最大高度，超出滚动
+    overflow-y: auto;      // 垂直滚动
+
+    // 数值项样式
+    .value-item {
+      display: flex;         // 弹性布局
+      align-items: center;   // 垂直居中
+      padding: 12px;         // 内边距
+      border-bottom: 1px solid #f0f0f0; // 底部分隔线
+      cursor: pointer;       // 可点击
+      transition: background-color 0.2s; // 背景色过渡动画
+
+      // 悬停效果
+      &:hover {
+        background-color: #f5f7fa; // 浅灰背景
+      }
+
+      // 选中状态
+      &.selected {
+        background-color: #e6f7ff; // 浅蓝背景
+        border-color: #1890ff;     // 蓝色边框
+      }
+
+      // 日期显示
+      .date {
+        flex: 1;              // 弹性占比
+        color: #666;          // 灰色文本
+        font-size: 14px;      // 字体大小
+      }
+
+      // 检测名称
+      .test-name {
+        flex: 1;              // 弹性占比
+        color: #333;          // 深色文本
+        font-size: 14px;      // 字体大小
+        text-align: center;   // 居中对齐
+      }
+
+      // 数值显示
+      .value {
+        flex: 1;              // 弹性占比
+        color: #333;          // 深色文本
+        font-size: 14px;      // 字体大小
+        text-align: center;   // 居中对齐
+        font-weight: 500;     // 中等粗细
+      }
+
+      // 单选按钮
+     
+    }
+  }
+}
+
+/* ===== 规则配置对话框样式 ===== */
+.rule-dialog-content {
+  // 规则头部
+  .rule-header {
+    display: flex;         // 弹性布局
+    align-items: center;   // 垂直居中
+    margin-bottom: 16px;   // 底部边距
+    font-weight: 500;      // 中等粗细
+    color: #333;           // 深色文本
+
+    // 范围标签
+    .range-label {
+      flex: 1;             // 弹性占比2
+      text-align: center;  // 居中对齐
+    }
+
+    // 评分标签
+    .score-label {
+      flex: 1;             // 弹性占比1
+      text-align: center;  // 居中对齐
+      margin-left: 60px;   // 左边距，调整对齐
+    }
+  }
+
+  // 规则项目容器
+  .rule-items {
+    // 单个规则项
+    .rule-item {
+      display: flex;         // 弹性布局
+      align-items: center;   // 垂直居中
+      margin-bottom: 12px;   // 底部边距
+
+      // 范围输入区域
+      .range-inputs {
+        display: flex;         // 弹性布局
+        align-items: center;   // 垂直居中
+        flex: 2;              // 弹性占比2
+
+        // 范围输入框
+        .range-input {
+          width: 80px;         // 固定宽度
+        }
+
+        // 范围分隔符
+        .range-separator {
+          margin: 0 8px;       // 左右边距
+          color: #666;         // 灰色文本
+        }
+      }
+
+      // 箭头指示
+      .arrow {
+        margin: 0 16px;       // 左右边距
+        color: #1890ff;       // 蓝色
+        font-size: 16px;      // 字体大小
+        font-weight: bold;    // 粗体
+      }
+
+      // 评分输入区域
+      .score-input {
+        flex: 1;              // 弹性占比1
+
+        // 评分输入框
+        .score-input-field {
+          width: 80px;         // 固定宽度
+        }
+      }
+
+      // 操作按钮区域
+      .action-buttons {
+        margin-left: 16px;    // 左边距
+        display: flex;        // 弹性布局
+        gap: 8px;            // 按钮间距
+      }
+    }
+  }
+}
+ .add-icon {
+          cursor: pointer;   // 可点击
+          font-size: 30px;   // 大字体
+          width: 50px;       // 固定宽度
+          height: 32px;      // 固定高度
+          color: #086698;    // 蓝色，表示添加操作
+        }
+
+        // 删除按钮样式
+        .remove-icon {
+          width: 50px;       // 固定宽度
+          height: 32px;      // 固定高度
+          cursor: pointer;   // 可点击
+          font-size: 30px;   // 大字体
+          color: #d81e06;    // 红色，表示删除操作
+        }
