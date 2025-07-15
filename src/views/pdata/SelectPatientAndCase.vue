@@ -25,7 +25,7 @@
               </template>
             </el-input>
           </div>
-          <el-table :data="patients" style="width: 100%" @row-click="handlePatientSelect">
+          <el-table :data="patients" style="width: 100%" @row-click="handlePatientSelect" border>
             <el-table-column prop="name" label="姓名" width="120" />
             <el-table-column prop="identity_id" label="身份证号" />
             <el-table-column prop="gender" label="性别" width="80">
@@ -66,7 +66,7 @@
           <el-alert type="info" :closable="false" show-icon> 请选择要录入数据的病例 </el-alert>
         </div>
         <div class="case-content">
-          <el-table :data="cases" style="width: 100%" @row-click="handleCaseSelect">
+          <el-table :data="cases" style="width: 100%" @row-click="handleCaseSelect" border>
             <el-table-column prop="case_code" label="病例编号" width="120" />
             <el-table-column prop="main_diagnosis" label="主要诊断" />
             <el-table-column prop="has_transplant_surgery" label="移植手术" width="120">

@@ -25,7 +25,7 @@
         <el-alert type="info" :closable="false" show-icon> 请选择录入的临床模板 </el-alert>
       </div>
       <div class="template-content">
-        <el-table :data="templates" style="width: 100%" @row-click="handleTemplateSelect">
+        <el-table :data="templates" style="width: 100%" @row-click="handleTemplateSelect" border>
           <el-table-column prop="template_code" label="模板编号" width="120" />
           <el-table-column prop="template_name" label="模板名称" />
           <el-table-column prop="template_description" label="模板描述" show-overflow-tooltip />

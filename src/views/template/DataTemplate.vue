@@ -36,6 +36,8 @@
             :show-actions="true"
             @edit-template="handleEdit"
             @delete-template="handleDelete"
+            @edit-category="handleEditCategory"
+            @delete-category="handleDeleteCategory"
           />
         </template>
       </el-collapse>
@@ -60,7 +62,7 @@ import {
     dataTemplateUpdate,
     dataTemplateDelete,
 } from '../../api/dataTemplate';
-import { templateCategoryList } from '../../api/templateCategory';
+import { templateCategoryList, templateCategoryDelete } from '../../api/templateCategory';
 
 // 定义模板数据类型
 interface TemplateItem {
@@ -118,6 +120,37 @@ const categories = computed(() => {
   return Array.from(mergedCategories).sort((a, b) => a - b);
 });
 
+// 新增：处理编辑分类
+const handleEditCategory = (categoryId: number) => {
+  const category = categories_data.value.find(c => c.id === categoryId);
+  if (category && categoryDialogRef.value) {
+    categoryDialogRef.value.show(category);
+  }
+};
+
+// 新增：处理删除分类
+const handleDeleteCategory = async (categoryId: number) => {
+  try {
+    await ElMessageBox.confirm('确定要删除该分类吗？这将同时删除该分类下的所有模板。', '警告', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+    });
+
+    await templateCategoryDelete({ id: categoryId });
+    ElMessage.success('分类删除成功');
+    
+    // 刷新模板和分类数据
+    refreshCategoryData();
+
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('删除失败');
+    }
+  }
+};
+
+
 // 根据分类过滤模板 - 包括空分类
 const getTemplatesByCategory = (category: number) => {
   const categoryTemplates = templates.value.filter(t => t.category === category);
@@ -155,20 +188,25 @@ const refreshCategoryData = async (category?: number) => {
       fetchTemplates()
     ]);
     
-    // 根据实际的API响应结构来处理数据
-    if (categoryRes?.data?.code === 200 && categoryRes?.data?.data?.list) {
+    // @ts-ignore
+    if (categoryRes?.data?.results) {
+      // @ts-ignore
+      categories_data.value = categoryRes.data.results.map((item: any) => ({
+        id: item.id!,
+        name: item.name
+      }));
+       // @ts-ignore
+      console.log('分类数据已更新（从results）:', categories_data.value);
+      // @ts-ignore
+    } else if (categoryRes?.data?.code === 200 && categoryRes?.data?.data?.list) {
+       // @ts-ignore
       categories_data.value = categoryRes.data.data.list.map((item: any) => ({
         id: item.id!,
         name: item.name
       }));
       console.log('分类数据已更新（从list）:', categories_data.value);
-    } else if (categoryRes?.data?.results) {
-      categories_data.value = categoryRes.data.results.map((item: any) => ({
-        id: item.id!,
-        name: item.name
-      }));
-      console.log('分类数据已更新（从results）:', categories_data.value);
     } else {
+       // @ts-ignore
       console.log('刷新时分类数据结构不匹配:', categoryRes?.data);
     }
   } catch (error) {
@@ -180,12 +218,12 @@ const refreshCategoryData = async (category?: number) => {
 const showEditForm = ref(false);
 const dialogTitle = ref('');
 // 用于弹窗表单的数据
-const formData = reactive<TemplateItem>({
+const formData = reactive<Omit<TemplateItem, 'dictionaries'> & { dictionaries?: any[] }>({
   template_name: '',
   template_code: '',
   template_description: '',
   category: 1,
-  dictionary_list: [],
+  dictionaries: [],
 });
 // 表单引用，用于表单验证
 
@@ -208,7 +246,6 @@ const handleAddCustomTemplate = () => {
     template_code: '', 
     template_description: '', 
     category: 1, 
-    dictionary_list: [], 
     dictionaries: [] 
   });
   showEditForm.value = true;
@@ -228,8 +265,7 @@ const handleEdit = (row: TemplateItem) => {
     template_code: row.template_code,
     template_description: row.template_description,
     category: row.category,
-    dictionary_list: row.dictionary_list || [],
-    dictionaries: row.dictionary_list?.map(d => d.id) || [],
+    dictionaries: row.dictionaries || [],
   });
   showEditForm.value = true;
 };
@@ -240,7 +276,7 @@ const handleEdit = (row: TemplateItem) => {
 const handleCancel = () => {
   showEditForm.value = false;
   // 重置表单数据
-  Object.assign(formData, { template_name: '', template_code: '', template_description: '', category: 1, dictionary_list: [], type: 'custom' });
+  Object.assign(formData, { template_name: '', template_code: '', template_description: '', category: 1, dictionaries: [], type: 'custom' });
 };
 
 /**
@@ -254,15 +290,12 @@ const handleDelete = (row: TemplateItem) => {
     type: 'warning',
   })
     .then(async () => {
-      if (row.template_code) { // 使用 template_code 作为唯一标识
-        // 在实际应用中，这里会调用 API 删除后端数据
-        await dataTemplateDelete({ template_code: row.template_code }); // API 需要 template_code
-        templates.value = templates.value.filter(
-          (item) => item.template_code !== row.template_code
-        );
+      if (row.id) {
+        await dataTemplateDelete({ id: String(row.id) });
         ElMessage.success(`模版 "${row.template_name}" 删除成功!`);
+        fetchTemplates();
       } else {
-        ElMessage.error('无法删除，模版编号不存在。');
+        ElMessage.error('无法删除，模版ID不存在。');
       }
     })
     .catch(() => {
@@ -299,6 +332,7 @@ const handleSubmit = async (data: TemplateItem) => {
           ElMessage.success('模版更新成功!');
         }
       } else {
+        // @ts-ignore
         ElMessage.error(res?.data?.msg || '更新失败');
       }
     } else {
@@ -318,6 +352,7 @@ const handleSubmit = async (data: TemplateItem) => {
         await fetchTemplates();
         ElMessage.success('自定义模版添加成功!');
       } else {
+         // @ts-ignore
         ElMessage.error(res?.data?.msg || '创建失败');
       }
     }
@@ -328,7 +363,6 @@ const handleSubmit = async (data: TemplateItem) => {
       template_code: '',
       template_description: '',
       category: 1,
-      dictionary_list: [],
       dictionaries: [],
     });
   } catch (error) {
@@ -343,7 +377,7 @@ const handleSubmit = async (data: TemplateItem) => {
 const handleShowAll = () => {
   showEditForm.value = false;
   // 重置表单数据
-  Object.assign(formData, { template_name: '', template_code: '', template_description: '', category: 1, dictionary_list: [], type: 'custom' });
+  Object.assign(formData, { template_name: '', template_code: '', template_description: '', category: 1, dictionaries: [], type: 'custom' });
 };
 
 // 获取分类数据
@@ -380,25 +414,23 @@ const fetchCategories = async () => {
   }
 };
 
-// 修改获取模板列表的函数
+// 获取模板列表
 const fetchTemplates = async () => {
   try {
-    const res = await dataTemplateList({
-      page: 1,
-      page_size: 9999  // 设置一个足够大的数值以获取所有数据
-    });
-    console.log('获取到的模板列表:', res.data);
-    if (res?.data?.code === 200 && res.data?.data?.list) {
-      templates.value = res.data.data.list;
-      // 设置默认展开所有分类
-      activeNames.value = categories.value.map(String);
-      console.log('设置展开的分类:', activeNames.value);
+    const response = await dataTemplateList({ page: 1, page_size: 9999 }); // 获取所有模板
+    // @ts-ignore
+    if (response.data.results) {
+       // @ts-ignore
+      templates.value = response.data.results;
+       // @ts-ignore
+    } else if (response.data.code === 200) {
+       // @ts-ignore
+      templates.value = response.data.data.list;
     } else {
       templates.value = [];
-      console.log('API response does not contain valid template data or list is empty.', res);
     }
   } catch (error) {
-    console.error('获取模板列表失败:', error);
+    ElMessage.error('获取模板列表失败');
     templates.value = [];
   }
 };

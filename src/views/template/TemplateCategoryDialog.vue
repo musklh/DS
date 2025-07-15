@@ -1,9 +1,10 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    title="添加模板分类"
+    :title="dialogTitle"
     width="500px"
     :close-on-click-modal="false"
+    @close="handleClose"
   >
     <el-form
       ref="formRef"
@@ -25,16 +26,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
+import { ref, reactive, computed } from 'vue';
 import { ElMessage } from 'element-plus';
-import { templateCategoryCreate } from '@/api/templateCategory';
+import { templateCategoryCreate, templateCategoryUpdate } from '../../api/templateCategory';
 
 const dialogVisible = ref(false);
 const formRef = ref();
+const isEdit = ref(false);
+const categoryId = ref<number | null>(null);
 
 const form = reactive({
   name: '',
 });
+
+const dialogTitle = computed(() => (isEdit.value ? '编辑模板分类' : '添加模板分类'));
 
 const rules = {
   name: [
@@ -48,6 +53,11 @@ const emit = defineEmits(['success']);
 const handleClose = () => {
   dialogVisible.value = false;
   form.name = '';
+  isEdit.value = false;
+  categoryId.value = null;
+  if (formRef.value) {
+    formRef.value.clearValidate();
+  }
 };
 
 const handleSubmit = async () => {
@@ -55,14 +65,21 @@ const handleSubmit = async () => {
   
   try {
     await formRef.value.validate();
-    const response = await templateCategoryCreate({ name: form.name });
-    if (response?.data?.code === 200) {
-      ElMessage.success('添加成功');
+    let response;
+    if (isEdit.value && categoryId.value) {
+      response = await templateCategoryUpdate({ id: categoryId.value }, { name: form.name });
+    } else {
+      response = await templateCategoryCreate({ name: form.name });
+    }
+    
+    // @ts-ignore
+    if (response?.data?.code === 200 || response?.status === 200) {
+      ElMessage.success(isEdit.value ? '更新成功' : '添加成功');
       handleClose();
       emit('success');
     } else {
-        console.log(response.data)
-      ElMessage.error(response?.data?.msg || '添加失败');
+        // @ts-ignore
+      ElMessage.error(response?.data?.msg || '操作失败');
     }
   } catch (error) {
     console.error('提交失败：', error);
@@ -72,7 +89,16 @@ const handleSubmit = async () => {
 
 // 暴露方法给父组件
 defineExpose({
-  show: () => {
+  show: (category: { id: number; name: string } | null = null) => {
+    if (category) {
+      isEdit.value = true;
+      categoryId.value = category.id;
+      form.name = category.name;
+    } else {
+      isEdit.value = false;
+      categoryId.value = null;
+      form.name = '';
+    }
     dialogVisible.value = true;
   }
 });

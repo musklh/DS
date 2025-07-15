@@ -1,6 +1,29 @@
 <template>
-    <el-collapse-item :title="sectionTitle" :name="sectionName">
-      <el-table :data="tableData" style="width: 100%" border stripe>
+  <el-collapse-item :name="sectionName" class="template-section">
+    <template #title>
+      <div class="section-title-wrapper">
+        <h3 class="section-title">{{ sectionTitle }}</h3>
+        <div class="category-actions">
+          <el-button
+            type="primary"
+            link
+            @click.stop="$emit('edit-category', parseInt(sectionName))"
+          >
+            编辑
+          </el-button>
+          <el-button
+            type="danger"
+            link
+            @click.stop="$emit('delete-category', parseInt(sectionName))"
+          >
+            删除
+          </el-button>
+        </div>
+      </div>
+    </template>
+    
+    <div v-if="tableData.length > 0" class="table-container">
+      <el-table :data="tableData" style="width: 100%" border>
         <el-table-column prop="template_name" label="模版名称" width="200" />
         <el-table-column prop="template_code" label="模版编号" width="200" />
         <el-table-column prop="template_description" label="模版描述" />
@@ -13,8 +36,9 @@
           </template>
         </el-table-column>
       </el-table>
-    </el-collapse-item>
-  </template>
+    </div>
+  </el-collapse-item>
+</template>
   
   <script setup lang="ts">
   // 定义组件接收的 props
@@ -34,7 +58,7 @@
   // 定义组件可以触发的事件
   // edit-template: 点击编辑按钮时触发，传递当前行数据
   // delete-template: 点击删除按钮时触发，传递当前行数据
-  const emit = defineEmits(['edit-template', 'delete-template']);
+  const emit = defineEmits(['edit-template', 'delete-template', 'edit-category', 'delete-category']);
   
   // 定义 TemplateItem 接口，与 DataTemplate.vue 中的保持一致
   interface TemplateItem {
@@ -47,27 +71,34 @@
   }
   </script>
   
-  <style scoped lang="scss">
-  .el-table {
-    background: #fff;
+  <style lang="scss" scoped>
+  .template-section {
+    background-color: #ffffff;
     border-radius: 4px;
-    border: 1px solid #e9e9e9; // Border for the table
-  
-    /* Ensure table cells are aligned and have consistent padding */
-    :deep(.el-table__cell) {
-      padding: 10px 12px;
-      font-size: 14px;
-      color: #606266;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+
+    .section-title-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding-right: 20px;
     }
-  
-    :deep(.el-table__header-wrapper) {
-      .el-table__header {
-        .el-table__cell {
-          background-color: #f5f7fa; /* Header background for table */
-          color: #303133;
-          font-weight: bold;
-        }
-      }
+
+    .section-title {
+      font-size: 16px;
+      color: #303133;
+      margin: 0;
+    }
+
+    .category-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .table-container {
+      padding: 10px 20px 20px;
     }
   }
   </style>
