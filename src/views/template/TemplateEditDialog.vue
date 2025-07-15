@@ -33,17 +33,17 @@
                     style="width: 100%;"
                   />
                 </div>
-                <div class="dictionary-items">
+                <div class="dictionary-items" v-if="dictionaryItems.length > 0">
                   <el-checkbox-group v-model="selectedDictionaries">
                     <!-- 已选词条 -->
                     <div v-for="item in filteredDictionaryItems.selected" :key="item.id" class="dictionary-item selected-item">
-                      <el-checkbox :value="item.id">{{ item.word_name }}</el-checkbox>
+                      <el-checkbox :label="Number(item.id)">{{ item.word_name }}</el-checkbox>
                     </div>
                     <!-- 分割线 -->
                     <el-divider v-if="filteredDictionaryItems.selected.length > 0 && filteredDictionaryItems.unselected.length > 0" />
                     <!-- 未选词条 -->
                     <div v-for="item in filteredDictionaryItems.unselected" :key="item.id" class="dictionary-item">
-                      <el-checkbox :value="item.id">{{ item.word_name }}</el-checkbox>
+                      <el-checkbox :label="Number(item.id)">{{ item.word_name }}</el-checkbox>
                     </div>
                   </el-checkbox-group>
                 </div>
@@ -88,23 +88,45 @@
 
   // 监听 props.formData 的变化，初始化选中的词条
   watch(() => props.formData, (newVal) => {
-    if (newVal.dictionaries) {
-      selectedDictionaries.value = newVal.dictionaries.map(id => Number(id));
-    } else if (newVal.dictionary_list) {
-      selectedDictionaries.value = newVal.dictionary_list.map(item => Number(item.id));
+    console.log('TemplateEditDialog - formData changed:', newVal);
+    
+    if (newVal.dictionaries && Array.isArray(newVal.dictionaries)) {
+      // 如果 dictionaries 是数组，直接使用
+      selectedDictionaries.value = newVal.dictionaries.map(id => Number(id)).filter(id => !isNaN(id));
+      console.log('TemplateEditDialog - 从 dictionaries 数组初始化:', selectedDictionaries.value);
+    } else if (newVal.dictionary_list && Array.isArray(newVal.dictionary_list)) {
+      // 如果 dictionary_list 是对象数组，提取ID
+      selectedDictionaries.value = newVal.dictionary_list.map((item: any) => {
+        if (typeof item === 'object' && item.id) {
+          return Number(item.id);
+        } else if (typeof item === 'number') {
+          return Number(item);
+        }
+        return 0;
+      }).filter(id => id > 0);
+      console.log('TemplateEditDialog - 从 dictionary_list 对象数组初始化:', selectedDictionaries.value);
     } else {
       selectedDictionaries.value = [];
+      console.log('TemplateEditDialog - 没有找到有效的词条数据，初始化为空数组');
     }
   }, { immediate: true, deep: true });
-  
+
+  // 监听词条列表的变化，确保在词条加载完成后重新检查选中状态
+  watch(() => dictionaryItems.value, (newItems) => {
+    if (newItems.length > 0 && selectedDictionaries.value.length > 0) {
+      console.log('TemplateEditDialog - 词条列表已加载，当前选中的词条:', selectedDictionaries.value);
+      console.log('TemplateEditDialog - 可用的词条:', newItems.map(item => ({ id: item.id, name: item.word_name })));
+    }
+  }, { immediate: true });
+
   // 过滤后的词条列表，已选的置顶
   const filteredDictionaryItems = computed(() => {
     const items = dictionaryItems.value;
-    const selectedIds = new Set(selectedDictionaries.value);
-    const selectedItems = items.filter(item => selectedIds.has(item.id));
-    const unselectedItems = items.filter(item => !selectedIds.has(item.id));
+    const selectedIds = new Set(selectedDictionaries.value.map(id => Number(id)));
+    const selectedItems = items.filter(item => Number(item.id) && selectedIds.has(Number(item.id)));
+    const unselectedItems = items.filter(item => Number(item.id) && !selectedIds.has(Number(item.id)));
 
-    const filterFn = (item) => item.word_name.toLowerCase().includes(searchKeyword.value.toLowerCase());
+    const filterFn = (item: any) => item.word_name.toLowerCase().includes(searchKeyword.value.toLowerCase());
 
     if (!searchKeyword.value) {
       return {
@@ -125,17 +147,24 @@
         page: 1,
         page_size: 9999  // 设置一个足够大的数值以获取所有数据
       });
-      console.log('API响应数据:', res);
-      // 确保 res.data 存在，res.data.list 是数组且有数据
-      if (res?.data?.code === 200 && res.data?.data.list) {
+      console.log('TemplateEditDialog - API响应数据:', res);
+      // 根据实际的API响应结构来处理数据
+      // @ts-ignore
+      if (res?.data?.code === 200 && res.data?.data?.list) {
+        // @ts-ignore
         dictionaryItems.value = res.data.data.list;
-        console.log('词条列表赋值成功:', dictionaryItems.value);
+        console.log('TemplateEditDialog - 词条列表赋值成功:', dictionaryItems.value);
+      } else if (res?.data?.results) {
+        // 兼容不同的API响应格式
+        // @ts-ignore
+        dictionaryItems.value = res.data.results;
+        console.log('TemplateEditDialog - 词条列表赋值成功（results格式）:', dictionaryItems.value);
       } else {
-        console.log('API响应中没有有效数据或列表为空。', res);
+        console.log('TemplateEditDialog - API响应中没有有效数据或列表为空。', res);
         dictionaryItems.value = [];
       }
     } catch (error) {
-      console.error('获取词条列表失败:', error);
+      console.error('TemplateEditDialog - 获取词条列表失败:', error);
       dictionaryItems.value = [];
     }
   };
@@ -147,14 +176,20 @@
         page: 1,
         page_size: 9999  // 设置一个足够大的数值以获取所有数据
       });
+      // @ts-ignore
       if (res?.data?.code === 200 && res.data?.data?.list) {
+        // @ts-ignore
         categoryList.value = res.data.data.list;
+      } else if (res?.data?.results) {
+        // 兼容不同的API响应格式
+        // @ts-ignore
+        categoryList.value = res.data.results;
       } else {
-        console.log('获取分类列表失败:', res);
+        console.log('TemplateEditDialog - 获取分类列表失败:', res);
         categoryList.value = [];
       }
     } catch (error) {
-      console.error('获取分类列表失败:', error);
+      console.error('TemplateEditDialog - 获取分类列表失败:', error);
       categoryList.value = [];
     }
   };
@@ -164,7 +199,8 @@
 
     try {
       await formRef.value.validate();
-      console.log('表单验证通过，提交数据:', props.formData);
+      console.log('TemplateEditDialog - 表单验证通过，提交数据:', props.formData);
+      console.log('TemplateEditDialog - 当前选中的词条:', selectedDictionaries.value);
       
       // 准备提交的数据
       const submitData = {
@@ -174,11 +210,11 @@
         category: props.formData.category,
       };
 
-      console.log('提交的数据:', submitData);
+      console.log('TemplateEditDialog - 提交的数据:', submitData);
       // 发送提交事件给父组件
       emit('submit-form', submitData);
     } catch (error) {
-      console.error('表单验证失败:', error);
+      console.error('TemplateEditDialog - 表单验证失败:', error);
       ElMessage.error('请检查表单填写是否正确');
     }
   };
@@ -197,6 +233,7 @@
   
   // 在组件挂载时获取词条列表和分类列表
   onMounted(() => {
+    console.log('TemplateEditDialog - 组件挂载，开始获取数据');
     fetchDictionaryList();
     fetchCategoryList();
   });

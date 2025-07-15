@@ -61,6 +61,7 @@ import {
     dataTemplateCreate,
     dataTemplateUpdate,
     dataTemplateDelete,
+    dataTemplateRead,
 } from '../../api/dataTemplate';
 import { templateCategoryList, templateCategoryDelete } from '../../api/templateCategory';
 
@@ -255,19 +256,55 @@ const handleAddCustomTemplate = () => {
  * 处理编辑模板的点击事件
  * @param row 被编辑的模板数据
  */
-const handleEdit = (row: TemplateItem) => {
-  console.log('编辑模板:', row);
+const handleEdit = async (row: TemplateItem) => {
+  console.log('编辑模板 - 原始数据:', row);
   dialogTitle.value = '编辑模版';
-  // 复制当前行数据到表单，以便在弹窗中编辑
-  Object.assign(formData, {
-    id: row.id,
-    template_name: row.template_name,
-    template_code: row.template_code,
-    template_description: row.template_description,
-    category: row.category,
-    dictionaries: row.dictionaries || [],
-  });
-  showEditForm.value = true;
+  
+  try {
+    // 获取模板的详细信息，包括关联的词条
+    const templateDetailResponse = await dataTemplateRead({ template_code: row.template_code! });
+    // @ts-ignore
+    const templateDetail = templateDetailResponse.data;
+    console.log('编辑模板 - 获取到的详细信息:', templateDetail);
+    
+    // 处理词条数据，确保是ID数组
+    let dictionaryIds: number[] = [];
+    // @ts-ignore
+    if (templateDetail.data && Array.isArray(templateDetail.data.dictionary_list)) {
+      // @ts-ignore
+      dictionaryIds = templateDetail.data.dictionary_list.map((item: any) => {
+        if (typeof item === 'object' && item.id) {
+          return Number(item.id);
+        } else if (typeof item === 'number') {
+          return Number(item);
+        }
+        return 0;
+      }).filter((id: number) => id > 0);
+    }
+    
+    console.log('编辑模板 - 提取的词条ID:', dictionaryIds);
+    
+    // 复制当前行数据到表单，以便在弹窗中编辑
+    Object.assign(formData, {
+      // @ts-ignore
+      id: templateDetail.id || row.id,
+      // @ts-ignore
+      template_name: templateDetail.template_name || row.template_name,
+      // @ts-ignore
+      template_code: templateDetail.template_code || row.template_code,
+      // @ts-ignore
+      template_description: templateDetail.template_description || row.template_description,
+      // @ts-ignore
+      category: templateDetail.category || row.category,
+      dictionaries: dictionaryIds,
+    });
+    
+    console.log('编辑模板 - 传递给表单的数据:', formData);
+    showEditForm.value = true;
+  } catch (error) {
+    console.error('获取模板详情失败:', error);
+    ElMessage.error('获取模板详情失败');
+  }
 };
 
 /**
