@@ -34,7 +34,14 @@
       />
 
       <BloodRoutineEntryWithRating
-        v-if="currentStep === 2"
+        v-if="currentStep === 2 && selectedTemplate && selectedTemplate.name.includes('评分')"
+        :patient-data="selectedPatientData"
+        :selected-template="selectedTemplate"
+        @data-submitted="handleDataSubmitted"
+        @go-back-to-template="currentStep = 1"
+      />
+      <BloodRoutineEntryRefactored
+        v-else-if="currentStep === 2"
         :patient-data="selectedPatientData"
         :selected-template="selectedTemplate"
         @data-submitted="handleDataSubmitted"
@@ -57,6 +64,7 @@ import { UserFilled, Tickets, Edit } from '@element-plus/icons-vue';
 import SelectPatientAndCase from './SelectPatientAndCase.vue';
 import SelectClinicalTemplate from './SelectClinicalTemplate.vue';
 import BloodRoutineEntryWithRating from './BloodRoutineEntryWithRating.vue';
+import BloodRoutineEntryRefactored from './BloodRoutineEntryRefactored.vue';
 
 // import { caseIdentityCases } from '../../api/openApiCase'; // This import seems unused, can be removed if not needed elsewhere
 

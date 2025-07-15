@@ -1,7 +1,7 @@
 // 病人数据
 export const scoreItemsData ={
-    ratingGrading:"",  
-    ratingLabels:"",
+    ratingGrading: null,  
+    ratingLabels: null,
     list:[
     {
         label: '总胆红素',
@@ -47,9 +47,6 @@ export const scoreItemsData ={
 
 } 
 
-
-
-
 // 模拟历史检查数据
 export const getHistoryData = {
     总胆红素: [
@@ -83,13 +80,14 @@ export const rulesData = [
 ];
 
 // 固定模板数据
-export const eRules =  [ 
-    { "attr": "凝血酶原时间", "type": "范围编码", "ruleAttrsDdta": [ "总胆红素" ], "ruleTypes": [ "范围编码", "数字编码" ], "rule": { "name": "范围编码", "rules": [ { "minValue": "1", "maxValue": "5", "score": "1" }, { "minValue": "6", "maxValue": "10", "score": "2" } ] } },
-     { "attr": "总胆红素", "type": "数字编码", "ruleAttrsDdta": [ "白蛋白" ], "ruleTypes": [ "范围编码", "数字编码" ], "rule": { "name": "数字编码", "rules": [ { "originValue": "2.8", "scoreValue": "3" } ] } }, 
-     { "attr": "白蛋白", "type": "范围编码", "ruleAttrsDdta": [ "PT" ], "ruleTypes": [ "范围编码", "数字编码" ], "rule": { "name": "范围编码", "rules": [ { "minValue": "10", "maxValue": "20", "score": "5" } ] } }, 
-     { "attr": "腹水", "type": "范围编码", "ruleAttrsDdta": [ "腹水" ], "ruleTypes": [ "范围编码", "数字编码" ], "rule": { "name": "范围编码", "rules": [ { "minValue": "1", "maxValue": "5", "score": "2" } ] } }, { "attr": "肝性脑病", "type": "数字编码", "ruleAttrsDdta": [ "肝性脑病" ], "ruleTypes": [ "范围编码", "数字编码" ], "rule": { "name": "数字编码", "rules": [ { "originValue": "8", "scoreValue": "9" } ] } },
-     { "id": 6, "attr": "评分分级", "type": "公式计算", "ruleAttrsDdta": [], "ruleTypes": [ "公式计算" ], "formulaAttrs": [ "总胆红素", "白蛋白", "PT", "腹水", "肝性脑病" ], "rule": { "name": "公式计算", "rules": "总胆红素+白蛋白+PT+腹水+肝性脑病" } },
-      { "id": 7, "attr": "评分标签", "type": "范围标签", "ruleAttrsDdta": [], "ruleTypes": [ "范围标签" ], "rule": { "name": "范围标签", "rules": [ { "minValue": "1", "maxValue": "2", "score": " 严重" }, { "minValue": "3", "maxValue": "5", "score": "中等" }, { "minValue": "6", "maxValue": "12", "score": "超严重" } ] } } ]
+export const eRules = [
+  { "attr": "凝血酶原时间", "type": "范围编码", "ruleAttrsDdta": [ "总胆红素" ], "ruleTypes": [ "范围编码", "数字编码" ], "rule": { "name": "范围编码", "rules": [ { "minValue": "1", "maxValue": "5", "score": "1" }, { "minValue": "6", "maxValue": "10", "score": "2" } ] } },
+  { "attr": "总胆红素", "type": "数字编码", "ruleAttrsDdta": [ "白蛋白" ], "ruleTypes": [ "范围编码", "数字编码" ], "rule": { "name": "数字编码", "rules": [ { "originValue": "2.8", "scoreValue": "3" } ] } },
+  { "attr": "白蛋白", "type": "范围编码", "ruleAttrsDdta": [ "PT" ], "ruleTypes": [ "范围编码", "数字编码" ], "rule": { "name": "范围编码", "rules": [ { "minValue": "10", "maxValue": "20", "score": "5" } ] } },
+  { "attr": "腹水", "type": "范围编码", "ruleAttrsDdta": [ "腹水" ], "ruleTypes": [ "范围编码", "数字编码" ], "rule": { "name": "范围编码", "rules": [ { "minValue": "1", "maxValue": "5", "score": "2" } ] } }, { "attr": "肝性脑病", "type": "数字编码", "ruleAttrsDdta": [ "肝性脑病" ], "ruleTypes": [ "范围编码", "数字编码" ], "rule": { "name": "数字编码", "rules": [ { "originValue": "8", "scoreValue": "9" } ] } },
+  { "id": 6, "attr": "评分分级", "type": "公式计算", "ruleAttrsDdta": [], "ruleTypes": [ "公式计算" ], "formulaAttrs": [ "总胆红素", "白蛋白", "PT", "腹水", "肝性脑病" ], "rule": { "name": "公式计算", "rules": "总胆红素+白蛋白+PT+腹水+肝性脑病" } },
+  { "id": 7, "attr": "评分标签", "type": "范围标签", "ruleAttrsDdta": [], "ruleTypes": [ "范围标签" ], "rule": { "name": "范围标签", "rules": [ { "minValue": "1", "maxValue": "2", "score": " 严重" }, { "minValue": "3", "maxValue": "5", "score": "中等" }, { "minValue": "6", "maxValue": "12", "score": "超严重" } ] } }
+];
 
 // export const eRules =  [ 
 //     { "attr": "总胆红素", "type": "范围编码", "ruleAttrsDdta": [ "总胆红素" ], "ruleTypes": [ "范围编码", "数字编码" ]  },

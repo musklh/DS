@@ -150,7 +150,7 @@
                   <div class="flex-1">
                     <el-button
                       type="primary"
-                      :disabled="rule.rule && rule.rule.rules"
+                      :disabled="!!(rule.rule && rule.rule.rules)"
                       @click="openRuleDialog(rule)"
                       >{{ rule.rule && rule.rule.rules ? '已设置' : '设置规则' }}</el-button
                     >
@@ -293,7 +293,7 @@
                       style="width: 90px; margin-left: 6px"
                     />
                   </div>
-                  <div class="arrow" style=""><img src="@/assets/jt21.png" alt="" /></div>
+                  <div class="arrow" style="">→</div>
                   <div class="score-input" style="display: flex; align-items: center">
                     <el-input
                       v-model="ruleItem.score"
@@ -431,9 +431,14 @@ const props = defineProps({
   patientData: Object,
   selectedTemplate: Object,
 });
-import { dictionaryList, dictionaryUpdata } from '@/api/dictionary';
-import { getdataTableCrudList } from '@/api/dataTableCrud';
-import { dataCreate } from '@/api/data';
+import {
+  dictionaryCreate,
+  dictionaryList,
+  dictionaryUpdate,
+  dictionaryDelete,
+} from "@/api/dictionary";
+import { dataList, dataCreate } from '@/api/data';
+import { ElMessage, ElMessageBox } from "element-plus";
 import {
   ElDivider,
   ElIcon,
@@ -442,10 +447,14 @@ import {
   ElButton,
   ElTable,
   ElTableColumn,
-  ElMessage,
 } from 'element-plus';
 import { ref, reactive, onMounted, computed, watch } from 'vue';
-import { rulesData, getHistoryData, eRules, scoreItemsData } from './data.ts';
+import {
+  rulesData,
+  getHistoryData,
+  eRules,
+  scoreItemsData,
+} from './data.ts';
 import dayjs from 'dayjs';
 const scoreTime = ref('');
 const valueDialogVisible = ref(false);
@@ -460,6 +469,7 @@ const currentHistoryRuleItems = ref([]);
 const ruleAttrsDdta = ref([]);
 const ratingGrading = ref(scoreItemsData.ratingGrading);
 const ratingLabels = ref(scoreItemsData.ratingLabels);
+const rulesWordCode = ref(null);
 
 const scoreItems = reactive([]);
 const historyData = ref([]);
@@ -474,56 +484,87 @@ const formulaOutputAttr = ref('评分分级');
 const formulaAttrs = ref([]);
 const moFormulaAttrs = ref([]);
 
-watch(
-  () => props.selectedTemplate,
-  (newTemplate, oldTemplate) => {
-    if (newTemplate) {
-      rules.value = [];
-      scoreItems.length = 0;
-
-      const dictionaryList = newTemplate.dictionaryList.map((item) => item['word_name']);
-      newTemplate.dictionaryList.forEach((item) => {
-        rules.value.unshift({
-          attr: item['word_name'],
-          id: item['id'],
-          word_short: item['word_short'],
-          type: '',
-          word_code: item['word_code'],
-          ruleAttrsDdta: dictionaryList,
-          ruleTypes: ['范围编码', '数字编码'],
-        });
-        scoreItems.unshift({
-          label: item['word_name'],
-          required: true,
-          score: null,
-          word_code: item['word_code'],
-          value: '',
-          values: item['values'],
-        });
-      });
-
-      const pinfList = [
-        { id: 6, attr: '评分分级', type: '公式计算', ruleAttrsDdta: [], ruleTypes: ['公式计算'] },
-        { id: 7, attr: '评分标签', type: '范围标签', ruleAttrsDdta: [], ruleTypes: ['范围标签'] },
-      ];
-      rules.value = [...rules.value, ...pinfList];
-      ruleAttrsDdta.value = newTemplate.dictionaryList.map((item) => item['word_name']);
+const filterRulesTypes = (datas) => {
+  datas.forEach((element) => {
+    if (element.attr === '评分分级') {
+      element.ruleTypes = ['公式计算'];
+    } else if (element.attr === '评分标签') {
+      element.ruleTypes = ['范围标签'];
+    } else {
+      element.ruleTypes = ['范围编码', '数字编码'];
     }
-  },
-  { immediate: true }
-);
+  });
+};
 
-const onMountedd = async () => {
-  await getTableCrudList();
+const updateRuleAttrs = () => {
+  const selectedAttrs = new Set(rules.value.map((rule) => rule.attr).filter((attr) => attr));
+
+  rules.value.forEach((rule) => {
+    rule.ruleAttrsDdta = ruleAttrsDdta.value.filter((attr) => {
+      return !selectedAttrs.has(attr) || attr === rule.attr;
+    });
+  });
+};
+
+const initializeScoreItems = () => {
+  // Use static score items from data.ts and enrich with word_code from template
+  scoreItems.splice(0, scoreItems.length);
+
+  const dictionaryList = props.selectedTemplate?.dictionaryList || [];
+  const dictionaryMap = new Map(dictionaryList.map(item => [item.word_name, item]));
+
+  const newScoreItems = scoreItemsData.list.map(staticItem => {
+    const dynamicItem = dictionaryMap.get(staticItem.label);
+    return {
+      ...staticItem,
+      word_code: dynamicItem ? dynamicItem.word_code : undefined,
+    };
+  });
+  
+  newScoreItems.forEach(item => scoreItems.push(item));
+
+  formulaAttrs.value = scoreItems.map((item) => item.label);
+  updateRuleAttrs(); // This depends on scoreItems
 };
 
 onMounted(async () => {
+  rules.value = eRules;
   filterRulesTypes(rules.value);
-  updateRuleAttrs();
-  formulaAttrs.value = scoreItems.map((item) => item.label);
-  await fetchDictionary();
-  await getTableCrudList();
+
+  // Perform initial data load
+  if (props.selectedTemplate && props.selectedTemplate.dictionaryList) {
+    initializeScoreItems();
+    await getTableCrudList();
+  }
 });
+
+watch(
+  () => props.selectedTemplate,
+  (newTemplate, oldTemplate) => {
+    // Only run if template actually changes, ignoring the initial run
+    if (newTemplate && oldTemplate && newTemplate.code !== oldTemplate.code) {
+      initializeScoreItems();
+      resetData();
+      getTableCrudList();
+    }
+  },
+  { deep: true }
+);
+
+watch(
+  () => props.patientData,
+  (newPatient, oldPatient) => {
+    if (newPatient && oldPatient && newPatient.caseId !== oldPatient.caseId) {
+      resetData();
+      scoreItems.forEach((item) => {
+        item.value = '';
+        item.values = [];
+      });
+      getTableCrudList();
+    }
+  },
+  { deep: true }
+);
 
 const enterData = async () => {
   if (!scoreTime.value) {
@@ -569,14 +610,15 @@ const enterData = async () => {
 const getTableCrudList = async () => {
   try {
     if (
-      props.selectedTemplate &&
-      props.selectedTemplate.dictionaryList &&
-      props.selectedTemplate.dictionaryList.length > 0
+      props.patientData?.caseId &&
+      props.selectedTemplate?.code &&
+      scoreItems &&
+      scoreItems.length > 0
     ) {
-      let word_codes = props.selectedTemplate.dictionaryList.map((item) => item['word_code']);
+      let word_codes = scoreItems.map((item) => item['word_code']);
 
       const requests = word_codes.map((word_code) =>
-        getdataTableCrudList({
+        dataList({
           case_code: props.patientData.caseId,
           template_code: props.selectedTemplate.code,
           word_code: word_code,
@@ -587,8 +629,8 @@ const getTableCrudList = async () => {
 
       const groupedByWordName = {};
       results.forEach((res) => {
-        if (res.data?.code === 200 && res.data?.data?.list) {
-          res.data.data.list.forEach((item) => {
+        if (res.data?.count > 0 && res.data?.results) {
+          res.data.results.forEach((item) => {
             if (!groupedByWordName[item.word_name]) {
               groupedByWordName[item.word_name] = [];
             }
@@ -619,8 +661,10 @@ const getTableCrudList = async () => {
 
       scoreItems.forEach((item) => {
         if (guldwordNme[item.label]) {
-          item.values = guldwordNme[item.label].map((entry) => entry.value);
-          item.value = item.values[0] ? item.values[0] : '';
+          const values = guldwordNme[item.label].map((entry) => entry.value);
+          const uniqueValues = [...new Set(values)];
+          item.values = uniqueValues;
+          item.value = uniqueValues[0] ? uniqueValues[0] : '';
         }
       });
     } else {
@@ -637,6 +681,7 @@ const fetchDictionary = async () => {
     if (res.data?.code === 200 && res.data?.data?.list) {
       const dictionaryMap = res.data.data.list.find((item) => item.id === 355);
       if (dictionaryMap && dictionaryMap.score_func) {
+        rulesWordCode.value = dictionaryMap.word_code;
         currentHistoryRuleItems.value = dictionaryMap.score_func;
         filterdictionaryMap(dictionaryMap.score_func);
       } else {
@@ -672,7 +717,6 @@ const saveRuleSettings = async () => {
 
   try {
     const ruleData = {
-      id: 355,
       word_name: '计算规则数据',
       word_eng: '',
       word_short: '',
@@ -689,13 +733,15 @@ const saveRuleSettings = async () => {
       unit: null,
     };
 
-    const res = await dictionaryUpdata(ruleData);
-    if (res.data?.code === 200 && res.data?.data?.list) {
-      res.data.data.list.forEach((item) => {});
+    const res = await dictionaryUpdate({ word_code: rulesWordCode.value }, ruleData);
+    if (res.data?.code === 200) {
+      ElMessage.success('规则保存成功');
+    } else {
+      ElMessage.error('规则保存失败');
     }
   } catch (error) {
-    console.error('Failed to fetch dictionary', error);
-    ElMessage.error('获取系统词典失败');
+    console.error('Failed to save rules', error);
+    ElMessage.error('保存规则失败');
   }
 };
 
@@ -708,16 +754,6 @@ const numberRuleItems = ref([
   { originValue: '', scoreValue: '' },
   { originValue: '', scoreValue: '' },
 ]);
-
-const updateRuleAttrs = () => {
-  const selectedAttrs = new Set(rules.value.map((rule) => rule.attr).filter((attr) => attr));
-
-  rules.value.forEach((rule) => {
-    rule.ruleAttrsDdta = ruleAttrsDdta.value.filter((attr) => {
-      return !selectedAttrs.has(attr) || attr === rule.attr;
-    });
-  });
-};
 
 const addRule = (index) => {
   if (rules.value.length >= ruleAttrsDdta.value.length + 2) {
@@ -877,18 +913,6 @@ const toggleFormulaAttr = (attr) => {
   formulaString.value = selectedFormulaAttrs.value.join('+') || '请输入公式';
 };
 
-const filterRulesTypes = (datas) => {
-  datas.forEach((element) => {
-    if (element.attr === '评分分级') {
-      element.ruleTypes = ['公式计算'];
-    } else if (element.attr === '评分标签') {
-      element.ruleTypes = ['范围标签'];
-    } else {
-      element.ruleTypes = ['范围编码', '数字编码'];
-    }
-  });
-};
-
 const applyRules = () => {
   scoreItems.forEach((scoreItem) => {
     const matchedRule = rules.value.find((rule) => rule.attr === scoreItem.label);
@@ -985,6 +1009,7 @@ const resetData = () => {
   ratingLabels.value = null;
   scoreItems.forEach((item) => {
     item.score = null;
+    item.value = '';
   });
 };
 

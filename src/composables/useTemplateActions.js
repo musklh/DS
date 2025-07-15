@@ -1,7 +1,9 @@
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
 import { caseTemplateDetailCreate } from '../api/caseTemplateDetail'
-import { dataTableCrudDelete } from '../api/dataTableCrud'
+import { dataDelete } from '../api/data'
+import { dataTableCrudUpdate, dataTableCrudDelete } from '../api/dataTableCrud'
+
 
 export function useTemplateActions() {
   const router = useRouter()
@@ -28,7 +30,7 @@ export function useTemplateActions() {
 
       const apiResponse = templateDetailRes.data
       if (apiResponse?.code === 200 && apiResponse.data?.items) {
-        const deletePromises = apiResponse.data.items.map((item) => 
+        const deletePromises = apiResponse.data.items.map((item) =>
           dataTableCrudDelete({
             case_code: caseCode,
             template_code: templateCode,
@@ -36,7 +38,7 @@ export function useTemplateActions() {
             check_time: checkTime
           })
         )
-        
+
         await Promise.all(deletePromises)
         ElMessage.success(`成功删除模板 "${templateName}" 的 ${apiResponse.data.items.length} 条数据`)
         
