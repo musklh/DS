@@ -445,7 +445,7 @@ const props = defineProps({
   patientData: Object,
   selectedTemplate: Object,
 });
-import { dictionaryList } from '@/api/dictionary';
+import { dictionaryList, dictionaryUpdate } from '@/api/dictionary';
 import { dataTableCrudList } from '@/api/dataTableCrud';
 import { dataCreate } from '@/api/data';
 import {
@@ -715,10 +715,6 @@ const filterdictionaryMap = (scoreFunc) => {
 };
 
 // 上传规则数据
-// 上传规则数据
-// 上传规则数据
-// 上传规则数据
-// 上传规则数据
 const saveRuleSettings = async () => {
   let scoreFuncs = [];
   // console.log('currentHistoryRuleItems.value', currentHistoryRuleItems.value);
@@ -754,7 +750,7 @@ const saveRuleSettings = async () => {
       unit: null,
     };
 
-    const res = await dictionaryUpdata(ruleData);
+    const res = await dictionaryUpdate(ruleData);
     // @ts-ignore
     if (res.data?.code === 200 && res.data?.data?.list) {
       // @ts-ignore
