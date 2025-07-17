@@ -45,12 +45,6 @@
           <el-table-column prop="word_apply" label="词条应用" width="120" />
           <el-table-column prop="word_belong" label="从属别名" width="120" />
           <el-table-column prop="data_type" label="数值类型" width="120" />
-          <el-table-column prop="has_unit" label="有单位" width="80">
-            <template #default="{ row }">
-              <span>{{ row.has_unit === 1 ? '是' : '否' }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="unit" label="单位" width="100" />
           <el-table-column prop="is_score" label="是评分" width="80">
             <template #default="{ row }">
               <span>{{ row.is_score === 1 ? '是' : '否' }}</span>
@@ -130,7 +124,7 @@
                 <el-option label="多选并填写时间" value="multi_with_date" />
               </el-select>
             </el-form-item>
-            <el-form-item label="是否有单位" prop="has_unit">
+            <el-form-item label="是否有单位" prop="has_unit" v-if="false">
                 <el-radio-group v-model="formData.has_unit">
                   <el-radio :label="1">是</el-radio>
                   <el-radio :label="0">否</el-radio>
@@ -145,7 +139,7 @@
                 <el-radio :label="0">否</el-radio>
               </el-radio-group>
             </el-form-item>
-            <el-form-item v-if="formData.is_score === 1" label="评分计算方式" prop="score_func">
+            <el-form-item v-if="false" label="评分计算方式" prop="score_func">
               <el-input v-model="formData.score_func" type="textarea" placeholder="请输入评分计算方式" />
             </el-form-item>
             <el-form-item v-if="['single', 'multi', 'multi_with_date', 'single_with_other'].includes(formData.input_type)" label="主选项" prop="options">
