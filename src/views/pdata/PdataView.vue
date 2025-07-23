@@ -44,8 +44,20 @@
         v-if="currentStep === 3"
         :patient-data="selectedPatientData"
         :selected-template="selectedTemplate"
+        :pending-score-data="pendingScoreData"
         @data-submitted="handleDataSubmitted"
         @go-back-to-template="currentStep = 1"
+        @navigate-to-scale="handleNavigateToScale"
+        @clear-pending-data="pendingScoreData = {}"
+      />
+      
+      <DynamicScoreSheet
+        v-if="currentStep === 4"
+        :selected-scale="selectedScale"
+        :template-item="selectedTemplateItem"
+        :patient-data="selectedPatientData"
+        @go-back="currentStep = 3"
+        @save-score-data="handleSaveScoreData"
       />
     </div>
 
@@ -65,6 +77,7 @@ import SelectPatientAndCase from './SelectPatientAndCase.vue';
 import SelectClinicalTemplate from './SelectClinicalTemplate.vue';
 import BloodRoutineEntry from './BloodRoutineEntry.vue';
 import BloodRoutineEntryWithRating from './BloodRoutineEntryWithRating.vue';
+import DynamicScoreSheet from '../scale/DynamicScoreSheet.vue';
 
 // import { caseIdentityCases } from '../../api/openApiCase'; // This import seems unused, can be removed if not needed elsewhere
 
@@ -79,6 +92,9 @@ const selectedPatientData = reactive({
 });
 
 const selectedTemplate = ref(null); // To store the selected template name/ID
+const selectedScale = ref(null); // To store the selected scale
+const selectedTemplateItem = ref(null); // To store the selected template item
+const pendingScoreData = ref({}); // To store pending score data for all template items
 
 // Handlers for child component events
 const handlePatientCaseSelected = (data) => {
@@ -152,6 +168,23 @@ const handleBackToCase = () => {
 const handleBackToPatient = () => {
   selectedPatientData.caseId = '';
   currentStep.value = 0;
+};
+
+// 处理跳转到量表评分界面
+const handleNavigateToScale = (data) => {
+  selectedScale.value = data.selectedScale;
+  selectedTemplateItem.value = data.templateItem;
+  currentStep.value = 4;
+  ElMessage.success(`已跳转到 ${data.selectedScale.word_name} 评分界面`);
+};
+
+// 处理暂存评分数据
+const handleSaveScoreData = (data) => {
+  // 使用模板词条的word_code作为key来存储评分数据
+  const wordCode = data.templateItem.word_code;
+  pendingScoreData.value[wordCode] = data;
+  currentStep.value = 3; // 跳回模板页面
+  ElMessage.success(`评分数据已暂存，请在模板页面统一录入`);
 };
 </script>
 

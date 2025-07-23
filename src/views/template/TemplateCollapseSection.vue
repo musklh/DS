@@ -30,7 +30,7 @@
         <el-table-column v-if="showActions" label="操作" width="200" fixed="right">
           <template #default="scope">
             <el-button size="small" @click="$emit('edit-template', scope.row)"> 编辑 </el-button>
-            <el-button size="small" type="danger" @click="$emit('delete-template', scope.row)">
+            <el-button size="small" type="danger" @click="handleDeleteTemplate(scope.row)">
               删除
             </el-button>
           </template>
@@ -41,6 +41,7 @@
 </template>
   
   <script setup lang="ts">
+  
   // 定义组件接收的 props
   // sectionTitle: 可折叠项的标题
   // sectionName: 可折叠项的唯一标识名
@@ -69,6 +70,12 @@
     dictionaries: number[];
     type: string;
   }
+  
+  // 删除模板
+  const handleDeleteTemplate = (template: TemplateItem) => {
+    // 直接触发删除事件，让父组件处理删除逻辑
+    emit('delete-template', template);
+  };
   </script>
   
   <style lang="scss" scoped>

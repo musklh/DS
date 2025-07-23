@@ -115,6 +115,43 @@ const routes = [
           requiresAuth: true,
         },
       },
+      // 量表设计相关路由
+      {
+        path: 'scale-design',
+        name: 'ScaleDesign',
+        component: () => import('../views/scale/ScaleDesign.vue'),
+        meta: {
+          title: '量表设计',
+          requiresAuth: true,
+        },
+      }, 
+      {
+        path: 'scale-add',
+        name: 'ScaleAdd',
+        component: () => import('../views/scale/ScaleAdd.vue'),
+        meta: {
+          title: '新建量表',
+          requiresAuth: true,
+        },
+      },
+      {
+        path: 'scale-edit/:id',
+        name: 'ScaleEdit',
+        component: () => import('../views/scale/ScaleAdd.vue'),
+        meta: {
+          title: '编辑量表',
+          requiresAuth: true,
+        },
+      },
+      {
+        path: 'dynamic-score-sheet',
+        name: 'DynamicScoreSheet',
+        component: () => import('../views/scale/DynamicScoreSheet.vue'),
+        meta: {
+          title: '评分表',
+          requiresAuth: true,
+        },
+      },
     ],
   },
 ];

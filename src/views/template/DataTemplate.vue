@@ -327,12 +327,12 @@ const handleDelete = (row: TemplateItem) => {
     type: 'warning',
   })
     .then(async () => {
-      if (row.id) {
-        await dataTemplateDelete({ id: String(row.id) });
+      if (row.template_code) {
+        await dataTemplateDelete({ template_code: row.template_code });
         ElMessage.success(`模版 "${row.template_name}" 删除成功!`);
         fetchTemplates();
       } else {
-        ElMessage.error('无法删除，模版ID不存在。');
+        ElMessage.error('无法删除，模版编号不存在。');
       }
     })
     .catch(() => {

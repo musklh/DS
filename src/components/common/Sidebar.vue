@@ -37,6 +37,7 @@
             <span>数据分析</span>
           </template>
           <el-menu-item index="/dashboard/DataAnalysisView"> 数据可视化 </el-menu-item>
+          <el-menu-item index="/dashboard/scale-design"> 量表设计 </el-menu-item>
         </el-sub-menu>
 
     </el-menu>

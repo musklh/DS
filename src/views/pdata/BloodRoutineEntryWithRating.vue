@@ -43,40 +43,88 @@
                   />
                 </el-form-item>
 
-                <div class="score-table">
-                  <div class="score-row" style="margin-bottom: 0">
-                    <span data-v-2b4be9f2="" class="score-label"> </span>
-                    <span class="el-select score-select">评分:</span>
-                    <span class="el-select score-select">数值:</span>
+                <!-- 暂存评分数据显示 -->
+                <div v-if="Object.keys(pendingScoreData).length > 0" class="pending-score-section">
+                  <div class="pending-score-header">
+                    <h4>暂存评分数据</h4>
                   </div>
-                  <div
-                    class="score-row"
-                    v-for="item in scoreItems"
-                    :key="item.label"
-                    style="margin-bottom: 4px"
-                  >
-                    <span class="score-label"
-                      >{{ item.label }}<span v-if="item.required" class="required">*</span></span
-                    >
-                    <el-input v-model="item.score" class="score-select" />
-                    <el-select v-model="item.value" class="value-select">
-                      <el-option v-for="val in item.values" :key="val" :label="val" :value="val" />
-                    </el-select>
-                    <a class="choose-value" href="#" @click.prevent="openValueDialog(item)"
-                      >选择数值</a
-                    >
+                  <div class="pending-score-content">
+                    <div v-for="(scoreData, wordCode) in pendingScoreData" :key="wordCode" class="score-item">
+                      <div class="score-info">
+                        <span class="score-label">词条名称:</span>
+                        <span class="score-value">{{ scoreData.templateItem.word_name }}</span>
+                      </div>
+                      <div class="score-info">
+                        <span class="score-label">量表名称:</span>
+                        <span class="score-value">{{ scoreData.selectedScale.word_name }}</span>
+                      </div>
+                      <div class="score-info">
+                        <span class="score-label">评分总分:</span>
+                        <span class="score-value">{{ scoreData.scaleData.value }} {{ scoreData.scaleData.unit }}</span>
+                      </div>
+                      <div class="score-info" v-if="scoreData.scaleData.result">
+                        <span class="score-label">临床意义:</span>
+                        <span class="score-value">{{ scoreData.scaleData.result }}</span>
+                      </div>
+                      <div class="score-info">
+                        <span class="score-label">检查时间:</span>
+                        <span class="score-value">{{ scoreData.checkTime }}</span>
+                      </div>
+                      <div class="score-sources">
+                        <span class="score-label">参与评分词条:</span>
+                        <div class="sources-list">
+                          <div v-for="source in scoreData.scaleData.sources" :key="source.word_code" class="source-item">
+                            <span class="source-name">{{ getWordNameByCode(source.word_code) }}</span>
+                            <span class="source-value">{{ source.value }}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div class="score-result">
-                  <span style="margin-right: 20px">评分分级</span>
-                  <span class=" " v-if="ratingGrading"
-                    >计算结果: <span class="score-value">{{ ratingGrading }}</span></span
-                  >
+
+                <!-- 模板词条列表 -->
+                <div class="template-items-section">
+                  <div class="template-items-header">
+                    <h4>模板词条</h4>
+                    <span class="template-description">左侧是该模板的词条，如果该模板是评分模板，则这些词条右侧给一个按钮去选择量表</span>
+                  </div>
+                  
+                  <div class="template-items-list">
+                    <div 
+                      v-for="item in selectedTemplate.dictionaryList" 
+                      :key="item.word_code"
+                      class="template-item-row"
+                    >
+                      <div class="item-info">
+                        <span class="item-name">{{ item.word_name }}</span>
+                        <span v-if="item.word_short" class="item-short">({{ item.word_short }})</span>
+                      </div>
+                      <div class="item-actions">
+                        <el-button 
+                          v-if="item.is_score === 1 && !pendingScoreData[item.word_code]"
+                          type="primary" 
+                          size="small"
+                          @click="openScaleSelectionDialog(item)"
+                        >
+                          选择量表
+                        </el-button>
+                        <div v-else-if="item.is_score === 1 && pendingScoreData[item.word_code]" class="score-status">
+                          <span class="score-total">{{ pendingScoreData[item.word_code].scaleData.value }}分</span>
+                          <el-button 
+                            type="warning" 
+                            size="small"
+                            @click="openScaleSelectionDialog(item)"
+                          >
+                            重新评分
+                          </el-button>
+                        </div>
+                        <span v-else class="no-scale-text">非评分词条</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div class="score-tag">
-                  <span>评分标签</span>
-                  <span class="score-desc">{{ ratingLabels }}</span>
-                </div>
+
                 <div class="form-actions">
                   <el-button
                     type="primary"
@@ -86,7 +134,7 @@
                       border-color: rgba(64, 158, 255, 0.5);
                       color: #409eff;
                     "
-                    @click="enterData"
+                    @click="submitAllData"
                     >录入</el-button
                   >
                   <el-button
@@ -103,126 +151,54 @@
                 </div>
               </el-form>
             </div>
+          </div>
 
-            <!-- 右侧评分规则设置 -->
-            <div class="score-rule-box">
-              <div class="rule-title">临床评分表规则<span class="required">*</span></div>
-              <div class="rule-table">
-                <div class="rule-thead">
-                  <div class="item-box">规则属性</div>
-                  <div class="item-box">规则类型</div>
-                  <div class="item-box">规则设置</div>
-                  <div class="item-box">增加操作</div>
-                </div>
-                <div class="rule-row" v-for="rule in rules" :key="rule.id">
-                  <!-- {{ rule }} -->
-                  <div class="flex-1">
-                    <el-select
-                      v-model="rule.attr"
-                      class="rule-select"
-                      placeholder="规则属性"
-                      @change="(e) => handleRuleChange(e, rule, '规则属性')"
-                    >
-                      <el-option
-                        v-for="attr in rule.ruleAttrsDdta"
-                        :key="attr"
-                        :label="attr"
-                        :value="attr"
-                      />
-                    </el-select>
-                  </div>
-                  <div class="flex-1">
-                    <el-select
-                      v-model="rule.type"
-                      class="rule-select"
-                      placeholder="规则类型"
-                      @change="(e) => handleRuleChange(e, rule, '规则类型')"
-                    >
-                      <el-option
-                        v-for="type in rule.ruleTypes"
-                        :key="type"
-                        :label="type"
-                        :value="type"
-                      />
-                    </el-select>
-                  </div>
-                  <div class="flex-1">
-                    <el-button type="primary" @click="openRuleDialog(rule)">
-                      {{ rule && rule.rule && rule.rule.rules ? '查看-修改' : '去设置' }}
-                    </el-button>
-                  </div>
-                  <div class="flex-1">
-                    <div
-                      class="add"
-                      @click="addRule(index)"
-                      :class="{ disabled: rules.length == ruleAttrsDdta.length + 2 }"
-                      :style="{
-                        opacity: rules.length == ruleAttrsDdta.length + 2 ? 0.5 : 1,
-                        cursor:
-                          rules.length == ruleAttrsDdta.length + 2 ? 'not-allowed' : 'pointer',
-                      }"
-                    >
-                      +
-                    </div>
-                    <div
-                      class="remove"
-                      @click="removeRule(index)"
-                      :class="{ disabled: rules.length <= 1 }"
-                      :style="{
-                        opacity: rules.length <= 1 ? 0.5 : 1,
-                        cursor: rules.length <= 1 ? 'not-allowed' : 'pointer',
-                      }"
-                    >
-                      -
-                    </div>
-                  </div>
-                </div>
+          <!-- 量表选择弹窗 -->
+          <el-dialog
+            v-model="scaleSelectionDialogVisible"
+            title="选择量表词条"
+            width="800px"
+            :before-close="handleCloseScaleSelectionDialog"
+          >
+            <div class="scale-selection-content">
+              <div class="search-section">
+                <el-input
+                  v-model="scaleSearchKeyword"
+                  placeholder="输入词条名称、编号、英文缩写或类型进行搜索..."
+                  clearable
+                  prefix-icon="Search"
+                  style="width: 100%; margin-bottom: 20px;"
+                  @input="handleScaleSearch"
+                />
+                <el-text v-if="scaleSearchKeyword" type="info" style="margin-bottom: 10px; display: block;">
+                  找到 {{ filteredScaleOptions.length }} 个词条
+                </el-text>
               </div>
-              <div class="applicationOfRules">
-                <!-- // 在应用规则按钮上添加点击事件 -->
-                <!-- <el-button class="apply-rule-btn" icon="el-icon-refresh round"> 应用规则</el-button> -->
-                <el-button
-                  class="apply-rule-btn"
-                  :icon="Refresh"
-                  round
-                  style="
-                    background-color: rgba(64, 158, 255, 0.1);
-                    border-color: rgba(64, 158, 255, 0.5);
-                    color: #409eff;
-                  "
-                  @click="applyRules"
+              
+              <div class="scale-list">
+                <el-table
+                  :data="filteredScaleOptions"
+                  style="width: 100%"
+                  max-height="400"
+                  @row-click="selectScale"
+                  highlight-current-row
                 >
-                  应用规则</el-button
-                >
-                <el-button
-                  class="apply-rule-btn"
-                  :icon="Refresh"
-                  round
-                  style="
-                    background-color: rgba(64, 158, 255, 0.1);
-                    border-color: rgba(64, 158, 255, 0.5);
-                    color: #409eff;
-                  "
-                  @click="saveRuleSettings"
-                >
-                  保存规则设置</el-button
-                >
-                <!-- <el-button
-                  class="apply-rule-btn"
-                  :icon="Refresh"
-                  round
-                  style="
-                    background-color: rgba(64, 158, 255, 0.1);
-                    border-color: rgba(64, 158, 255, 0.5);
-                    color: #409eff;
-                  "
-                  @click="onMountedd()"
-                >
-                  dad</el-button
-                > -->
+                  <el-table-column prop="word_name" label="词条名称" width="200" />
+                  <el-table-column prop="word_code" label="词条编号" width="150" />
+                  <el-table-column prop="word_short" label="英文缩写" width="120" />
+                  <el-table-column prop="word_class" label="词条类型" width="120" />
+                  <el-table-column prop="word_apply" label="词条应用" />
+                </el-table>
               </div>
             </div>
-          </div>
+            
+            <template #footer>
+              <span class="dialog-footer">
+                <el-button @click="scaleSelectionDialogVisible = false">取消</el-button>
+                <el-button type="primary" @click="confirmScaleSelection">确定</el-button>
+              </span>
+            </template>
+          </el-dialog>
 
           <!-- 选择数值弹窗 -->
           <el-dialog
@@ -444,6 +420,10 @@ import { Refresh } from '@element-plus/icons-vue';
 const props = defineProps({
   patientData: Object,
   selectedTemplate: Object,
+  pendingScoreData: {
+    type: Object,
+    default: () => ({}) // 存储该模板所有评分词条的数据
+  },
 });
 import { dictionaryList, dictionaryUpdate } from '@/api/dictionary';
 import { dataTableCrudList } from '@/api/dataTableCrud';
@@ -470,10 +450,43 @@ const currentRule = ref(null);
 const currentRuleItems = ref([]);
 const currentHistoryRuleItems = ref([]);
 
+// 量表选择相关
+const scaleSelectionDialogVisible = ref(false);
+const scaleSearchKeyword = ref('');
+const selectedScale = ref(null);
+const scaleOptions = ref([]);
+const currentTemplateItem = ref(null);
+
 const scoreTime = ref(dayjs().format('YYYY-MM-DD HH:mm:ss'));
 const ruleAttrsDdta = ref([]);
 const ratingGrading = ref(null);
 const ratingLabels = ref('');
+
+// 过滤后的量表选项
+const filteredScaleOptions = computed(() => {
+  if (!scaleSearchKeyword.value.trim()) {
+    return scaleOptions.value;
+  }
+
+  const keyword = scaleSearchKeyword.value.toLowerCase().trim();
+  
+  return scaleOptions.value.filter(item => {
+    return (
+      // 搜索词条名称
+      item.word_name?.toLowerCase().includes(keyword) ||
+      // 搜索词条编号
+      item.word_code?.toLowerCase().includes(keyword) ||
+      // 搜索英文缩写
+      item.word_short?.toLowerCase().includes(keyword) ||
+      // 搜索词条类型
+      item.word_class?.toLowerCase().includes(keyword) ||
+      // 搜索词条应用
+      item.word_apply?.toLowerCase().includes(keyword) ||
+      // 搜索英文名称
+      item.word_eng?.toLowerCase().includes(keyword)
+    );
+  });
+});
 
 const scoreItems = reactive([]);
 const historyData = ref([]);
@@ -545,6 +558,7 @@ onMounted(async () => {
   formulaAttrs.value = scoreItems.map((item) => item.label);
   await fetchDictionary();
   await getTableCrudList();
+  await fetchScaleOptions();
 });
 
 const enterData = async () => {
@@ -608,75 +622,11 @@ const enterData = async () => {
   }
 };
 
-// 获取历史病例
+// 获取历史病例 - 已禁用所有自动请求
 const getTableCrudList = async () => {
-  try {
-    if (
-      props.selectedTemplate &&
-      props.selectedTemplate.dictionaryList &&
-      props.selectedTemplate.dictionaryList.length > 0
-    ) {
-      let word_codes = props.selectedTemplate.dictionaryList.map((item) => item['word_code']);
-
-      // 并发请求所有 word_code
-      const requests = word_codes.map((word_code) =>
-        dataTableCrudList({
-          case_code: props.patientData.caseId,
-          template_code: props.selectedTemplate.code,
-          word_code: word_code,
-        })
-      );
-
-      // 修改为 allSettled，保证全部执行
-      const results = await Promise.allSettled(requests);
-
-      // 对 results 中所有 fulfilled 的 res 的 list 按 word_name 分组
-      const groupedByWordName = {};
-      results.forEach((result) => {
-        if (result.status === 'fulfilled') {
-          const res = result.value;
-          if (res.data?.code === 200 && res.data?.data?.list) {
-            res.data.data.list.forEach((item) => {
-              if (!groupedByWordName[item.word_name]) {
-                groupedByWordName[item.word_name] = [];
-              }
-              groupedByWordName[item.word_name].push(item);
-            });
-          }
-        }
-      });
-
-      const guldwordNme = [];
-      for (const key in groupedByWordName) {
-        if (Object.prototype.hasOwnProperty.call(groupedByWordName, key)) {
-          groupedByWordName[key].forEach((item) => {
-            const testName = item.word_name;
-            if (!guldwordNme[testName]) {
-              guldwordNme[testName] = [];
-            }
-            guldwordNme[testName].push({
-              date: item.check_time,
-              testName: item.word_name,
-              value: item.value,
-              case_code: item.case_code,
-            });
-          });
-        }
-      }
-
-      historyData.value = guldwordNme;
-      // 直接修改 scoreItems
-      scoreItems.forEach((item) => {
-        if (guldwordNme[item.label]) {
-          // console.log('guldwordNme[item.label]', guldwordNme[item.label]);
-          item.values = guldwordNme[item.label].map((entry) => entry.value);
-        }
-      });
-    }
-  } catch (error) {
-    console.error('Failed to fetch dictionary', error);
-    ElMessage.error('获取系统词典失败');
-  }
+  // 根据用户要求，删除所有自动发送的 dataTableCrudList 请求
+  console.log('getTableCrudList: 已禁用所有自动历史数据请求');
+  return;
 };
 
 // 获取规则数据获取规则数据获取规则数据获取规则数据获取规则数据获取规则数据获取规则数据
@@ -1134,7 +1084,147 @@ const resetData = () => {
   });
 };
 
-const emit = defineEmits(['go-back-to-template']);
+// 获取量表选项
+const fetchScaleOptions = async () => {
+  try {
+    const response = await dictionaryList({});
+    // 只获取 is_score 为 1 的评分词条
+    scaleOptions.value = (response.data?.data?.list || []).filter(item => item.is_score === 1);
+  } catch (error) {
+    console.error('获取量表选项失败:', error);
+  }
+};
+
+// 打开量表选择弹窗
+const openScaleSelectionDialog = (templateItem) => {
+  console.log('打开量表选择弹窗，templateItem:', templateItem);
+  console.log('templateItem.word_code:', templateItem.word_code);
+  scaleSearchKeyword.value = '';
+  selectedScale.value = null;
+  currentTemplateItem.value = templateItem;
+  scaleSelectionDialogVisible.value = true;
+};
+
+// 处理量表搜索
+const handleScaleSearch = () => {
+  // 搜索是通过计算属性实时进行的，这里可以添加额外的搜索逻辑
+};
+
+// 选择量表
+const selectScale = (row) => {
+  selectedScale.value = row;
+};
+
+// 确认量表选择
+const confirmScaleSelection = () => {
+  if (!selectedScale.value) {
+    ElMessage.warning('请选择一个量表');
+    return;
+  }
+
+  if (!currentTemplateItem.value) {
+    ElMessage.error('未找到对应的模板词条');
+    return;
+  }
+
+  ElMessage.success(`已为"${currentTemplateItem.value.word_name}"选择量表: ${selectedScale.value.word_name}`);
+  scaleSelectionDialogVisible.value = false;
+  
+  // 跳转到评分界面，传递选中的量表信息
+  emit('navigate-to-scale', {
+    selectedScale: selectedScale.value,
+    templateItem: currentTemplateItem.value,
+    patientData: props.patientData
+  });
+};
+
+// 关闭量表选择弹窗
+const handleCloseScaleSelectionDialog = () => {
+  scaleSelectionDialogVisible.value = false;
+  selectedScale.value = null;
+  currentTemplateItem.value = null;
+  scaleSearchKeyword.value = '';
+};
+
+// 根据词条代码获取词条名称
+const getWordNameByCode = (wordCode) => {
+  const item = props.selectedTemplate?.dictionaryList?.find(item => item.word_code === wordCode);
+  return item ? item.word_name : wordCode;
+};
+
+// 统一录入所有数据
+const submitAllData = async () => {
+  if (!props.pendingScoreData || Object.keys(props.pendingScoreData).length === 0) {
+    ElMessage.warning('没有暂存的评分数据');
+    return;
+  }
+
+  // 调试信息
+  console.log('pendingScoreData:', props.pendingScoreData);
+
+  try {
+    // 为每个暂存的评分数据创建API请求
+    const requests = [];
+    
+    for (const [wordCode, scoreData] of Object.entries(props.pendingScoreData)) {
+      // 构建评分数据，按照API要求的格式
+      const scoreValue = JSON.stringify({
+        value: scoreData.scaleData.value,
+        unit: scoreData.scaleData.unit,
+        result: scoreData.scaleData.result,
+        sources: scoreData.scaleData.sources
+      });
+
+      // 确保word_code存在
+      const finalWordCode = scoreData.templateItem?.word_code || scoreData.selectedScale?.word_code;
+      if (!finalWordCode) {
+        ElMessage.error(`缺少word_code参数: ${wordCode}`);
+        console.error('scoreData:', scoreData);
+        return;
+      }
+
+      // 创建API请求数据
+      const requestData = {
+        case_code: props.patientData.caseId,
+        template_code: props.selectedTemplate.code,
+        word_code: finalWordCode,
+        check_time: scoreData.checkTime,
+        value: scoreValue
+      };
+
+      console.log(`API请求数据 (${wordCode}):`, requestData);
+      
+      // 添加到请求列表
+      requests.push(dataCreate(requestData));
+    }
+
+    // 并发执行所有请求
+    const responses = await Promise.all(requests);
+
+    // 检查所有请求是否成功
+    const allSuccess = responses.every(response => 
+      response.data.code === 200 || response.data.code === 201
+    );
+
+    if (allSuccess) {
+      ElMessage.success(`成功录入 ${responses.length} 条评分数据！`);
+      // 清空暂存数据
+      emit('clear-pending-data');
+      // 触发数据提交事件
+      emit('data-submitted', props.pendingScoreData);
+    } else {
+      const failedCount = responses.filter(response => 
+        response.data.code !== 200 && response.data.code !== 201
+      ).length;
+      ElMessage.error(`${failedCount} 条评分数据录入失败`);
+    }
+  } catch (error) {
+    console.error('Submit score data error:', error);
+    ElMessage.error('评分数据录入失败，请检查网络或联系管理员。');
+  }
+};
+
+const emit = defineEmits(['go-back-to-template', 'navigate-to-scale', 'clear-pending-data', 'data-submitted']);
 </script>
 
 <style scoped lang="scss">
@@ -1156,5 +1246,190 @@ const emit = defineEmits(['go-back-to-template']);
 }
 ::v-deep(.el-radio__label) {
   display: none !important;
+}
+
+.pending-score-section {
+  margin: 20px 0;
+  padding: 20px;
+  border: 2px solid #67c23a;
+  border-radius: 6px;
+  background-color: #f0f9ff;
+
+  .pending-score-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+
+    h4 {
+      margin: 0;
+      color: #67c23a;
+      font-size: 16px;
+      font-weight: bold;
+    }
+  }
+
+  .pending-score-content {
+    .score-info {
+      display: flex;
+      align-items: center;
+      margin-bottom: 12px;
+
+      .score-label {
+        font-weight: 500;
+        color: #303133;
+        min-width: 100px;
+        margin-right: 10px;
+      }
+
+      .score-value {
+        color: #67c23a;
+        font-weight: 500;
+      }
+    }
+
+    .score-sources {
+      margin-top: 15px;
+
+      .score-label {
+        font-weight: 500;
+        color: #303133;
+        margin-bottom: 10px;
+        display: block;
+      }
+
+      .sources-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+
+        .source-item {
+          background-color: white;
+          padding: 8px 12px;
+          border-radius: 4px;
+          border: 1px solid #e4e7ed;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+
+          .source-name {
+            color: #606266;
+            font-size: 14px;
+          }
+
+          .source-value {
+            color: #67c23a;
+            font-weight: 500;
+            font-size: 14px;
+          }
+        }
+      }
+    }
+  }
+}
+
+.template-items-section {
+  margin: 20px 0;
+  padding: 20px;
+  border: 1px solid #e4e7ed;
+  border-radius: 6px;
+  background-color: #fafafa;
+
+  .template-items-header {
+    margin-bottom: 20px;
+
+    h4 {
+      margin: 0 0 8px 0;
+      color: #303133;
+      font-size: 16px;
+    }
+
+    .template-description {
+      color: #909399;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+  }
+
+  .template-items-list {
+    .template-item-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      background-color: white;
+      border: 1px solid #e4e7ed;
+      border-radius: 4px;
+      transition: all 0.3s ease;
+
+      &:hover {
+        border-color: #409eff;
+        box-shadow: 0 2px 8px rgba(64, 158, 255, 0.1);
+      }
+
+      .item-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        .item-name {
+          font-weight: 500;
+          color: #303133;
+        }
+
+        .item-short {
+          color: #909399;
+          font-size: 12px;
+        }
+      }
+
+      .item-actions {
+        .no-scale-text {
+          color: #c0c4cc;
+          font-size: 12px;
+          font-style: italic;
+        }
+
+        .score-status {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+
+          .score-total {
+            color: #67c23a;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 4px 8px;
+            background-color: #f0f9ff;
+            border-radius: 4px;
+            border: 1px solid #67c23a;
+          }
+        }
+      }
+    }
+  }
+}
+
+.scale-selection-content {
+  .search-section {
+    margin-bottom: 20px;
+  }
+
+  .scale-list {
+    .el-table {
+      .el-table__row {
+        cursor: pointer;
+        
+        &:hover {
+          background-color: #f5f7fa;
+        }
+        
+        &.current-row {
+          background-color: #e6f7ff;
+        }
+      }
+    }
+  }
 }
 </style>
