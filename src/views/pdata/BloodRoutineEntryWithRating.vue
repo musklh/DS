@@ -74,7 +74,7 @@
                         <span class="score-label">参与评分词条:</span>
                         <div class="sources-list">
                           <div v-for="source in scoreData.scaleData.sources" :key="source.word_code" class="source-item">
-                            <span class="source-name">{{ getWordNameByCode(source.word_code) }}</span>
+                            <span class="source-name">{{ source.word_name || getWordNameByCode(source.word_code) }}</span>
                             <span class="source-value">{{ source.value }}</span>
                           </div>
                         </div>
@@ -889,7 +889,7 @@ const filterRulesTypes = (datas) => {
   });
 };
 
-// 应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法
+// 应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法
 const applyRules = () => {
   // 循环scoreItems每一条
   scoreItems.forEach((scoreItem) => {
@@ -1004,11 +1004,18 @@ const applyRules = () => {
 };
 
 const resetData = () => {
+
+  initializeFormData();
+  if (formRef.value) {
+    formRef.value.resetFields();
+  }
+  // 清空评分数据
   ratingGrading.value = null;
   ratingLabels.value = null;
   scoreItems.forEach((item) => {
     item.score = null;
   });
+
 };
 
 // 获取量表选项

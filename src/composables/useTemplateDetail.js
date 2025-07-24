@@ -441,6 +441,63 @@ export function useTemplateDetail() {
     
     const value = parseJson(item.value);
 
+    // 特殊处理评分数据
+    if (item.is_score === 1) {
+      if (typeof value === 'object' && value !== null) {
+        // 评分数据结构: { value: number, unit: string, result: string, sources: array }
+        const scoreValue = value.value !== undefined ? value.value : '';
+        const unit = value.unit || '';
+        const result = value.result || '';
+        const sources = value.sources || [];
+        
+        let displayText = '';
+        
+        // 显示评分值
+        if (scoreValue !== '') {
+          displayText += `<strong>评分值:</strong> ${escapeHtml(String(scoreValue))}`;
+          if (unit) {
+            displayText += ` ${escapeHtml(unit)}`;
+          }
+        }
+        
+        // 显示评分结果
+        if (result) {
+          displayText += displayText ? '<br>' : '';
+          displayText += `<strong>评分结果:</strong> ${escapeHtml(result)}`;
+        }
+        
+        // 显示评分来源
+        if (sources && sources.length > 0) {
+          displayText += displayText ? '<br>' : '';
+          displayText += `<strong>评分来源:</strong><br>`;
+          sources.forEach((source, index) => {
+            const sourceName = source.word_name || source.word_code || `来源${index + 1}`;
+            const sourceValue = source.value !== undefined ? source.value : '';
+            const sourceTime = source.check_time || '';
+            
+            displayText += `&nbsp;&nbsp;• ${escapeHtml(sourceName)}: ${escapeHtml(String(sourceValue))}`;
+            if (sourceTime) {
+              displayText += ` (${escapeHtml(sourceTime)})`;
+            }
+            displayText += '<br>';
+          });
+        }
+        
+        return displayText || '<span style="color: #909399;">评分数据为空</span>';
+      } else if (typeof value === 'string' && value) {
+        // 如果value是字符串，尝试解析
+        try {
+          const parsedValue = JSON.parse(value);
+          return formatDisplayValue({ ...item, value: parsedValue });
+        } catch (e) {
+          // 如果解析失败，直接显示原始值
+          return `<strong>评分值:</strong> ${escapeHtml(value)}`;
+        }
+      } else {
+        return '<span style="color: #909399;">评分数据为空</span>';
+      }
+    }
+
     // Helper to format key-value pairs from an object, used for both main group and followup groups
     const formatGroup = (groupObj) => {
       return Object.entries(groupObj)

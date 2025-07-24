@@ -429,6 +429,7 @@ const enterData = async () => {
     if (item.word_name !== '评分分级' && item.word_name !== '评分标签' && item.value) {
       scoreData.sources.push({
         word_code: item.word_code,
+        word_name: item.word_name, // 添加词条名称
         template_code: props.templateItem.template_code || props.selectedTemplate?.code,
         check_time: currentTime,
         value: item.value

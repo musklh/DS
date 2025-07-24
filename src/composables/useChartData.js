@@ -77,15 +77,53 @@ export function useChartData(patientData) {
         
         // 保证chartValues顺序与xAxisStr一致
         const valueMap = {}
+        const tableDataMap = {}
+        
         ;(yData.data_points || []).forEach(p => { 
-          valueMap[p.check_time] = Number(p.value) 
+          // 检查是否是评分数据（JSON格式）
+          let parsedValue = p.value
+          let scoreInfo = null
+          
+          try {
+            // 尝试解析JSON格式的评分数据
+            if (typeof p.value === 'string' && (p.value.startsWith('{') || p.value.startsWith('['))) {
+              const parsed = JSON.parse(p.value)
+              if (parsed && typeof parsed === 'object' && parsed.value !== undefined) {
+                // 这是评分数据，提取评分值
+                parsedValue = Number(parsed.value)
+                scoreInfo = {
+                  unit: parsed.unit || '',
+                  result: parsed.result || '',
+                  sources: parsed.sources || []
+                }
+              }
+            } else {
+              // 普通数值数据
+              parsedValue = Number(p.value)
+            }
+          } catch (e) {
+            // 解析失败，使用原始值
+            parsedValue = Number(p.value)
+          }
+          
+          valueMap[p.check_time] = parsedValue
+          tableDataMap[p.check_time] = {
+            value: parsedValue,
+            scoreInfo: scoreInfo,
+            originalValue: p.value
+          }
         })
         
         chartValues.value = xAxisStr.map(x => valueMap[x] ?? 0)
-        tableData.value = xAxisStr.map((x, i) => ({ 
-          date: x, 
-          value: chartValues.value[i] ?? '' 
-        }))
+        tableData.value = xAxisStr.map((x, i) => {
+          const dataPoint = tableDataMap[x]
+          return {
+            date: x,
+            value: chartValues.value[i] ?? '',
+            scoreInfo: dataPoint?.scoreInfo || null,
+            originalValue: dataPoint?.originalValue || ''
+          }
+        })
       } else {
         chartValues.value = []
         tableData.value = []

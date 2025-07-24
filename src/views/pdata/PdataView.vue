@@ -62,7 +62,6 @@
     </div>
 
     <div v-if="currentStep !== 2" class="workflow-navigation-buttons">
-      <el-button v-if="currentStep > 0" @click="currentStep--"> 上一步 </el-button>
     </div>
   </div>
 </template>
