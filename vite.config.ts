@@ -34,7 +34,7 @@ export default defineConfig({
       },
       // OCR服务代理配置
       '/getOcrData': {
-        target: 'http://localhost:8080',
+        target: 'http://118.89.187.153:9090',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/getOcrData/, '/getOcrData'),
       },
