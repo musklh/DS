@@ -171,6 +171,31 @@ export function useTemplateDetail() {
         row.editingValue = { selected, times };
         break;
       }
+      case 'single': {
+        // 处理单选类型
+        row.editingValue = initialValue || '';
+        
+        // 如果有后续选择，需要解析并初始化
+        if (row.followup_options && initialValue) {
+          const followupConfig = row.followup_options[initialValue];
+          if (followupConfig) {
+            // 检查初始值是否是JSON格式，包含后续选择
+            if (typeof initialValue === 'object' && initialValue !== null) {
+              // 如果是对象格式，提取后续选择值
+              const selectedOption = Object.keys(initialValue)[0];
+              const followupValue = initialValue[selectedOption];
+              row.editingValue = selectedOption;
+              row.editingValue[row.word_code + '_followup'] = followupValue;
+            } else if (typeof initialValue === 'string') {
+              // 如果是字符串格式，可能是简单的选项值
+              row.editingValue = initialValue;
+              // 初始化后续选择字段
+              row.editingValue[row.word_code + '_followup'] = '';
+            }
+          }
+        }
+        break;
+      }
       case 'single_with_other': {
         const options = getOptions(row.word_code);
         if (initialValue && options.includes(initialValue)) {
@@ -201,6 +226,27 @@ export function useTemplateDetail() {
     switch (inputType) {
       case 'group':
         formattedValue = JSON.stringify(value);
+        break;
+      case 'single':
+        // 处理单选类型
+        if (row.followup_options && value) {
+          const followupConfig = row.followup_options[value];
+          if (followupConfig) {
+            // 如果有后续选择，格式化为JSON对象
+            const followupValue = value[row.word_code + '_followup'];
+            if (followupValue) {
+              formattedValue = JSON.stringify({
+                [value]: followupValue
+              });
+            } else {
+              formattedValue = value;
+            }
+          } else {
+            formattedValue = value;
+          }
+        } else {
+          formattedValue = value;
+        }
         break;
       case 'single_with_other':
         if (value && value.selected) {
@@ -445,6 +491,23 @@ export function useTemplateDetail() {
     }
 
     // Case 3: It's a simple value (string, number)
+    // 检查是否是单选类型且有后续选择
+    if (item.input_type === 'single' && item.followup_options) {
+      const selectedOption = value.toString();
+      const followupConfig = item.followup_options[selectedOption];
+      if (followupConfig) {
+        // 检查值是否是JSON格式，包含后续选择
+        if (typeof value === 'object' && value !== null) {
+          const optionKey = Object.keys(value)[0];
+          const followupValue = value[optionKey];
+          return `<strong>${escapeHtml(optionKey)}</strong>: ${escapeHtml(String(followupValue))}`;
+        } else {
+          // 如果是简单字符串，只显示选项名
+          return `<strong>${escapeHtml(selectedOption)}</strong>`;
+        }
+      }
+    }
+    
     return value.toString();
   };
 

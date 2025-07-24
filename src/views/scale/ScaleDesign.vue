@@ -12,7 +12,7 @@
           <img :src="tag.iconName" class="menu-icon" />{{ tag.title }}
         </el-button>
       </div>
-      <div class="search-area" v-if="isScaleListActive === 1">
+      <div class="search-area" v-if="isScaleListActive === 1 && !currentEditItem">
         <el-input
           v-model="searchKeyword"
           placeholder="搜索量表名称"
@@ -24,10 +24,10 @@
       </div>
     </div>
     <div class="scale-content">
-      <ScaleList v-if="isScaleListActive === 1" @editRules="onEditRules" />
-      <ScaleAdd v-if="isScaleListActive === 2" :currentItem="currentEditItem" />
-      <ScoreSheet v-if="isScaleListActive === 3" />
-      <ChildRating v-if="isScaleListActive === 4" />
+      <ScaleList v-if="isScaleListActive === 1 && !currentEditItem" @editRules="onEditRules" />
+      <ScaleAdd v-if="currentEditItem && isScaleListActive === 1" :currentItem="currentEditItem" @goBack="onGoBack" />
+      <ScoreSheet v-if="isScaleListActive === 2" />
+      <ChildRating v-if="isScaleListActive === 3" />
     </div>
   </div>
 </template>
@@ -67,10 +67,6 @@ const tags = ref([
     iconName: table,
   },
   {
-    title: '添加量表',
-    iconName: tag2,
-  },
-  {
     title: '评分表',
     iconName: tag2,
   },
@@ -100,8 +96,11 @@ const fetchScaleList = async () => {
 
 const switchTab = (tabIndex: number) => {
   isScaleListActive.value = tabIndex;
-  if (tabIndex === 2 && !currentEditItem.value) {
-    // 如果切换到添加量表标签页且没有编辑项，清空当前编辑项
+  // 注意：由于删除了"添加量表"标签，现在的索引对应关系是：
+  // 1: 全部量表, 2: 评分表, 3: 从模板中规则评分
+  
+  // 如果切换到其他标签页，清空编辑状态
+  if (tabIndex !== 1) {
     currentEditItem.value = null;
   }
 };
@@ -123,8 +122,15 @@ const handleSearch = () => {
 
 // 处理编辑规则事件
 const onEditRules = (row: DictionaryItem) => {
-  currentEditItem.value = row; // 保存当前编辑的词条
-  isScaleListActive.value = 2;  // 切换到添加量表页面
+  currentEditItem.value = row; // 保存当前编辑的词条，这会自动显示编辑页面
+  console.log('进入编辑模式，编辑词条:', row.word_name);
+};
+
+// 处理返回事件
+const onGoBack = () => {
+  currentEditItem.value = null; // 清空编辑项，返回到列表页面
+  // 确保当前激活的标签是"全部量表"
+  isScaleListActive.value = 1;
 };
 
 onMounted(() => {

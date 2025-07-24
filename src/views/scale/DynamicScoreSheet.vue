@@ -22,11 +22,7 @@
       <!-- 左侧评分表单 -->
       <div class="score-form">
         <el-form label-width="80px" label-position="left">
-          <el-form-item label="评分时间">
-            <el-date-picker v-model="scoreTime" type="datetime" placeholder="2024-XX-XX 13:20" />
-          </el-form-item>
-
-          <div class="score-table" style="margin-top: 40px">
+          <div class="score-table" style="margin-top: 20px">
             <div class="score-row" style="margin-bottom: 0">
               <span data-v-2b4be9f2="" class="score-label"> </span>
               <span class="el-select score-select">评分:</span>
@@ -200,7 +196,7 @@ const valueDialogVisible = ref(false);
 const selectedHistoryIndex = ref(null);
 const currentScoreItem = ref(null);
 const currentHistoryData = ref([]);
-const scoreTime = ref(dayjs().format('YYYY-MM-DD HH:mm:ss'));
+// 评分时间现在使用当前时间，不再需要单独的变量
 const ratingGrading = ref(null);
 const ratingLabels = ref('');
 
@@ -409,9 +405,8 @@ const handleCloseDialog = () => {
 
 // 录入 - 暂存数据并跳回模板页面
 const enterData = async () => {
-  if (!scoreTime.value) {
-    return ElMessage.error('请选择检查时间');
-  }
+  // 使用当前时间作为评分时间
+  const currentTime = dayjs().format('YYYY-MM-DD HH:mm:ss');
 
   // 验证必填字段
   const requiredItems = scoreItems.value.filter(item => item.required && item.word_name !== '评分分级' && item.word_name !== '评分标签');
@@ -435,7 +430,7 @@ const enterData = async () => {
       scoreData.sources.push({
         word_code: item.word_code,
         template_code: props.templateItem.template_code || props.selectedTemplate?.code,
-        check_time: scoreTime.value,
+        check_time: currentTime,
         value: item.value
       });
     }
@@ -477,7 +472,7 @@ const enterData = async () => {
     scaleData: scoreData,
     selectedScale: props.selectedScale,
     templateItem: props.templateItem,
-    checkTime: scoreTime.value
+    checkTime: currentTime
   });
 
   ElMessage.success('评分数据已暂存，返回模板页面');

@@ -105,7 +105,7 @@
                           v-if="item.is_score === 1 && !pendingScoreData[item.word_code]"
                           type="primary" 
                           size="small"
-                          @click="openScaleSelectionDialog(item)"
+                          @click="navigateToScaleDirectly(item)"
                         >
                           选择量表
                         </el-button>
@@ -114,7 +114,7 @@
                           <el-button 
                             type="warning" 
                             size="small"
-                            @click="openScaleSelectionDialog(item)"
+                            @click="navigateToScaleDirectly(item)"
                           >
                             重新评分
                           </el-button>
@@ -153,52 +153,7 @@
             </div>
           </div>
 
-          <!-- 量表选择弹窗 -->
-          <el-dialog
-            v-model="scaleSelectionDialogVisible"
-            title="选择量表词条"
-            width="800px"
-            :before-close="handleCloseScaleSelectionDialog"
-          >
-            <div class="scale-selection-content">
-              <div class="search-section">
-                <el-input
-                  v-model="scaleSearchKeyword"
-                  placeholder="输入词条名称、编号、英文缩写或类型进行搜索..."
-                  clearable
-                  prefix-icon="Search"
-                  style="width: 100%; margin-bottom: 20px;"
-                  @input="handleScaleSearch"
-                />
-                <el-text v-if="scaleSearchKeyword" type="info" style="margin-bottom: 10px; display: block;">
-                  找到 {{ filteredScaleOptions.length }} 个词条
-                </el-text>
-              </div>
-              
-              <div class="scale-list">
-                <el-table
-                  :data="filteredScaleOptions"
-                  style="width: 100%"
-                  max-height="400"
-                  @row-click="selectScale"
-                  highlight-current-row
-                >
-                  <el-table-column prop="word_name" label="词条名称" width="200" />
-                  <el-table-column prop="word_code" label="词条编号" width="150" />
-                  <el-table-column prop="word_short" label="英文缩写" width="120" />
-                  <el-table-column prop="word_class" label="词条类型" width="120" />
-                  <el-table-column prop="word_apply" label="词条应用" />
-                </el-table>
-              </div>
-            </div>
-            
-            <template #footer>
-              <span class="dialog-footer">
-                <el-button @click="scaleSelectionDialogVisible = false">取消</el-button>
-                <el-button type="primary" @click="confirmScaleSelection">确定</el-button>
-              </span>
-            </template>
-          </el-dialog>
+
 
           <!-- 选择数值弹窗 -->
           <el-dialog
@@ -450,43 +405,15 @@ const currentRule = ref(null);
 const currentRuleItems = ref([]);
 const currentHistoryRuleItems = ref([]);
 
-// 量表选择相关
-const scaleSelectionDialogVisible = ref(false);
-const scaleSearchKeyword = ref('');
-const selectedScale = ref(null);
+// 量表选择相关（简化后）
 const scaleOptions = ref([]);
-const currentTemplateItem = ref(null);
 
 const scoreTime = ref(dayjs().format('YYYY-MM-DD HH:mm:ss'));
 const ruleAttrsDdta = ref([]);
 const ratingGrading = ref(null);
 const ratingLabels = ref('');
 
-// 过滤后的量表选项
-const filteredScaleOptions = computed(() => {
-  if (!scaleSearchKeyword.value.trim()) {
-    return scaleOptions.value;
-  }
 
-  const keyword = scaleSearchKeyword.value.toLowerCase().trim();
-  
-  return scaleOptions.value.filter(item => {
-    return (
-      // 搜索词条名称
-      item.word_name?.toLowerCase().includes(keyword) ||
-      // 搜索词条编号
-      item.word_code?.toLowerCase().includes(keyword) ||
-      // 搜索英文缩写
-      item.word_short?.toLowerCase().includes(keyword) ||
-      // 搜索词条类型
-      item.word_class?.toLowerCase().includes(keyword) ||
-      // 搜索词条应用
-      item.word_apply?.toLowerCase().includes(keyword) ||
-      // 搜索英文名称
-      item.word_eng?.toLowerCase().includes(keyword)
-    );
-  });
-});
 
 const scoreItems = reactive([]);
 const historyData = ref([]);
@@ -1095,56 +1022,47 @@ const fetchScaleOptions = async () => {
   }
 };
 
-// 打开量表选择弹窗
-const openScaleSelectionDialog = (templateItem) => {
-  console.log('打开量表选择弹窗，templateItem:', templateItem);
-  console.log('templateItem.word_code:', templateItem.word_code);
-  scaleSearchKeyword.value = '';
-  selectedScale.value = null;
-  currentTemplateItem.value = templateItem;
-  scaleSelectionDialogVisible.value = true;
-};
-
-// 处理量表搜索
-const handleScaleSearch = () => {
-  // 搜索是通过计算属性实时进行的，这里可以添加额外的搜索逻辑
-};
-
-// 选择量表
-const selectScale = (row) => {
-  selectedScale.value = row;
-};
-
-// 确认量表选择
-const confirmScaleSelection = () => {
-  if (!selectedScale.value) {
-    ElMessage.warning('请选择一个量表');
-    return;
-  }
-
-  if (!currentTemplateItem.value) {
-    ElMessage.error('未找到对应的模板词条');
-    return;
-  }
-
-  ElMessage.success(`已为"${currentTemplateItem.value.word_name}"选择量表: ${selectedScale.value.word_name}`);
-  scaleSelectionDialogVisible.value = false;
+// 直接跳转到评分页面
+const navigateToScaleDirectly = (templateItem) => {
+  console.log('直接跳转到评分页面，templateItem:', templateItem);
   
-  // 跳转到评分界面，传递选中的量表信息
-  emit('navigate-to-scale', {
-    selectedScale: selectedScale.value,
-    templateItem: currentTemplateItem.value,
-    patientData: props.patientData
-  });
+  // 根据模板词条名称查找对应的量表
+  const scaleName = templateItem.word_name;
+  const matchingScale = scaleOptions.value.find(scale => 
+    scale.word_name === scaleName || 
+    scale.word_name.includes(scaleName) ||
+    scaleName.includes(scale.word_name)
+  );
+  
+  if (matchingScale) {
+    console.log('找到匹配的量表:', matchingScale);
+    // 直接跳转到评分界面
+    emit('navigate-to-scale', {
+      selectedScale: matchingScale,
+      templateItem: templateItem,
+      patientData: props.patientData
+    });
+  } else {
+    console.log('未找到匹配的量表，使用默认量表');
+    // 如果没找到匹配的量表，使用第一个可用的量表
+    const defaultScale = scaleOptions.value.find(scale => scale.word_apply === '评分');
+    if (defaultScale) {
+      emit('navigate-to-scale', {
+        selectedScale: defaultScale,
+        templateItem: templateItem,
+        patientData: props.patientData
+      });
+    } else {
+      ElMessage.error('未找到可用的评分量表');
+    }
+  }
 };
 
-// 关闭量表选择弹窗
-const handleCloseScaleSelectionDialog = () => {
-  scaleSelectionDialogVisible.value = false;
-  selectedScale.value = null;
-  currentTemplateItem.value = null;
-  scaleSearchKeyword.value = '';
-};
+
+
+
+
+
 
 // 根据词条代码获取词条名称
 const getWordNameByCode = (wordCode) => {

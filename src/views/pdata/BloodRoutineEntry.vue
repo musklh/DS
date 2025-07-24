@@ -80,9 +80,25 @@
 
               <!-- 单选 -->
               <el-form-item v-else-if="item.input_type === 'single'" :prop="`values.${item.word_code}`" :label="item.word_name">
-                  <el-radio-group v-model="formData.values[item.word_code]">
-                      <el-radio v-for="option in item.options.split(',')" :key="option" :label="option" />
-                  </el-radio-group>
+                  <div class="single-radio-container">
+                      <el-radio-group v-model="formData.values[item.word_code]">
+                          <el-radio v-for="option in item.options.split(',')" :key="option" :label="option" />
+                      </el-radio-group>
+                      
+                      <!-- 级联子问题 -->
+                      <div v-if="formData.values[item.word_code] && item.followup_options && item.followup_options[formData.values[item.word_code]]">
+                        <div class="followup-container">
+                          <span class="followup-label">{{ item.followup_options[formData.values[item.word_code]].label || formData.values[item.word_code] }}:</span>
+                          <!-- Level 1 Followup Input -->
+                          <el-radio-group v-if="item.followup_options[formData.values[item.word_code]].input_type === 'single'" v-model="formData.values[item.word_code + '_followup']">
+                            <el-radio v-for="fu_option in getOptionsArray(item.followup_options[formData.values[item.word_code]].options)" :key="fu_option" :label="fu_option" />
+                          </el-radio-group>
+                          <el-input v-else-if="item.followup_options[formData.values[item.word_code]].input_type === 'text'" v-model="formData.values[item.word_code + '_followup']" size="small" placeholder="请输入" style="width: 150px;"/>
+                          <el-input-number v-else-if="item.followup_options[formData.values[item.word_code]].input_type === 'number'" v-model="formData.values[item.word_code + '_followup']" size="small" :controls="false" placeholder="请输入数值" style="width: 150px;"/>
+                          <el-date-picker v-else-if="item.followup_options[formData.values[item.word_code]].input_type === 'date'" v-model="formData.values[item.word_code + '_followup']" type="date" size="small" placeholder="选择日期" value-format="YYYY-MM-DD" style="width: 150px;"/>
+                        </div>
+                      </div>
+                  </div>
               </el-form-item>
 
               <!-- 单选（含其他） -->
@@ -361,6 +377,12 @@ const initializeFormData = () => {
         newValues[item.word_code] = { selected: [], times: {}, followup: {} };
       } else if (item.input_type === 'single') {
         newValues[item.word_code] = '';
+        // 为单选类型初始化后续选择字段
+        if (item.followup_options) {
+          Object.keys(item.followup_options).forEach(option => {
+            newValues[item.word_code + '_followup'] = '';
+          });
+        }
       } else if (item.input_type === 'single_with_other') {
         newValues[item.word_code] = { selected: '', other: '' };
       } else if (item.input_type === 'number') {
@@ -404,6 +426,17 @@ watch(
             }
           }
         });
+      }
+      
+      // 处理单选类型的后续选择字段
+      if (item && item.input_type === 'single' && current) {
+        const selectedOption = current;
+        if (selectedOption && item.followup_options && item.followup_options[selectedOption]) {
+          // 确保后续选择字段存在
+          if (!newValues[word_code + '_followup']) {
+            newValues[word_code + '_followup'] = '';
+          }
+        }
       }
     }
   },
@@ -475,6 +508,26 @@ const formRules = computed(() => {
       } else if (item.input_type === 'single') {
           rule.message = `请选择${item.word_name}`;
           rule.trigger = 'change';
+          
+          // 为单选类型添加后续选择验证
+          if (item.followup_options) {
+            rule.validator = (rule, value, callback) => {
+              if (!value) {
+                return callback(new Error(`请选择${item.word_name}`));
+              }
+              
+              // 检查是否有后续选择需要填写
+              const followupConfig = item.followup_options[value];
+              if (followupConfig) {
+                const followupValue = formData.values[item.word_code + '_followup'];
+                if (!followupValue) {
+                  return callback(new Error(`请完成'${value}'的后续选项`));
+                }
+              }
+              
+              callback();
+            };
+          }
       } else if (item.input_type === 'single_with_other') {
         rule.message = `请选择${item.word_name}`;
         rule.trigger = 'change';
@@ -779,7 +832,26 @@ const submitForm = async () => {
             }
           } else {
             // 处理文本、单选等简单类型
-            formattedValue = value;
+            if (item.input_type === 'single' && item.followup_options) {
+              // 处理单选类型的后续选择
+              const selectedOption = value;
+              const followupConfig = item.followup_options[selectedOption];
+              if (followupConfig) {
+                const followupValue = formData.values[word_code + '_followup'];
+                if (followupValue) {
+                  // 如果有后续选择，格式化为JSON对象
+                  formattedValue = JSON.stringify({
+                    [selectedOption]: followupValue
+                  });
+                } else {
+                  formattedValue = selectedOption;
+                }
+              } else {
+                formattedValue = value;
+              }
+            } else {
+              formattedValue = value;
+            }
           }
           
           // 只提交有意义的数据
@@ -1300,5 +1372,16 @@ const resetForm = () => {
   background-color: #f0f2f5;
   padding: 4px 8px;
   border-radius: 4px;
+}
+
+.single-radio-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.single-radio-container .followup-container {
+  margin-left: 20px;
+  margin-top: 8px;
 }
 </style>

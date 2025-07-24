@@ -50,7 +50,6 @@
               <span>{{ row.is_score === 1 ? '是' : '否' }}</span>
             </template>
           </el-table-column>
-          <el-table-column prop="score_func" label="评分方式" width="150" />
           <el-table-column prop="actions" label="操作" width="200" fixed="right">
             <template #default="{ row }">
               <el-button size="small" @click="handleEdit(row)">编辑</el-button>

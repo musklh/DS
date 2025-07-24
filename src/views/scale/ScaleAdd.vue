@@ -1,5 +1,13 @@
 <template>
   <div style="padding: 40px 20px">
+    <!-- 返回按钮 -->
+    <div style="margin-bottom: 20px;">
+      <el-button @click="goBack" type="primary" plain>
+        <el-icon><ArrowLeft /></el-icon>
+        返回量表列表
+      </el-button>
+    </div>
+    
     <div class="" style="padding-left: 40px">
       <el-form-item label="词条编号" required>
         <el-input v-model="form.word_code" placeholder="当前词条编号" readonly />
@@ -25,7 +33,8 @@
 
 <script setup lang="ts">
 import { reactive, ref, onMounted, computed, watch } from 'vue';
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElButton, ElIcon } from 'element-plus';
+import { ArrowLeft } from '@element-plus/icons-vue';
 import ratingRules from '@/components/ratingRules/index.vue';
 import { dictionaryList, dictionaryPartialUpdate } from '../../api/dictionary';
 
@@ -57,13 +66,14 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const emit = defineEmits(['goBack']);
 
 // 词条列表数据
 const selectionRules = ref<DictionaryItem[]>([]);
 const saving = ref(false);
 
-// 模拟初始规则数据--如果初始化没有可以传[]或不传
-const mockInitialRules: any[] = [];
+// 初始规则数据，根据当前词条的score_func字段解析
+const mockInitialRules = ref<any[]>([]);
 
 const form = reactive({
   word_code: '',
@@ -88,14 +98,30 @@ const fetchDictionaryList = async () => {
 
 
 
-// 监听props变化，更新表单数据
+// 监听props变化，更新表单数据和评分规则
 watch(() => props.currentItem, (newItem) => {
   if (newItem) {
     form.word_code = newItem.word_code || '';
     form.word_name = newItem.word_name || '';
+    
+    // 解析已有的评分规则
+    if (newItem.score_func) {
+      try {
+        const parsedRules = JSON.parse(newItem.score_func);
+        console.log('解析的评分规则:', parsedRules);
+        mockInitialRules.value = Array.isArray(parsedRules) ? parsedRules : [];
+        console.log('设置mockInitialRules:', mockInitialRules.value);
+      } catch (error) {
+        console.error('解析评分规则失败:', error);
+        mockInitialRules.value = [];
+      }
+    } else {
+      mockInitialRules.value = [];
+    }
   } else {
     form.word_code = '';
     form.word_name = '';
+    mockInitialRules.value = [];
   }
 }, { immediate: true });
 
@@ -130,6 +156,11 @@ const onSettings = async (data: any) => {
   } finally {
     saving.value = false;
   }
+};
+
+// 返回量表列表
+const goBack = () => {
+  emit('goBack');
 };
 
 onMounted(() => {

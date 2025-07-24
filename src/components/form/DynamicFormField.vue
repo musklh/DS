@@ -33,13 +33,112 @@
     />
     
     <!-- Single Select -->
-    <el-radio-group 
-      v-else-if="inputType === 'single'" 
-      :modelValue="modelValue"
-      @update:modelValue="$emit('update:modelValue', $event)"
-    >
-      <el-radio v-for="option in getOptions(wordCode)" :key="option" :label="option">{{ option }}</el-radio>
-    </el-radio-group>
+    <div v-else-if="inputType === 'single'" class="single-radio-container">
+      <el-radio-group 
+        :modelValue="modelValue"
+        @update:modelValue="$emit('update:modelValue', $event)"
+      >
+        <el-radio v-for="option in getOptions(wordCode)" :key="option" :label="option">{{ option }}</el-radio>
+      </el-radio-group>
+      
+      <!-- 级联子问题 -->
+      <div v-if="modelValue && hasFollowupForOption(wordCode, modelValue)" class="followup-container">
+        <span class="followup-label">{{ getFollowupLabel(wordCode, modelValue) }}:</span>
+        
+        <!-- Group type followup -->
+        <div v-if="getFollowupType(wordCode, modelValue) === 'group'" class="followup-group">
+          <div v-for="field in getFollowupFields(wordCode, modelValue)" :key="field.label" class="followup-group-field">
+            <label class="followup-field-label" :for="`followup-field-${modelValue}-${field.label}`">{{ field.label }}:</label>
+            <!-- Select field -->
+            <el-select 
+              v-if="field.input_type === 'select'"
+              :id="`followup-field-${modelValue}-${field.label}`"
+              :modelValue="getFollowupValue(modelValue, field.label)"
+              @update:modelValue="updateFollowupGroup(modelValue, field.label, $event)"
+              size="small" 
+              class="followup-group-input"
+              placeholder="请选择">
+              <el-option 
+                v-for="selectOption in getFieldOptions(field)" 
+                :key="selectOption" 
+                :label="selectOption" 
+                :value="selectOption" />
+            </el-select>
+            <!-- Date field -->
+            <el-date-picker 
+              v-else-if="field.input_type === 'date'"
+              :id="`followup-field-${modelValue}-${field.label}`"
+              :modelValue="getFollowupValue(modelValue, field.label)"
+              @update:modelValue="updateFollowupGroup(modelValue, field.label, $event)"
+              type="date"
+              size="small"
+              placeholder="选择日期"
+              value-format="YYYY-MM-DD"
+              class="followup-group-input"
+            />
+            <!-- Number field -->
+            <el-input-number 
+              v-else-if="field.input_type === 'number'"
+              :id="`followup-field-${modelValue}-${field.label}`"
+              :modelValue="getFollowupValue(modelValue, field.label)"
+              @update:modelValue="updateFollowupGroup(modelValue, field.label, $event)"
+              size="small"
+              :controls="false"
+              placeholder="请输入数值"
+              class="followup-group-input"
+            />
+            <!-- Text field -->
+            <el-input 
+              v-else
+              :id="`followup-field-${modelValue}-${field.label}`"
+              :modelValue="getFollowupValue(modelValue, field.label)"
+              @update:modelValue="updateFollowupGroup(modelValue, field.label, $event)"
+              size="small" 
+              class="followup-group-input" 
+              placeholder="请输入" />
+          </div>
+        </div>
+        
+        <!-- Single type followup -->
+        <el-select 
+          v-else-if="getFollowupType(wordCode, modelValue) === 'single'"
+          :modelValue="getFollowupValue(modelValue)"
+          @update:modelValue="updateFollowup(modelValue, $event)"
+          size="small" 
+          style="width: 120px;"
+          placeholder="请选择"
+        >
+          <el-option 
+            v-for="subOption in getFollowupOptions(wordCode, modelValue)" 
+            :key="subOption" 
+            :label="subOption" 
+            :value="subOption" 
+          />
+        </el-select>
+
+        <!-- Date type followup -->
+        <el-date-picker 
+          v-else-if="getFollowupType(wordCode, modelValue) === 'date'"
+          :modelValue="getFollowupValue(modelValue)"
+          @update:modelValue="updateFollowup(modelValue, $event)"
+          type="date"
+          size="small"
+          placeholder="选择日期"
+          value-format="YYYY-MM-DD"
+          style="width: 150px;"
+        />
+        
+        <!-- Default to text input for other types -->
+        <el-input 
+          v-else
+          :modelValue="getFollowupValue(modelValue)"
+          @update:modelValue="updateFollowup(modelValue, $event)"
+          size="small" 
+          style="width: 120px;" 
+          placeholder="请输入" 
+        />
+      </div>
+    </div>
     
     <!-- Single With Other -->
     <div v-else-if="inputType === 'single_with_other'">
@@ -250,32 +349,77 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue'])
 
-// 更新 followup 数据的方法
-const updateFollowup = (option, value) => {
-  const newValue = { 
-    ...props.modelValue, 
-    followup: { 
-      ...props.modelValue.followup, 
-      [option]: value 
-    } 
+// 获取单选类型的后续选择值
+const getFollowupValue = (option, fieldLabel = null) => {
+  if (props.inputType === 'single') {
+    // 对于单选类型，后续选择值存储在单独的字段中
+    const followupKey = props.wordCode + '_followup';
+    if (fieldLabel) {
+      // 对于 group 类型，需要从嵌套对象中获取
+      return props.modelValue[followupKey]?.[fieldLabel] || '';
+    }
+    return props.modelValue[followupKey] || '';
+  } else {
+    // 对于多选类型，使用原有的逻辑
+    if (fieldLabel) {
+      return props.modelValue.followup?.[option]?.[fieldLabel] || '';
+    }
+    return props.modelValue.followup?.[option] || '';
   }
-  emit('update:modelValue', newValue)
 }
 
-// ADDED: 更新 group followup 数据的方法
-const updateFollowupGroup = (option, fieldLabel, value) => {
-  const newFollowupOptionValue = {
-    ...props.modelValue.followup[option],
-    [fieldLabel]: value
-  };
-  const newValue = {
-    ...props.modelValue,
-    followup: {
-      ...props.modelValue.followup,
-      [option]: newFollowupOptionValue
+// 更新 followup 数据的方法
+const updateFollowup = (option, value) => {
+  if (props.inputType === 'single') {
+    // 对于单选类型，更新单独的后续选择字段
+    const followupKey = props.wordCode + '_followup';
+    const newValue = {
+      ...props.modelValue,
+      [followupKey]: value
+    };
+    emit('update:modelValue', newValue);
+  } else {
+    // 对于多选类型，使用原有的逻辑
+    const newValue = { 
+      ...props.modelValue, 
+      followup: { 
+        ...props.modelValue.followup, 
+        [option]: value 
+      } 
     }
-  };
-  emit('update:modelValue', newValue);
+    emit('update:modelValue', newValue)
+  }
+}
+
+// 更新 group followup 数据的方法
+const updateFollowupGroup = (option, fieldLabel, value) => {
+  if (props.inputType === 'single') {
+    // 对于单选类型，更新单独的后续选择字段
+    const followupKey = props.wordCode + '_followup';
+    const newFollowupValue = {
+      ...props.modelValue[followupKey],
+      [fieldLabel]: value
+    };
+    const newValue = {
+      ...props.modelValue,
+      [followupKey]: newFollowupValue
+    };
+    emit('update:modelValue', newValue);
+  } else {
+    // 对于多选类型，使用原有的逻辑
+    const newFollowupOptionValue = {
+      ...props.modelValue.followup[option],
+      [fieldLabel]: value
+    };
+    const newValue = {
+      ...props.modelValue,
+      followup: {
+        ...props.modelValue.followup,
+        [option]: newFollowupOptionValue
+      }
+    };
+    emit('update:modelValue', newValue);
+  }
 };
 
 // 更新时间数据的方法
@@ -334,5 +478,16 @@ const updateTime = (option, value) => {
 .followup-group-input {
   width: 120px;
   margin-left: 8px;
+}
+
+.single-radio-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.single-radio-container .followup-container {
+  margin-left: 20px;
+  margin-top: 8px;
 }
 </style> 

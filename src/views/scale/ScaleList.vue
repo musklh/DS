@@ -27,7 +27,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { dictionaryList } from '@/api/dictionary';
+import { dictionaryList } from '../../api/dictionary';
 
 // 定义词条数据类型
 interface ScaleItem {
@@ -65,7 +65,8 @@ const fetchScaleList = async () => {
     });
     
     // 过滤只显示评分词条 (is_score: 1)
-    const filteredData = response.data?.data?.list?.filter((item: ScaleItem) => {
+    const responseData = response as any;
+    const filteredData = responseData.data?.data?.list?.filter((item: ScaleItem) => {
       return item.is_score === 1;
     }) || [];
     tableData.value = filteredData;
