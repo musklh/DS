@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc -b && vite build",
+    "build": "vite build",
     "build-pure": "vite build",
     "preview": "vite preview",
     "openapi": "node openapi.config.js",
