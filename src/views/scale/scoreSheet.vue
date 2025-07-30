@@ -111,7 +111,12 @@
           :nitialRules="mockInitialRules"
           :selectionRules="mockSelectionRules"
           @settings="onSettings"
+          @save="onSaveRules"
           :applyTitle="'应用规则'"
+          :showSaveButton="true"
+          :saveButtonText="'保存评分规则'"
+          :saving="saving"
+          :currentItem="currentScaleItem"
         />
         <!-- :entryOfCalculation="mockInitialRules" -->
       </div>
@@ -158,6 +163,7 @@ import dayjs from 'dayjs';
 import { ElMessage } from 'element-plus';
 import ratingRules from '@/components/ratingRules/index.vue';
 import { applyRules } from './baseFunction';
+import { dictionaryPartialUpdate } from '../../api/dictionary';
 
 const rules = ref([]);
 const valueDialogVisible = ref(false);
@@ -167,6 +173,10 @@ const currentHistoryData = ref([]);
 const scoreTime = ref(dayjs().format('YYYY-MM-DD HH:mm:ss'));
 const ratingGrading = ref(null);
 const ratingLabels = ref('');
+
+// 保存相关变量
+const saving = ref(false);
+const currentScaleItem = ref(null);
 
 /**左边要参与评分的数据
  * 注意
@@ -753,8 +763,48 @@ const onSettings = (data) => {
   // 将data赋值给rules.value用于应用规则
   rules.value = data;
 
-  // 自动应用规则应用规则方法进行左边计算包括词条
-  applyRules(scoreItems, rules, ratingLabels);
+  // 自动应用规则
+  applyRules(scoreItems, rules, ratingGrading, ratingLabels);
+};
+
+// 保存评分规则
+const onSaveRules = async (data) => {
+  if (saving.value) return;
+  
+  saving.value = true;
+  console.log('保存评分规则数据:', data);
+  
+  try {
+    // 找到当前评分对应的词条
+    const currentScale = scoreItems.value.find(item => 
+      item.word_name === '评分分级' || 
+      item.word_name.includes('评分')
+    );
+    
+    if (!currentScale) {
+      ElMessage.error('未找到对应的评分词条');
+      return;
+    }
+    
+    const scoreFunc = typeof data === 'string' ? data : JSON.stringify(data);
+    
+    // 更新评分词条的规则
+    await dictionaryPartialUpdate(
+      { word_code: currentScale.word_code },
+      {
+        is_score: 1,
+        score_func: scoreFunc,
+      }
+    );
+    
+    ElMessage.success(`保存成功！词条：${currentScale.word_name}(${currentScale.word_code})`);
+    
+  } catch (error) {
+    console.error('保存评分规则失败:', error);
+    ElMessage.error('保存评分规则失败，请重试');
+  } finally {
+    saving.value = false;
+  }
 };
 
 // 新增方法打开选择数值事件

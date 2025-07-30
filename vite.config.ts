@@ -29,12 +29,12 @@ export default defineConfig({
       // 开发环境代理配置
       '/api': {
         //target: process.env.VITE_API_URL || 'http://127.0.0.1:8000',
-        target: 'http://118.89.187.153:8000',
+        target: 'http://118.89.187.153:5173',
         changeOrigin: true,
       },
       // OCR服务代理配置
       '/getOcrData': {
-        target: 'http://118.89.187.153:9090',
+        target: 'http://118.89.187.153:8099',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/getOcrData/, '/getOcrData'),
       },

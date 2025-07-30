@@ -85,6 +85,23 @@
         >
           {{ props.applyTitle }}</el-button
         >
+        
+        <!-- 保存按钮 -->
+        <el-button
+          v-if="props.showSaveButton"
+          class="save-rule-btn"
+          type="success"
+          round
+          :loading="props.saving"
+          style="
+            background-color: rgba(103, 194, 58, 0.1);
+            border-color: rgba(103, 194, 58, 0.5);
+            color: #67c23a;
+          "
+          @click="saveRules"
+        >
+          {{ props.saving ? '保存中...' : props.saveButtonText }}
+        </el-button>
       </div>
     </div>
     <!-- 设置范围编码规则弹窗 -->
@@ -348,6 +365,7 @@ import { Refresh, Search } from '@element-plus/icons-vue';
 
 import { ElButton, ElMessage, ElMessageBox } from 'element-plus';
 import { ref, onMounted, computed, watch } from 'vue';
+import { dictionaryList } from '@/api/dictionary';
 
 const props = defineProps({
   nitialRules: {
@@ -379,9 +397,26 @@ const props = defineProps({
     type: String,
     default: 'center',
   },
+  // 新增保存相关props
+  currentItem: {
+    type: Object,
+    default: null,
+  },
+  showSaveButton: {
+    type: Boolean,
+    default: false,
+  },
+  saveButtonText: {
+    type: String,
+    default: '保存评分规则',
+  },
+  saving: {
+    type: Boolean,
+    default: false,
+  },
 });
 
-const emit = defineEmits(['settings']);
+const emit = defineEmits(['settings', 'save']);
 const ruleDialogVisible = ref(false);
 const currentRule = ref(null);
 const currentRuleItems = ref([]);
@@ -405,6 +440,22 @@ const formulaAttrs = computed(() => {
 });
 
 const moFormulaAttrs = ref([]);
+
+// 获取所有词条列表
+const fetchAllDictionaryItems = async () => {
+  try {
+    const response = await dictionaryList({ page: 1, page_size: 99999 });
+    if (response.data?.code === 200 && response.data?.data?.list) {
+      // 获取所有词条作为可选属性
+      const allItems = response.data.data.list;
+      console.log('获取到所有词条:', allItems.length);
+      return allItems;
+    }
+  } catch (error) {
+    console.error('获取词条列表失败:', error);
+  }
+  return [];
+};
 
 // 将 selectedFormulaAttrs 改为从 rules 中计算得出
 const selectedFormulaAttrs = computed(() => {
@@ -455,12 +506,13 @@ const filteredAttrOptions = computed(() => {
 
 watch(
   () => props.selectionRules,
-  (newSelectionRules) => {
+  async (newSelectionRules) => {
     console.log('评分规则组件接收到selectionRules:', newSelectionRules);
-    if (newSelectionRules && newSelectionRules.length > 0) {
-      moFormulaAttrs.value = [...newSelectionRules, ...props.extrasRules];
-      console.log('设置moFormulaAttrs:', moFormulaAttrs.value);
-    }
+    // 获取所有词条列表
+    const allItems = await fetchAllDictionaryItems();
+    // 合并当前评分词条和所有可用词条
+    moFormulaAttrs.value = [...newSelectionRules, ...props.extrasRules, ...allItems];
+    console.log('设置moFormulaAttrs:', moFormulaAttrs.value.length);
   },
   { immediate: true, deep: true }
 );
@@ -550,10 +602,16 @@ const openRuleDialog = (rule) => {
 };
 
 // 打开属性搜索弹窗
-const openAttrSearchDialog = (rule) => {
+const openAttrSearchDialog = async (rule) => {
   currentSelectingRule.value = rule;
   attrSearchKeyword.value = '';
   selectedAttr.value = null;
+  
+  // 重新获取最新的词条列表
+  const allItems = await fetchAllDictionaryItems();
+  moFormulaAttrs.value = [...props.selectionRules, ...props.extrasRules, ...allItems];
+  console.log('打开属性搜索弹窗，可用词条数量:', moFormulaAttrs.value.length);
+  
   attrSearchDialogVisible.value = true;
 };
 
@@ -814,7 +872,19 @@ const applyRules = () => {
   emit('settings', rules.value);
 };
 
-onMounted(() => {});
+const saveRules = () => {
+  if (!checkDataFormat(rules.value)) {
+    return;
+  }
+  emit('save', rules.value);
+};
+
+onMounted(async () => {
+  // 初始化时获取所有词条列表
+  const allItems = await fetchAllDictionaryItems();
+  moFormulaAttrs.value = [...props.selectionRules, ...props.extrasRules, ...allItems];
+  console.log('组件挂载，初始化词条列表:', moFormulaAttrs.value.length);
+});
 </script>
 
 <style scoped lang="scss">
@@ -871,6 +941,13 @@ onMounted(() => {});
   
   &:hover {
     border-color: #409eff;
+  }
+}
+
+.save-rule-btn {
+  &:hover {
+    background-color: rgba(103, 194, 58, 0.2) !important;
+    border-color: rgba(103, 194, 58, 0.7) !important;
   }
 }
 </style>

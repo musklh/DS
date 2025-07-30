@@ -27,6 +27,14 @@
 
       <div class="entry-form-layout">
         <div class="left-form-section">
+          <el-alert 
+            v-if="isSingleChoiceTemplate" 
+            title="注意：这是一个单选题，所有选项中只能选择一项。" 
+            type="info" 
+            :closable="false" 
+            show-icon 
+            style="margin-bottom: 20px;"
+          />
           <el-form :model="formData" :rules="formRules" ref="formRef" label-width="auto" label-position="left" class="adaptive-form">
             <el-form-item label="检查时间" prop="checkTime">
               <div style="display: flex; gap: 8px; align-items: center;">
@@ -82,7 +90,14 @@
               <el-form-item v-else-if="item.input_type === 'single'" :prop="`values.${item.word_code}`" :label="item.word_name">
                   <div class="single-radio-container">
                       <el-radio-group v-model="formData.values[item.word_code]">
-                          <el-radio v-for="option in item.options.split(',')" :key="option" :label="option" />
+                          <el-radio 
+                            v-for="option in item.options.split(',')" 
+                            :key="option" 
+                            :label="option"
+                            @click.prevent="handleRadioClick(formData.values, item.word_code, option)"
+                          >
+                            {{ option === item.word_name ? '&#x200B;' : option }}
+                          </el-radio>
                       </el-radio-group>
                       
                       <!-- 级联子问题 -->
@@ -91,7 +106,12 @@
                           <span class="followup-label">{{ item.followup_options[formData.values[item.word_code]].label || formData.values[item.word_code] }}:</span>
                           <!-- Level 1 Followup Input -->
                           <el-radio-group v-if="item.followup_options[formData.values[item.word_code]].input_type === 'single'" v-model="formData.values[item.word_code + '_followup']">
-                            <el-radio v-for="fu_option in getOptionsArray(item.followup_options[formData.values[item.word_code]].options)" :key="fu_option" :label="fu_option" />
+                            <el-radio 
+                              v-for="fu_option in getOptionsArray(item.followup_options[formData.values[item.word_code]].options)" 
+                              :key="fu_option" 
+                              :label="fu_option"
+                              @click.prevent="handleRadioClick(formData.values, item.word_code + '_followup', fu_option)"
+                            />
                           </el-radio-group>
                           <el-input v-else-if="item.followup_options[formData.values[item.word_code]].input_type === 'text'" v-model="formData.values[item.word_code + '_followup']" size="small" placeholder="请输入" style="width: 150px;"/>
                           <el-input-number v-else-if="item.followup_options[formData.values[item.word_code]].input_type === 'number'" v-model="formData.values[item.word_code + '_followup']" size="small" :controls="false" placeholder="请输入数值" style="width: 150px;"/>
@@ -122,7 +142,9 @@
               <el-form-item v-else-if="item.input_type === 'multi' || item.input_type === 'multi_with_date'" :label="item.word_name" :prop="`values.${item.word_code}`">
                 <el-checkbox-group v-model="formData.values[item.word_code].selected">
                   <div v-for="option in item.options.split(',')" :key="option" class="checkbox-time-item">
-                    <el-checkbox :label="option" />
+                    <el-checkbox :label="option">
+                      {{ option === item.word_name ? '&#x200B;' : option }}
+                    </el-checkbox>
                     
                     <!-- 多选带时间 -->
                     <el-date-picker
@@ -318,6 +340,7 @@ import {
   ElInputNumber,
   ElSelect,
   ElOption,
+  ElAlert,
 } from 'element-plus';
 import { Refresh, InfoFilled, Camera, Upload } from '@element-plus/icons-vue';
 import { dataCreate } from '../../api/data';
@@ -451,106 +474,48 @@ const formRules = computed(() => {
       { required: true, message: '请选择检查时间', trigger: 'change' }
     ]
   };
-  //这里少一个词条单位，目前用的是英文缩写代替。。。。。。
-  console.log(props.selectedTemplate.dictionaryList)
-  // 为每个模板字段添加必填校验
-  if (props.selectedTemplate?.dictionaryList) {
-    props.selectedTemplate.dictionaryList.forEach(item => {
-      const rule = { required: true, trigger: 'blur' };
-      if (item.input_type === 'multi' || item.input_type === 'multi_with_date') {
-        rule.message = `请选择${item.word_name}`;
-        rule.trigger = 'change';
-        // 自定义校验
-        rule.validator = (rule, value, callback) => {
-          if (!value || value.selected.length === 0) {
-            return callback(new Error(`请至少选择一个${item.word_name}`));
-          }
-          // 校验 multi_with_date
-          if (item.input_type === 'multi_with_date') {
-            for (const option of value.selected) {
-              if (!value.times[option]) {
-                return callback(new Error(`请为'${option}'选择时间`));
-              }
-            }
-          }
-          // 校验级联选项
-          if (item.followup_options) {
-            for (const option of value.selected) {
-              const fu1 = item.followup_options[option];
-
-              if (fu1?.input_type === 'group') {
-                const groupData = value.followup?.[option];
-                if (!groupData) {
-                  return callback(new Error(`请完成'${option}'的后续选项`));
-                }
-                for (const field of fu1.fields) {
-                  if (!groupData[field.label]) {
-                    return callback(new Error(`请为'${option}'的'${field.label}'提供一个值`));
-                  }
-                }
-              } else if (fu1 && !value.followup[option]) {
-                  return callback(new Error(`请完成'${option}'的后续选项`));
-              }
-              
-              // 校验二级级联
-              if (fu1 && fu1.input_type === 'single' && value.followup[option]) {
-                  const selected_fu1_option = value.followup[option];
-                  const fu2 = fu1.followup_options && fu1.followup_options[selected_fu1_option];
-                  const fu2_key = `${option}_${selected_fu1_option}`;
-                  if (fu2 && !value.followup[fu2_key]) {
-                      return callback(new Error(`请完成'${selected_fu1_option}'的后续选项`));
-                  }
-              }
-            }
-          }
-          callback();
-        };
-      } else if (item.input_type === 'single') {
-          rule.message = `请选择${item.word_name}`;
-          rule.trigger = 'change';
-          
-          // 为单选类型添加后续选择验证
-          if (item.followup_options) {
-            rule.validator = (rule, value, callback) => {
-              if (!value) {
-                return callback(new Error(`请选择${item.word_name}`));
-              }
-              
-              // 检查是否有后续选择需要填写
-              const followupConfig = item.followup_options[value];
-              if (followupConfig) {
-                const followupValue = formData.values[item.word_code + '_followup'];
-                if (!followupValue) {
-                  return callback(new Error(`请完成'${value}'的后续选项`));
-                }
-              }
-              
-              callback();
-            };
-          }
-      } else if (item.input_type === 'single_with_other') {
-        rule.message = `请选择${item.word_name}`;
-        rule.trigger = 'change';
-        rule.validator = (rule, value, callback) => {
-          if (!value || !value.selected) {
-            return callback(new Error(`请选择${item.word_name}`));
-          }
-          if (value.selected === '__other__' && !value.other) {
-            return callback(new Error('请输入其他内容'));
-          }
-          callback();
-        };
-      } else if (item.input_type === 'number' || item.input_type === 'date') {
-        rule.message = `请输入${item.word_name}`;
-      } else {
-        rule.message = `请输入${item.word_name}`;
-      }
-      rules[`values.${item.word_code}`] = [rule];
-    });
-  }
-
   return rules;
 });
+
+const isSingleChoiceTemplate = computed(() => {
+  if (!props.selectedTemplate?.dictionaryList) {
+    return false;
+  }
+  const singleChoiceItems = props.selectedTemplate.dictionaryList.filter(
+    item => item.input_type === 'single'
+  );
+  return singleChoiceItems.length > 1;
+});
+
+// 允许取消单选按钮
+const handleRadioClick = (model, key, option) => {
+    if (isSingleChoiceTemplate.value) {
+        const isDeselecting = model[key] === option;
+
+        // Clear all single-choice values in this template group
+        props.selectedTemplate.dictionaryList.forEach(item => {
+            if (item.input_type === 'single') {
+                model[item.word_code] = '';
+                // Also clear any potential follow-up answers for the cleared item
+                if (item.followup_options && model[item.word_code + '_followup'] !== undefined) {
+                    model[item.word_code + '_followup'] = '';
+                }
+            }
+        });
+
+        // If it was not a deselect action, set the new value
+        if (!isDeselecting) {
+            model[key] = option;
+        }
+    } else {
+        // Original logic to allow deselecting a single radio
+        if (model[key] === option) {
+            model[key] = ''; // Deselect
+        } else {
+            model[key] = option; // Select
+        }
+    }
+};
 
 // 检查是否有摄像头
 const checkCamera = async () => {

@@ -475,6 +475,18 @@ watch(
   { immediate: true } // immediate: true 确保在组件挂载时立即执行一次
 );
 
+const filterRulesTypes = (datas) => {
+  datas.forEach((element) => {
+    if (element.attr === '评分分级') {
+      element.ruleTypes = ['公式计算'];
+    } else if (element.attr === '评分标签') {
+      element.ruleTypes = ['范围标签'];
+    } else {
+      element.ruleTypes = ['范围编码', '数字编码'];
+    }
+  });
+};
+
 const onMountedd = async () => {
   await getTableCrudList();
 };
@@ -556,7 +568,7 @@ const getTableCrudList = async () => {
   return;
 };
 
-// 获取规则数据获取规则数据获取规则数据获取规则数据获取规则数据获取规则数据获取规则数据
+// 获取规则数据获取规则数据获取规则数据获取规则数据获取规则数据获取规则数据获取规则数据获取规则数据获取规则数据获取规则数据获取规则数据获取规则数据获取规则数据
 const fetchDictionary = async () => {
   try {
     const res = await dictionaryList({ page: 1, page_size: 99999 });
@@ -758,7 +770,7 @@ const handleCloseDialog = () => {
   valueDialogVisible.value = false;
 };
 
-// 打开规则设置弹窗打开规则设置弹窗打开规则设置弹窗打开规则设置弹窗打开规则设置弹窗打开规则设置弹窗打开规则设置弹窗打开规则设置弹窗
+// 打开规则设置弹窗打开规则设置弹窗打开规则设置弹窗打开规则设置弹窗打开规则设置弹窗打开规则设置弹窗打开规则设置弹窗打开规则设置弹窗打开规则设置弹窗
 const openRuleDialog = (rule) => {
   if (!rule.type) {
     ElMessage.error(`您还未选择规则类型`);
@@ -807,217 +819,6 @@ const removeRuleItem = (index) => {
   }
 };
 
-// 确认规则设置确认规则设置确认规则设置确认规则设置确认规则设置确认规则设置确认规则设置确认规则设置确认规则设置确认规则设置确认规则设置
-const confirmRuleSettings = () => {
-  // 这里可以保存规则设置到对应的规则对象中
-  let eventRules = rules.value.find((item) => item.attr === currentRule.value.attr);
-  let Rule = {};
-  if (dialogType.value === '范围编码' || dialogType.value === '范围标签') {
-    Rule = {
-      name: dialogType.value,
-      rules: currentRuleItems.value,
-    };
-  }
-  if (dialogType.value === '数字编码') {
-    Rule = {
-      name: dialogType.value,
-      rules: numberRuleItems.value,
-    };
-  }
-  if (dialogType.value === '公式计算') {
-    // console.log(selectedFormulaAttrs.value);
-    Rule = {
-      name: dialogType.value,
-      rules: formulaString.value,
-    };
-    eventRules.formulaAttrs = selectedFormulaAttrs.value;
-  }
-
-  eventRules.rule = Rule;
-
-  //  }
-  // if(  dialogType.value ==='范围编码'){
-
-  // }
-
-  // console.log('保存规则设置:', currentRuleItems.value);
-  ruleDialogVisible.value = false;
-};
-
-const addNumberRuleItem = (idx) => {
-  numberRuleItems.value.splice(idx + 1, 0, { originValue: '', scoreValue: '' });
-};
-const removeNumberRuleItem = (idx) => {
-  if (numberRuleItems.value.length > 1) numberRuleItems.value.splice(idx, 1);
-};
-
-// 添加选中的公式属性状态
-const selectedFormulaAttrs = ref([]);
-
-// 在其他 ref 变量声明附近添加
-const formulaString = ref('请点击虾类的计算属性参与计算');
-
-// 添加切换公式属性选中状态的方法
-const toggleFormulaAttr = (attr) => {
-  const index = selectedFormulaAttrs.value.indexOf(attr);
-  if (index > -1) {
-    // 如果已选中，则取消选中
-    selectedFormulaAttrs.value.splice(index, 1);
-  } else {
-    // 如果未选中，则添加到选中列表
-    selectedFormulaAttrs.value.push(attr);
-  }
-
-  // 更新公式字符串
-  formulaString.value = selectedFormulaAttrs.value.join('+') || '请输入公式';
-};
-
-// 删除原来的 computed 定义
-// const formulaString = computed(() => {
-//   return selectedFormulaAttrs.value.join('+') || '请输入公式';
-// });
-
-const filterRulesTypes = (datas) => {
-  datas.forEach((element) => {
-    if (element.attr === '评分分级') {
-      element.ruleTypes = ['公式计算'];
-    } else if (element.attr === '评分标签') {
-      element.ruleTypes = ['范围标签'];
-    } else {
-      element.ruleTypes = ['范围编码', '数字编码'];
-    }
-  });
-};
-
-// 应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法应用规则方法
-const applyRules = () => {
-  // 循环scoreItems每一条
-  scoreItems.forEach((scoreItem) => {
-    // 找到rules中对应attr的规则
-
-    if (!scoreItem.value) {
-      ElMessage.error(`请填写${scoreItem.label}`);
-      return;
-    }
-    scoreItem.value = Number(scoreItem.value);
-    const matchedRule = rules.value.find((rule) => rule.attr === scoreItem.label);
-
-    // 添加 matchedRule 存在性检查
-    if (
-      matchedRule &&
-      matchedRule.type &&
-      matchedRule.type == '范围编码' &&
-      matchedRule.rule &&
-      matchedRule.rule.rules
-    ) {
-      const ruleItems = matchedRule.rule.rules;
-      const itemValue = parseFloat(scoreItem.value);
-
-      // 如果value为空或无效，跳过
-      if (!scoreItem.value || isNaN(itemValue)) {
-        return;
-      }
-
-      // 在currentRuleItems中找到匹配的范围
-      const matchedRuleItem = ruleItems.find((ruleItem) => {
-        const minValue = parseFloat(ruleItem.minValue);
-        const maxValue = parseFloat(ruleItem.maxValue);
-
-        // 检查value是否在minValue和maxValue之间（包含边界）
-        return itemValue >= minValue && itemValue <= maxValue;
-      });
-
-      // 如果找到匹配的规则项，赋值score
-      if (matchedRuleItem) {
-        scoreItem.score = matchedRuleItem.score;
-      }
-    }
-
-    // 添加 matchedRule 存在性检查
-    if (
-      matchedRule &&
-      matchedRule.type &&
-      matchedRule.type == '数字编码' &&
-      matchedRule.rule &&
-      matchedRule.rule.rules
-    ) {
-      const ruleItems = matchedRule.rule.rules;
-      const itemValue = parseFloat(scoreItem.value);
-
-      // 如果value为空或无效，跳过
-      if (!scoreItem.value || isNaN(itemValue)) {
-        return;
-      }
-
-      // 在currentRuleItems中找到匹配的范围
-      const matchedRuleItem = ruleItems.find((ruleItem) => {
-        const minValue = parseFloat(ruleItem.originValue);
-        const maxValue = parseFloat(ruleItem.scoreValue);
-        // 检查value是否在minValue和maxValue之间（包含边界）
-        return itemValue == minValue;
-      });
-
-      // 如果找到匹配的规则项，赋值score
-      if (matchedRuleItem) {
-        scoreItem.score = matchedRuleItem.scoreValue;
-      }
-    }
-  });
-
-  rules.value.forEach((item) => {
-    if (item.attr === '评分分级') {
-      // console.log('matchedRule', item);
-      if (item.formulaAttrs) {
-        let values = 0;
-        item.formulaAttrs.forEach((At) => {
-          const matchedRule = scoreItems.find((score) => score.label === At);
-          // 添加存在性检查，避免访问undefined的属性
-          if (matchedRule && matchedRule.score) {
-            values = values + Number(matchedRule.score);
-          }
-        });
-        ratingGrading.value = values;
-      }
-    }
-    if (item.attr === '评分标签') {
-      const matchedRule = rules.value.find((rule) => rule.attr === '评分标签');
-
-      if (matchedRule && matchedRule.rule && matchedRule.rule.rules) {
-        const ruleItems = matchedRule.rule.rules;
-
-        // 在currentRuleItems中找到匹配的范围
-        const matchedRuleItem = ruleItems.find((ruleItem) => {
-          const minValue = parseFloat(ruleItem.minValue);
-          const maxValue = parseFloat(ruleItem.maxValue);
-
-          // 检查value是否在minValue和maxValue之间（包含边界）
-          // console.log('sss', ratingGrading.value, minValue, maxValue);
-          return ratingGrading.value >= minValue && ratingGrading.value <= maxValue;
-        });
-        // 如果找到匹配的规则项，赋值score
-        if (matchedRuleItem) {
-          ratingLabels.value = matchedRuleItem.score;
-        }
-      }
-    }
-  });
-};
-
-const resetData = () => {
-
-  initializeFormData();
-  if (formRef.value) {
-    formRef.value.resetFields();
-  }
-  // 清空评分数据
-  ratingGrading.value = null;
-  ratingLabels.value = null;
-  scoreItems.forEach((item) => {
-    item.score = null;
-  });
-
-};
-
 // 获取量表选项
 const fetchScaleOptions = async () => {
   try {
@@ -1027,6 +828,18 @@ const fetchScaleOptions = async () => {
   } catch (error) {
     console.error('获取量表选项失败:', error);
   }
+};
+
+// 重置数据
+const resetData = () => {
+  // 清空评分数据
+  ratingGrading.value = null;
+  ratingLabels.value = '';
+  scoreItems.forEach((item) => {
+    item.score = null;
+    item.value = '';
+  });
+  ElMessage.success('数据已重置');
 };
 
 // 直接跳转到评分页面
@@ -1064,12 +877,6 @@ const navigateToScaleDirectly = (templateItem) => {
     }
   }
 };
-
-
-
-
-
-
 
 // 根据词条代码获取词条名称
 const getWordNameByCode = (wordCode) => {
@@ -1154,6 +961,7 @@ const emit = defineEmits(['go-back-to-template', 'navigate-to-scale', 'clear-pen
 
 <style scoped lang="scss">
 @import url('./BloodRoutineEntry.scss');
+
 ::v-deep(.custom-dialog .el-dialog__headerbtn) {
   width: 40px;
   height: 40px;

@@ -125,7 +125,12 @@
           :nitialRules="mockInitialRules"
           :selectionRules="mockSelectionRules"
           @settings="onSettings"
+          @save="onSaveRules"
           :applyTitle="'应用规则'"
+          :showSaveButton="true"
+          :saveButtonText="'保存评分规则'"
+          :saving="saving"
+          :currentItem="currentScaleItem"
         />
         <!-- :entryOfCalculation="mockInitialRules" -->
       </div>
@@ -173,6 +178,7 @@ import { ElMessage } from 'element-plus';
 import ratingRules from '@/components/ratingRules/index.vue';
 import { applyRules } from './baseFunction';
 import { dataTableCrudList } from '../../api/dataTableCrud';
+import { dictionaryPartialUpdate } from '../../api/dictionary';
 
 const props = defineProps({
   selectedScale: {
@@ -197,11 +203,15 @@ const selectedHistoryIndex = ref(null);
 const currentScoreItem = ref(null);
 const currentHistoryData = ref([]);
 // 评分时间现在使用当前时间，不再需要单独的变量
-const ratingGrading = ref(null);
-const ratingLabels = ref('');
+
+// 保存相关变量
+const saving = ref(false);
+const currentScaleItem = ref(null);
 
 // 动态生成评分项目，基于选中的量表
 const scoreItems = ref<any[]>([]);
+const ratingGrading = ref(null);
+const ratingLabels = ref('');
 
 // 初始化评分项目
 const initializeScoreItems = async () => {
@@ -339,9 +349,50 @@ watch(() => props.selectedScale, async () => {
 // 点击应用规则事件
 const onSettings = (data) => {
   console.log('保存规则设置', data);
+  console.log(data);
+
+  // 将data赋值给rules.value用于应用规则
   rules.value = data;
+
   // 自动应用规则
-  applyRules(scoreItems, rules, ratingLabels);
+  applyRules(scoreItems, rules, ratingGrading, ratingLabels);
+};
+
+// 保存评分规则
+const onSaveRules = async (data) => {
+  if (saving.value) return;
+  
+  saving.value = true;
+  console.log('保存评分规则数据:', data);
+  
+  try {
+    // 使用当前选中的量表作为保存目标
+    const currentScale = props.selectedScale;
+    
+    if (!currentScale) {
+      ElMessage.error('未找到对应的评分词条');
+      return;
+    }
+    
+    const scoreFunc = typeof data === 'string' ? data : JSON.stringify(data);
+    
+    // 更新评分词条的规则
+    await dictionaryPartialUpdate(
+      { word_code: currentScale.word_code },
+      {
+        is_score: 1,
+        score_func: scoreFunc,
+      }
+    );
+    
+    ElMessage.success(`保存成功！词条：${currentScale.word_name}(${currentScale.word_code})`);
+    
+  } catch (error) {
+    console.error('保存评分规则失败:', error);
+    ElMessage.error('保存评分规则失败，请重试');
+  } finally {
+    saving.value = false;
+  }
 };
 
 // 打开选择数值弹窗

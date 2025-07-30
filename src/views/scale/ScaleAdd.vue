@@ -24,9 +24,14 @@
       :selectionRules="selectionRules"
       :nitialRules="mockInitialRules"
       @settings="onSettings"
+      @save="onSave"
       :applyTitle="saving ? '保存中...' : '保存评分规则'"
       :buttonAlign="'left'"
       :loading="saving"
+      :showSaveButton="true"
+      :saveButtonText="saving ? '保存中...' : '保存评分规则'"
+      :saving="saving"
+      :currentItem="props.currentItem"
     />
   </div>
 </template>
@@ -127,6 +132,39 @@ watch(() => props.currentItem, (newItem) => {
 
 // 保存逻辑
 const onSettings = async (data: any) => {
+  if (saving.value) return;
+  
+  if (!props.currentItem) {
+    ElMessage.error('请先选择要编辑的词条');
+    return;
+  }
+  
+  saving.value = true;
+  console.log('保存评分规则数据:', data);
+  
+  try {
+    const scoreFunc = typeof data === 'string' ? data : JSON.stringify(data);
+    
+    // 更新现有词条的评分规则
+    await dictionaryPartialUpdate(
+      { word_code: props.currentItem.word_code! },
+      {
+        is_score: 1, // 标记为评分词条
+        score_func: scoreFunc, // 保存评分规则
+      } as any
+    );
+    
+    ElMessage.success(`保存成功！词条：${form.word_name}(${form.word_code})`);
+  } catch (error) {
+    console.error('保存失败:', error);
+    ElMessage.error('保存失败，请重试');
+  } finally {
+    saving.value = false;
+  }
+};
+
+// 保存评分规则
+const onSave = async (data: any) => {
   if (saving.value) return;
   
   if (!props.currentItem) {
