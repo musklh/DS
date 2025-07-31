@@ -457,6 +457,18 @@ const fetchAllDictionaryItems = async () => {
   return [];
 };
 
+// 初始化所有可选属性
+const initializeAllAttributes = async () => {
+  const allItems = await fetchAllDictionaryItems();
+  const baseAttrs = [...props.selectionRules, ...props.extrasRules];
+  const baseAttrCodes = new Set(baseAttrs.map(item => item.word_code));
+
+  const uniqueNewItems = allItems.filter(item => !baseAttrCodes.has(item.word_code));
+  
+  moFormulaAttrs.value = [...baseAttrs, ...uniqueNewItems];
+  console.log('初始化/更新后可用词条数量:', moFormulaAttrs.value.length);
+};
+
 // 将 selectedFormulaAttrs 改为从 rules 中计算得出
 const selectedFormulaAttrs = computed(() => {
   if (!currentRule.value || !currentRule.value.rule) return [];
@@ -503,19 +515,6 @@ const filteredAttrOptions = computed(() => {
     );
   });
 });
-
-watch(
-  () => props.selectionRules,
-  async (newSelectionRules) => {
-    console.log('评分规则组件接收到selectionRules:', newSelectionRules);
-    // 获取所有词条列表
-    const allItems = await fetchAllDictionaryItems();
-    // 合并当前评分词条和所有可用词条
-    moFormulaAttrs.value = [...newSelectionRules, ...props.extrasRules, ...allItems];
-    console.log('设置moFormulaAttrs:', moFormulaAttrs.value.length);
-  },
-  { immediate: true, deep: true }
-);
 
 watch(
   () => props.nitialRules,
@@ -608,8 +607,7 @@ const openAttrSearchDialog = async (rule) => {
   selectedAttr.value = null;
   
   // 重新获取最新的词条列表
-  const allItems = await fetchAllDictionaryItems();
-  moFormulaAttrs.value = [...props.selectionRules, ...props.extrasRules, ...allItems];
+  await initializeAllAttributes();
   console.log('打开属性搜索弹窗，可用词条数量:', moFormulaAttrs.value.length);
   
   attrSearchDialogVisible.value = true;
@@ -881,8 +879,7 @@ const saveRules = () => {
 
 onMounted(async () => {
   // 初始化时获取所有词条列表
-  const allItems = await fetchAllDictionaryItems();
-  moFormulaAttrs.value = [...props.selectionRules, ...props.extrasRules, ...allItems];
+  await initializeAllAttributes();
   console.log('组件挂载，初始化词条列表:', moFormulaAttrs.value.length);
 });
 </script>
