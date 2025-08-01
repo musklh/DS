@@ -249,7 +249,14 @@
               <div class="upload-hint">点击上传图片或拍照</div>
             </div>
             <div v-else class="image-preview">
-              <img :src="uploadedImage" alt="上传的图片" />
+              <el-image 
+                :src="uploadedImage" 
+                :preview-src-list="[uploadedImage]"
+                alt="上传的图片"
+                fit="cover"
+                style="width: 100%; height: 100%;"
+                preview-teleported
+              />
               <div class="image-overlay">
                 <el-button type="primary" size="small" @click.stop="triggerFileUpload">重新上传</el-button>
                 <el-button type="danger" size="small" @click.stop="removeImage">删除</el-button>
@@ -358,6 +365,7 @@ import {
   ElOption,
   ElAlert,
   ElProgress,
+  ElImage,
 } from 'element-plus';
 import { Refresh, InfoFilled, Camera, Upload } from '@element-plus/icons-vue';
 import { dataCreate } from '../../api/data';
@@ -1120,9 +1128,12 @@ const resetForm = () => {
 .ocr-placeholder {
   border: 1px dashed #dcdfe6;
   border-radius: 6px;
-  width: 100%;
-  max-width: 450px; /* Max width to control its size */
-  height: 300px; /* Fixed height for the placeholder */
+  width: 1000px; /* Increased initial width */
+  max-width: 100%;
+  aspect-ratio: 4 / 3; /* Set aspect ratio */
+  height: auto; /* Height will be determined by aspect ratio */
+  min-height: 200px;
+  min-width: 300px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1133,9 +1144,10 @@ const resetForm = () => {
   background-color: #fafafa;
   margin-bottom: 20px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: border-color 0.3s ease, background-color 0.3s ease;
   position: relative;
-  overflow: hidden;
+  overflow: auto;
+  resize: both;
 }
 
 .ocr-placeholder:hover {
@@ -1175,6 +1187,11 @@ const resetForm = () => {
   gap: 10px;
   opacity: 0;
   transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.image-overlay > * {
+  pointer-events: auto;
 }
 
 .image-preview:hover .image-overlay {
