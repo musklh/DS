@@ -227,6 +227,22 @@
         </div>
 
         <div class="right-ocr-section">
+          <!-- Progress Overlay -->
+          <div v-if="showOcrProgress" class="ocr-progress-overlay">
+            <el-progress
+              type="circle"
+              :percentage="ocrProgress"
+              :width="120"
+              :stroke-width="8"
+              color="#409eff"
+            >
+              <template #default="{ percentage }">
+                <span class="percentage-value">{{ Math.round(percentage) }}%</span>
+                <span class="percentage-label">识别中...</span>
+              </template>
+            </el-progress>
+          </div>
+
           <div class="ocr-placeholder" @click="triggerFileUpload">
             <div v-if="!uploadedImage" class="ocr-icon-box">
               <img src="../../assets/s.png" alt="" />
@@ -341,6 +357,7 @@ import {
   ElSelect,
   ElOption,
   ElAlert,
+  ElProgress,
 } from 'element-plus';
 import { Refresh, InfoFilled, Camera, Upload } from '@element-plus/icons-vue';
 import { dataCreate } from '../../api/data';
@@ -370,6 +387,8 @@ const uploadedImage = ref('');
 const hasCamera = ref(false);
 const ocrResults = ref([]);
 const isProcessingOcr = ref(false);
+const showOcrProgress = ref(false);
+const ocrProgress = ref(0);
 const matchResults = ref([]);
 const matchStatistics = ref(null);
 
@@ -582,17 +601,29 @@ const removeImage = () => {
 // OCR识别处理
 const performOcrRecognition = async (file) => {
   isProcessingOcr.value = true;
-  
+  showOcrProgress.value = true;
+  ocrProgress.value = 0;
+  ocrResults.value = [];
+  matchStatistics.value = null;
+
+  const progressInterval = setInterval(() => {
+  if (ocrProgress.value < 99) {
+    ocrProgress.value += Math.random() * 1.5 + 0.5;
+    if (ocrProgress.value > 99) {
+      ocrProgress.value = 99;
+    }
+  } else {
+    clearInterval(progressInterval);
+  }
+}, 400);
+
+
   try {
-    ElMessage.info('正在进行OCR识别...');
-    
-    // 调用真实OCR接口
     const response = await ocrUpload({ file });
 
-    console.log("OCR原始响应:", response.data)
+    console.log("OCR原始响应:", response.data);
 
     if (response.data.code === 200) {
-      // 解析msg字段，因为OCR服务返回的是JSON字符串
       let msgData;
       try {
         msgData = typeof response.data.msg === 'string' ? JSON.parse(response.data.msg) : response.data.msg;
@@ -603,39 +634,34 @@ const performOcrRecognition = async (file) => {
       
       const testResults = msgData.test_results;
       
-             if (!testResults || !Array.isArray(testResults)) {
-         throw new Error('OCR识别结果格式错误');
-       }
-       
-       console.log("解析后的OCR数据:", msgData);
-       console.log("检测结果数组:", testResults);
-       
-       // 将模板字段转换为匹配器需要的格式
+      if (!testResults || !Array.isArray(testResults)) {
+        ElMessage.warning('OCR服务未返回有效的识别结果。');
+        return;
+      }
+      
+      console.log("解析后的OCR数据:", msgData);
+      console.log("检测结果数组:", testResults);
+      
       const templateFields = props.selectedTemplate.dictionaryList.map(item => ({
         word_code: item.word_code,
         word_name: item.word_name,
         word_short: item.word_short
       }));
       
-      // 进行智能匹配
       const matches = matchOcrWithTemplate(templateFields, testResults, 0.6);
       matchResults.value = matches;
       
-      // 获取匹配统计信息
       const stats = getMatchStatistics(templateFields, matches);
       matchStatistics.value = stats;
       
-      // 将匹配结果转换为表单数据格式
       const matchedFormData = convertMatchesToFormData(matches);
       
-      // 自动填充表单
       Object.keys(matchedFormData).forEach(key => {
         if (formData.values[key] !== undefined) {
           formData.values[key] = matchedFormData[key];
         }
       });
       
-      // 显示匹配结果
       ocrResults.value = matches.map(match => ({
         field: match.word_name,
         value: match.result,
@@ -644,17 +670,26 @@ const performOcrRecognition = async (file) => {
         ocr_item: match.ocr_item
       }));
       
-      ElMessage.success(`OCR识别完成！成功匹配 ${stats.matchedFields}/${stats.totalFields} 个字段`);
+      if (stats.matchedFields > 0) {
+        ElMessage.success(`识别成功！匹配到 ${stats.matchedFields} 个词条`);
+      } else {
+        ElMessage.warning('识别完成，未匹配到任何有效词条。');
+      }
       
       console.log('匹配统计:', stats);
       console.log('匹配结果:', matches);
     } else {
-      throw new Error('OCR识别失败');
+      ElMessage.error(response.data.msg || 'OCR服务返回错误');
     }
   } catch (error) {
     console.error('OCR识别错误:', error);
     ElMessage.error('OCR识别失败，请重试');
   } finally {
+    clearInterval(progressInterval);
+    ocrProgress.value = 100;
+    setTimeout(() => {
+      showOcrProgress.value = false;
+    }, 500);
     isProcessingOcr.value = false;
   }
 };
@@ -1050,6 +1085,36 @@ const resetForm = () => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  position: relative;
+}
+
+.ocr-progress-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  border-radius: 6px;
+  flex-direction: column;
+}
+
+.percentage-value {
+  display: block;
+  font-size: 28px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.percentage-label {
+  display: block;
+  margin-top: 8px;
+  font-size: 14px;
+  color: #606266;
 }
 
 .ocr-placeholder {
