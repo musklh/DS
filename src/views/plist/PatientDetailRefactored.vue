@@ -6,6 +6,7 @@
       <div class="right-toolbar">
         <el-button icon="Edit" type="primary" @click="openEditDialog">编辑信息</el-button>
         <el-button icon="DataAnalysis" type="success" @click="handleVisualization">数据可视化</el-button>
+        <el-button icon="Download" type="info" @click="openExportDialog">导出数据</el-button>
         <div class="view-switch">
           <el-button
             :type="viewMode === 'table' ? 'danger' : 'default'"
@@ -74,6 +75,15 @@
       @save-item="handleSaveItem"
       @delete-item="handleDeleteItem"
     />
+
+    <!-- 导出数据对话框 -->
+    <DataExportDialog
+      v-model="exportDialogVisible"
+      :patient-data="patient"
+      :template-data="templateData"
+      :selected-case-codes="selectedCaseCodes"
+      @export-success="handleExportSuccess"
+    />
   </div>
 </template>
 
@@ -93,6 +103,7 @@ import PatientEditDialog from './components/PatientEditDialog.vue'
 import TemplateTableView from './components/TemplateTableView.vue'
 import TemplateTimelineView from './components/TemplateTimelineView.vue'
 import TemplateDetailDialog from './components/TemplateDetailDialog.vue'
+import DataExportDialog from './components/DataExportDialog.vue'
 
 // Props
 const props = defineProps({
@@ -108,6 +119,7 @@ const emit = defineEmits(['back'])
 // 响应式引用
 const patient = toRef(props, 'patient')
 const viewMode = ref('timeline') // 'table' or 'timeline'
+const exportDialogVisible = ref(false)
 
 // 使用组合式函数
 const {
@@ -121,6 +133,7 @@ const {
 } = usePatientData(patient)
 
 const {
+  templateData,
   leftSections,
   rightSections,
   timelineData,
@@ -183,6 +196,15 @@ const handleDeleteItem = async (row) => {
   if (needsRefresh) {
     await fetchTemplateData()
   }
+}
+
+// 导出相关方法
+const openExportDialog = () => {
+  exportDialogVisible.value = true
+}
+
+const handleExportSuccess = () => {
+  console.log('数据导出成功')
 }
 
 // 组件挂载时的初始化
