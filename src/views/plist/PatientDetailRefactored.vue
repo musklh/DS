@@ -200,6 +200,18 @@ const handleDeleteItem = async (row) => {
 
 // 导出相关方法
 const openExportDialog = () => {
+  console.log('打开导出对话框')
+  console.log('templateData 长度:', templateData.value.length)
+  console.log('selectedCaseCodes:', selectedCaseCodes.value)
+
+  // 打印所有模板分类
+  templateData.value.forEach((caseData, index) => {
+    console.log(`病例 ${index + 1}:`, caseData.case_code)
+    caseData.template_categories.forEach(category => {
+      console.log(`  - 分类: ${category.template_category}, 模板数量: ${category.templates.length}`)
+    })
+  })
+
   exportDialogVisible.value = true
 }
 

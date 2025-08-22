@@ -28,7 +28,7 @@
           title="导出说明"
           type="warning"
           :closable="false"
-          description="数据将按模板分类导出，相同模板按时间倒序排列。导出文件包含：模板名称、检查时间、病例编号等信息。"
+          description="数据将按模板分类导出，相同模板按时间倒序排列。导出文件包含：模板基本信息、词条名称、词条编码、检查值、输入类型等完整信息。"
         />
       </div>
     </div>
@@ -42,7 +42,7 @@
           @click="handleExport"
           :disabled="!canExport"
         >
-          {{ exporting ? '导出中...' : '开始导出' }}
+          {{ exporting ? '正在获取数据并导出...' : '开始导出' }}
         </el-button>
       </span>
     </template>
