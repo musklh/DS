@@ -67,9 +67,11 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import { ElSteps, ElStep, ElButton, ElMessage } from 'element-plus';
 import { UserFilled, Tickets, Edit } from '@element-plus/icons-vue';
+import { dataTemplateList } from '../../api/dataTemplate';
 
 // Import child components
 import SelectPatientAndCase from './SelectPatientAndCase.vue';
@@ -80,6 +82,7 @@ import DynamicScoreSheet from '../scale/DynamicScoreSheet.vue';
 
 // import { caseIdentityCases } from '../../api/openApiCase'; // This import seems unused, can be removed if not needed elsewhere
 
+const route = useRoute();
 const currentStep = ref(0); // 0: Select Patient/Case, 1: Select Template, 2: Data Entry
 
 const selectedPatientData = reactive({
@@ -94,6 +97,64 @@ const selectedTemplate = ref(null); // To store the selected template name/ID
 const selectedScale = ref(null); // To store the selected scale
 const selectedTemplateItem = ref(null); // To store the selected template item
 const pendingScoreData = ref({}); // To store pending score data for all template items
+
+// 处理自动跳转逻辑
+const handleAutoJump = async () => {
+  const { autoJump, patientData } = route.query;
+
+  if (autoJump === 'true' && patientData) {
+    try {
+      // 解析患者数据
+      const parsedPatientData = JSON.parse(String(patientData));
+
+      // 更新选中的患者数据
+      Object.assign(selectedPatientData, {
+        name: parsedPatientData.name || '',
+        gender: parsedPatientData.gender === 0 ? '女' : '男',
+        age: parsedPatientData.age || '',
+        identity_id: parsedPatientData.identity_id || '',
+        caseId: parsedPatientData.caseId || '',
+      });
+
+      console.log('自动跳转：患者数据已设置', selectedPatientData);
+
+      // 获取第一个模板
+      const templateResponse = await dataTemplateList({
+        page: 1,
+        page_size: 1 // 只获取第一个模板
+      });
+
+      if (templateResponse?.data?.code === 200 && templateResponse.data.data.list.length > 0) {
+        const firstTemplate = templateResponse.data.data.list[0];
+        console.log('自动跳转：获取到第一个模板', firstTemplate);
+
+        // 自动选择第一个模板
+        selectedTemplate.value = {
+          id: firstTemplate.id,
+          code: firstTemplate.template_code,
+          name: firstTemplate.template_name,
+          dictionaryList: firstTemplate.dictionary_list,
+        };
+
+        ElMessage.success(`自动选择模板 "${firstTemplate.template_name}"，正在跳转到数据录入页面...`);
+
+        // 根据模板名称判断跳转到哪个步骤
+        if (firstTemplate.template_name.includes('评分')) {
+          currentStep.value = 3;
+        } else {
+          currentStep.value = 2;
+        }
+      } else {
+        ElMessage.error('获取模板失败，跳转到模板选择页面');
+        currentStep.value = 1;
+      }
+    } catch (error) {
+      console.error('自动跳转处理失败:', error);
+      ElMessage.error('自动跳转失败，请手动选择患者和模板');
+      currentStep.value = 0;
+    }
+  }
+};
 
 // Handlers for child component events
 const handlePatientCaseSelected = (data) => {
@@ -185,6 +246,11 @@ const handleSaveScoreData = (data) => {
   currentStep.value = 3; // 跳回模板页面
   ElMessage.success(`评分数据已暂存，请在模板页面统一录入`);
 };
+
+// 组件挂载时处理自动跳转
+onMounted(() => {
+  handleAutoJump();
+});
 </script>
 
 <style scoped>

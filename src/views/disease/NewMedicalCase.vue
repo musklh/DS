@@ -110,12 +110,14 @@
 <script lang="ts">
 import { defineComponent, reactive, ref, onMounted } from 'vue'; // 引入 onMounted
 import { ElMessage } from 'element-plus';
+import { useRouter } from 'vue-router'; // 导入路由
 import { caseCreate } from '../../api/openApiCase'; // 路径根据实际位置调整
 
 export default defineComponent({
   name: 'NewMedicalCase',
 
   setup() {
+    const router = useRouter(); // 获取路由实例
     const formRef = ref(); // 表单实例引用
     const form = reactive({
       caseId: '', // 病例号
@@ -271,7 +273,7 @@ export default defineComponent({
               main_diagnosis: form.diagnosis, // 主要诊断
               has_transplant_surgery: transplantSurgeryInfo, // 是否做过移植手术及其日期
               is_in_transplant_queue: form.isInTransplantQueue, // 是否在移植队列
-            } as unknown as API.Case; // 类型断言，如果API.Case已定义，可以去掉 unknown
+            } as API.CaseDetail; // 类型断言
 
             console.log("提交的payload:", payload);
 
@@ -279,10 +281,25 @@ export default defineComponent({
             const response = await caseCreate(payload);
             
             if (response?.data?.code === 200) {
-              ElMessage.success('病例添加成功！');
+              ElMessage.success('病例添加成功！正在跳转到数据录入页面...');
               console.log('提交成功，返回数据：', response);
-              formRef.value.resetFields(); // 重置表单字段
-              generateCaseId(); // 重新生成新的病例号
+
+              // 跳转到数据录入页面并传递患者和病例信息
+              const patientData = {
+                name: form.name,
+                identity_id: form.idCard,
+                age: calcAge(form.birthDate),
+                gender: form.gender === '男' ? 1 : 0,
+                caseId: form.caseId
+              };
+
+              router.push({
+                name: 'PdataView',
+                query: {
+                  autoJump: 'true', // 标识这是自动跳转
+                  patientData: JSON.stringify(patientData)
+                }
+              });
             } else {
               ElMessage.error(response?.data?.msg || '病例添加失败，请检查数据后重试');
               console.error('提交失败，返回数据：', response);
