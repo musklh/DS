@@ -125,15 +125,20 @@ const handleAutoJump = async () => {
 
       console.log('自动跳转：患者数据已设置', selectedPatientData);
 
-      // 获取第一个模板
+      // 获取完整的模板列表
       const templateResponse = await dataTemplateList({
         page: 1,
-        page_size: 1 // 只获取第一个模板
+        page_size: 100 // 获取足够多的模板
       });
 
       if (templateResponse?.data?.code === 200 && templateResponse.data.data.list.length > 0) {
+        // 保存完整的模板列表
+        templatesList.value = templateResponse.data.data.list;
+        currentTemplateIndex.value = 0; // 设置为第一个模板
+
         const firstTemplate = templateResponse.data.data.list[0];
-        console.log('自动跳转：获取到第一个模板', firstTemplate);
+        console.log('自动跳转：获取到模板列表', templatesList.value);
+        console.log('自动跳转：选择第一个模板', firstTemplate);
 
         // 自动选择第一个模板
         selectedTemplate.value = {
@@ -195,13 +200,38 @@ const handlePatientCaseSelected = (data) => {
   }
 };
 
-const handleTemplateSelected = (templateData) => {
+const handleTemplateSelected = async (templateData) => {
   console.log('PdataView: 接收到的模板数据:', templateData);
 
   // 如果是从模板选择页面来的，保存整个模板列表
-  if (templateData.templatesList) {
+  if (templateData.templatesList && templateData.templatesList.length > 0) {
     templatesList.value = templateData.templatesList;
     currentTemplateIndex.value = templateData.currentIndex || 0;
+    console.log('PdataView: 设置模板列表，长度:', templatesList.value.length, '当前索引:', currentTemplateIndex.value);
+  } else {
+    // 如果没有传递模板列表，主动获取完整列表以支持导航功能
+    console.log('PdataView: 没有接收到模板列表，主动获取...');
+    try {
+      const templateResponse = await dataTemplateList({
+        page: 1,
+        page_size: 100 // 获取足够多的模板
+      });
+
+      if (templateResponse?.data?.code === 200 && templateResponse.data.data.list.length > 0) {
+        templatesList.value = templateResponse.data.data.list;
+        // 找到当前模板的索引
+        const currentIndex = templatesList.value.findIndex(
+          template => template.id === templateData.templateId
+        );
+        currentTemplateIndex.value = currentIndex >= 0 ? currentIndex : 0;
+        console.log('PdataView: 主动获取模板列表成功，长度:', templatesList.value.length, '当前索引:', currentTemplateIndex.value);
+      }
+    } catch (error) {
+      console.warn('PdataView: 获取模板列表失败:', error);
+      // 即使获取失败，也要设置当前模板
+      templatesList.value = [];
+      currentTemplateIndex.value = 0;
+    }
   }
 
   selectedTemplate.value = {
@@ -245,6 +275,8 @@ const handleNavigateToScale = (data) => {
 
 // 处理模板切换
 const handleTemplateSwitch = (newIndex) => {
+  console.log('模板切换请求:', newIndex, '当前模板列表长度:', templatesList.value.length);
+
   if (newIndex >= 0 && newIndex < templatesList.value.length) {
     currentTemplateIndex.value = newIndex;
     const newTemplate = templatesList.value[newIndex];
@@ -257,7 +289,11 @@ const handleTemplateSwitch = (newIndex) => {
       dictionaryList: newTemplate.dictionary_list,
     };
 
+    console.log('模板切换成功:', selectedTemplate.value);
     ElMessage.success(`切换到模板 "${newTemplate.template_name}"`);
+  } else {
+    console.warn('模板切换失败: 索引超出范围或模板列表为空');
+    ElMessage.warning('无法切换模板，模板列表可能未正确加载');
   }
 };
 

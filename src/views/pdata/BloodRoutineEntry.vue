@@ -382,8 +382,14 @@ import {
 const props = defineProps({
   patientData: Object,
   selectedTemplate: Object,
-  currentTemplateIndex: Number,
-  totalTemplates: Number,
+  currentTemplateIndex: {
+    type: Number,
+    default: 0
+  },
+  totalTemplates: {
+    type: Number,
+    default: 0
+  },
 });
 
 
@@ -395,11 +401,15 @@ const submitting = ref(false);
 
 // 模板导航相关
 const hasPreviousTemplate = computed(() => {
-  return props.currentTemplateIndex > 0;
+  const hasPrev = props.currentTemplateIndex > 0 && props.totalTemplates > 1;
+  console.log('hasPreviousTemplate:', hasPrev, 'currentIndex:', props.currentTemplateIndex, 'totalTemplates:', props.totalTemplates);
+  return hasPrev;
 });
 
 const hasNextTemplate = computed(() => {
-  return props.currentTemplateIndex < props.totalTemplates - 1;
+  const hasNext = props.currentTemplateIndex < props.totalTemplates - 1 && props.totalTemplates > 1;
+  console.log('hasNextTemplate:', hasNext, 'currentIndex:', props.currentTemplateIndex, 'totalTemplates:', props.totalTemplates);
+  return hasNext;
 });
 
 // 图片上传相关
@@ -792,15 +802,23 @@ const getNestedFollowupKey = (option, fu1_answer) => {
 
 // 切换到上一个模板
 const goToPreviousTemplate = () => {
+  console.log('尝试切换到上一个模板');
   if (hasPreviousTemplate.value) {
+    console.log('切换到模板索引:', props.currentTemplateIndex - 1);
     emit('switch-template', props.currentTemplateIndex - 1);
+  } else {
+    console.log('没有上一个模板');
   }
 };
 
 // 切换到下一个模板
 const goToNextTemplate = () => {
+  console.log('尝试切换到下一个模板');
   if (hasNextTemplate.value) {
+    console.log('切换到模板索引:', props.currentTemplateIndex + 1);
     emit('switch-template', props.currentTemplateIndex + 1);
+  } else {
+    console.log('没有下一个模板');
   }
 };
 
