@@ -284,14 +284,20 @@ export default defineComponent({
               ElMessage.success('病例添加成功！正在跳转到数据录入页面...');
               console.log('提交成功，返回数据：', response);
 
+              // 从后端响应中获取真实的病例号
+              const realCaseId = response?.data?.data?.case_code || response?.data?.case_code;
+
               // 跳转到数据录入页面并传递患者和病例信息
               const patientData = {
                 name: form.name,
                 identity_id: form.idCard,
                 age: calcAge(form.birthDate),
                 gender: form.gender === '男' ? 1 : 0,
-                caseId: form.caseId
+                caseId: realCaseId || form.caseId // 优先使用后端返回的真实病例号
               };
+
+              console.log('使用真实病例号:', realCaseId);
+              console.log('传递到数据录入页面的患者数据:', patientData);
 
               router.push({
                 name: 'PdataView',
@@ -345,7 +351,7 @@ export default defineComponent({
 }
 
 /* 优化表单label单行省略号显示 */
-/deep/ .el-form-item__label {
+:deep(.el-form-item__label) {
   max-width: 140px;
   overflow: hidden;
   text-overflow: ellipsis;

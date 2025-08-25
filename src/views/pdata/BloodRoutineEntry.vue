@@ -336,7 +336,9 @@
       </div>
 
       <div class="form-actions">
+        <el-button @click="goToPreviousTemplate" :disabled="!hasPreviousTemplate">上一页</el-button>
         <el-button type="primary" @click="submitForm" :loading="submitting"> 录入 </el-button>
+        <el-button @click="goToNextTemplate" :disabled="!hasNextTemplate">下一页</el-button>
         <el-button @click="resetForm"> 重置 </el-button>
       </div>
     </el-card>
@@ -380,14 +382,25 @@ import {
 const props = defineProps({
   patientData: Object,
   selectedTemplate: Object,
+  currentTemplateIndex: Number,
+  totalTemplates: Number,
 });
 
 
-const emit = defineEmits(['data-submitted', 'go-back-to-template']);
+const emit = defineEmits(['data-submitted', 'go-back-to-template', 'switch-template']);
 
 // 表单引用
 const formRef = ref(null);
 const submitting = ref(false);
+
+// 模板导航相关
+const hasPreviousTemplate = computed(() => {
+  return props.currentTemplateIndex > 0;
+});
+
+const hasNextTemplate = computed(() => {
+  return props.currentTemplateIndex < props.totalTemplates - 1;
+});
 
 // 图片上传相关
 const fileInput = ref(null);
@@ -777,6 +790,20 @@ const getNestedFollowupKey = (option, fu1_answer) => {
   return `${option}_${fu1_answer}`;
 };
 
+// 切换到上一个模板
+const goToPreviousTemplate = () => {
+  if (hasPreviousTemplate.value) {
+    emit('switch-template', props.currentTemplateIndex - 1);
+  }
+};
+
+// 切换到下一个模板
+const goToNextTemplate = () => {
+  if (hasNextTemplate.value) {
+    emit('switch-template', props.currentTemplateIndex + 1);
+  }
+};
+
 // 组件挂载时检查摄像头
 onMounted(() => {
   // initializeFormData(); // Now handled by watch
@@ -887,7 +914,25 @@ const submitForm = async () => {
         const res = await dataCreate(payload);
         if (res.data.code === 200 || res.data.code === 201) {
           ElMessage.success('数据录入成功！');
-          emit('data-submitted', formData);
+
+          // 如果有下一个模板，提示用户是否继续录入
+          if (hasNextTemplate.value) {
+            ElMessage({
+              message: '数据录入成功！是否录入下一个模板？',
+              type: 'success',
+              duration: 3000,
+              showClose: true,
+              onClose: () => {
+                // 自动跳转到下一个模板
+                goToNextTemplate();
+              }
+            });
+          } else {
+            ElMessage.success('所有模板已录入完成！');
+          }
+
+          // 重新初始化表单，准备录入下一个模板
+          resetForm();
         } else {
           ElMessage.error(res.data.msg || '数据录入失败');
         }
@@ -1025,9 +1070,7 @@ const resetForm = () => {
   max-width: 500px;
 }
 
-.left-form-section .adaptive-form {
-  /* 自适应表单标签宽度 */
-}
+
 
 .left-form-section .el-form-item {
   margin-bottom: 18px;
@@ -1228,8 +1271,14 @@ const resetForm = () => {
 }
 
 .form-actions .el-button {
-  width: 100px; /* Fixed width for buttons */
-  margin: 0 10px;
+  min-width: 80px; /* Minimum width for buttons */
+  margin: 0 5px;
+}
+
+/* 导航按钮样式 */
+.form-actions .el-button:first-child,
+.form-actions .el-button:nth-child(2) {
+  min-width: 100px;
 }
 
 .ocr-results {

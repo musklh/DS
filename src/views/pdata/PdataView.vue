@@ -37,8 +37,11 @@
         v-if="currentStep === 2"
         :patient-data="selectedPatientData"
         :selected-template="selectedTemplate"
+        :current-template-index="currentTemplateIndex"
+        :total-templates="templatesList.length"
         @data-submitted="handleDataSubmitted"
         @go-back-to-template="currentStep = 1"
+        @switch-template="handleTemplateSwitch"
       />
       <BloodRoutineEntryWithRating
         v-if="currentStep === 3"
@@ -97,6 +100,10 @@ const selectedTemplate = ref(null); // To store the selected template name/ID
 const selectedScale = ref(null); // To store the selected scale
 const selectedTemplateItem = ref(null); // To store the selected template item
 const pendingScoreData = ref({}); // To store pending score data for all template items
+
+// 模板列表相关状态
+const templatesList = ref([]); // 存储所有模板列表
+const currentTemplateIndex = ref(0); // 当前模板索引
 
 // 处理自动跳转逻辑
 const handleAutoJump = async () => {
@@ -190,6 +197,13 @@ const handlePatientCaseSelected = (data) => {
 
 const handleTemplateSelected = (templateData) => {
   console.log('PdataView: 接收到的模板数据:', templateData);
+
+  // 如果是从模板选择页面来的，保存整个模板列表
+  if (templateData.templatesList) {
+    templatesList.value = templateData.templatesList;
+    currentTemplateIndex.value = templateData.currentIndex || 0;
+  }
+
   selectedTemplate.value = {
     id: templateData.templateId,
     code: templateData.templateCode,
@@ -202,19 +216,10 @@ const handleTemplateSelected = (templateData) => {
 };
 
 const handleDataSubmitted = (formData) => {
-  ElMessage.success('数据已成功录入！');
   console.log('Final submitted data:', formData);
-  // 数据录入完成后，重置整个流程，跳转回到患者列表
-  currentStep.value = 0;
-  // 清空已选择的数据
-  Object.assign(selectedPatientData, {
-    name: '',
-    gender: '',
-    age: '',
-    idCard: '',
-    caseId: '',
-  });
-  selectedTemplate.value = null;
+  // 数据录入成功后，不跳转到选择病例页面，保持当前状态
+  // 用户可以通过上一页/下一页按钮继续录入其他模板
+  // 或者手动选择返回
 };
 
 // 返回病例选择
@@ -236,6 +241,24 @@ const handleNavigateToScale = (data) => {
   selectedTemplateItem.value = data.templateItem;
   currentStep.value = 4;
   ElMessage.success(`已跳转到 ${data.selectedScale.word_name} 评分界面`);
+};
+
+// 处理模板切换
+const handleTemplateSwitch = (newIndex) => {
+  if (newIndex >= 0 && newIndex < templatesList.value.length) {
+    currentTemplateIndex.value = newIndex;
+    const newTemplate = templatesList.value[newIndex];
+
+    // 更新当前选中的模板
+    selectedTemplate.value = {
+      id: newTemplate.id,
+      code: newTemplate.template_code,
+      name: newTemplate.template_name,
+      dictionaryList: newTemplate.dictionary_list,
+    };
+
+    ElMessage.success(`切换到模板 "${newTemplate.template_name}"`);
+  }
 };
 
 // 处理暂存评分数据

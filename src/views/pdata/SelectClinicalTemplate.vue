@@ -31,8 +31,8 @@
           <el-table-column prop="template_description" label="模板描述" show-overflow-tooltip />
           <el-table-column prop="category_name" label="分类" width="120" />
           <el-table-column label="操作" width="120">
-            <template #default="{ row }">
-              <el-button type="primary" link @click.stop="handleTemplateSelect(row)">
+            <template #default="{ row, $index }">
+              <el-button type="primary" link @click.stop="handleTemplateSelect(row, $index)">
                 选择
               </el-button>
             </template>
@@ -70,6 +70,20 @@ const templates = ref([]);
 // 获取模板列表
 const fetchTemplates = async () => {
   try {
+    // 先检查本地缓存
+    const cachedTemplates = localStorage.getItem('clinicalTemplates');
+    if (cachedTemplates) {
+      const parsedTemplates = JSON.parse(cachedTemplates);
+      const cacheTime = parsedTemplates.timestamp;
+      const now = Date.now();
+      // 如果缓存时间在1小时内，直接使用缓存
+      if (now - cacheTime < 60 * 60 * 1000) {
+        templates.value = parsedTemplates.data;
+        console.log('使用缓存的模板列表');
+        return;
+      }
+    }
+
     const res = await dataTemplateList({
       page: 1,
       page_size: 100
@@ -77,6 +91,13 @@ const fetchTemplates = async () => {
     console.log('获取到的模板列表:', res);
     if (res?.data?.code === 200) {
       templates.value = res.data.data.list;
+
+      // 缓存到本地存储
+      const cacheData = {
+        data: res.data.data.list,
+        timestamp: Date.now()
+      };
+      localStorage.setItem('clinicalTemplates', JSON.stringify(cacheData));
     }
   } catch (error) {
     console.error('获取模板列表失败:', error);
@@ -85,13 +106,16 @@ const fetchTemplates = async () => {
 };
 
 // 选择模板
-const handleTemplateSelect = (template) => {
+const handleTemplateSelect = (template, index) => {
   console.log('选择的模板:', template);
+  const templateIndex = index !== undefined ? index : templates.value.indexOf(template);
   emit('template-selected', {
     templateId: template.id,
     templateCode: template.template_code,
     templateName: template.template_name,
-    dictionaryList: template.dictionary_list
+    dictionaryList: template.dictionary_list,
+    templatesList: templates.value, // 传递整个模板列表
+    currentIndex: templateIndex // 传递当前选择的模板索引
   });
 };
 
