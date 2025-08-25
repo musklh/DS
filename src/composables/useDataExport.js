@@ -1,6 +1,7 @@
 import { nextTick } from 'vue'
 import html2canvas from 'html2canvas'
 import * as XLSX from 'xlsx'
+import jsPDF from 'jspdf'
 
 export function useDataExport() {
   // 导出图表为图片
@@ -415,11 +416,249 @@ export function useDataExport() {
     }
   }
 
+  // 创建PDF内容HTML
+  const createPDFContentHTML = (patientData, processedData, dateRange) => {
+    const patientInfo = {
+      name: patientData.identity_name || patientData.name || '',
+      gender: patientData.gender || '',
+      age: patientData.age || '',
+      caseCode: patientData.case_code || patientData.id || '',
+      printTime: new Date().toLocaleDateString('zh-CN'),
+      timeRange: dateRange.exportAll ? '全部数据' : `${dateRange.startDate} ~ ${dateRange.endDate}`
+    }
+
+    let html = `
+      <div style="font-family: 'Microsoft YaHei', 'SimSun', Arial, sans-serif; padding: 20px; line-height: 1.6;">
+        <div style="text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px;">
+          病人检验报告单
+        </div>
+
+        <div style="margin-bottom: 20px; font-size: 14px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span>姓名: ${patientInfo.name}</span>
+            <span>性别: ${patientInfo.gender}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span>年龄: ${patientInfo.age}岁</span>
+            <span>病历号: ${patientInfo.caseCode}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span>打印时间: ${patientInfo.printTime}</span>
+            <span>时间范围: ${patientInfo.timeRange}</span>
+          </div>
+        </div>
+    `
+
+    processedData.forEach(category => {
+      html += `
+        <div style="margin-bottom: 30px;">
+          <div style="font-size: 18px; font-weight: bold; margin-bottom: 15px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">
+            ${category.template_category}
+          </div>
+      `
+
+      category.templates.forEach(template => {
+        const checkTime = new Date(template.check_time).toLocaleDateString('zh-CN')
+        html += `
+          <div style="margin-bottom: 20px; margin-left: 10px;">
+            <div style="font-size: 14px; font-weight: bold; margin-bottom: 10px; color: #333;">
+              检查时间: ${checkTime}
+            </div>
+            <div style="margin-left: 15px; font-size: 12px;">
+        `
+
+        // 这里先添加基础信息，稍后会通过JavaScript添加详细数据
+        html += `
+            </div>
+          </div>
+        `
+      })
+
+      html += `
+        </div>
+      `
+    })
+
+    html += `
+      </div>
+    </div>
+    `
+
+    return html
+  }
+
+  // 导出模板数据到PDF (使用html2canvas方式)
+  const exportTemplateDataToPdf = async (params) => {
+    try {
+      const { patientData, dateRange } = params
+      const processedData = processTemplateData(params)
+
+      if (processedData.length === 0) {
+        return { success: false, message: '没有找到符合条件的数据' }
+      }
+
+      console.log('开始生成PDF文档...')
+
+      // 创建临时HTML元素
+      const tempDiv = document.createElement('div')
+      tempDiv.style.position = 'absolute'
+      tempDiv.style.left = '-9999px'
+      tempDiv.style.top = '-9999px'
+      tempDiv.style.width = '800px'
+      tempDiv.style.fontFamily = "'Microsoft YaHei', 'SimSun', Arial, sans-serif"
+
+      const patientInfo = {
+        name: patientData.identity_name || patientData.name || '',
+        gender: patientData.gender || '',
+        age: patientData.age || '',
+        caseCode: patientData.case_code || patientData.id || '',
+        printTime: new Date().toLocaleDateString('zh-CN'),
+        timeRange: dateRange.exportAll ? '全部数据' : `${dateRange.startDate} ~ ${dateRange.endDate}`
+      }
+
+      tempDiv.innerHTML = `
+        <div style="padding: 40px; line-height: 1.8; font-family: 'Microsoft YaHei', 'SimSun', Arial, sans-serif;">
+          <div style="text-align: center; font-size: 28px; font-weight: bold; margin-bottom: 30px; border-bottom: 3px solid #000; padding-bottom: 15px;">
+            病人检验报告单
+          </div>
+
+          <div style="margin-bottom: 30px; font-size: 16px; background: #f9f9f9; padding: 20px; border-radius: 5px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+              <span style="flex: 1;">姓名: ${patientInfo.name}</span>
+              <span style="flex: 1;">性别: ${patientInfo.gender}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+              <span style="flex: 1;">年龄: ${patientInfo.age}岁</span>
+              <span style="flex: 1;">病历号: ${patientInfo.caseCode}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="flex: 1;">打印时间: ${patientInfo.printTime}</span>
+              <span style="flex: 1;">时间范围: ${patientInfo.timeRange}</span>
+            </div>
+          </div>
+      `
+
+      // 获取模板详情数据并添加到HTML
+      for (const category of processedData) {
+        console.log(`处理PDF分类: ${category.template_category}`)
+
+        tempDiv.innerHTML += `
+          <div style="margin-bottom: 40px; page-break-inside: avoid;">
+            <div style="font-size: 20px; font-weight: bold; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 8px; color: #333;">
+              ${category.template_category}
+            </div>
+        `
+
+        // 获取模板详情数据
+        const templatesWithDetails = await fetchTemplateDetails(category.templates)
+
+        for (const template of templatesWithDetails) {
+          const checkTime = new Date(template.check_time).toLocaleDateString('zh-CN')
+          const templateName = template.template_name || '未命名模板'
+
+          tempDiv.innerHTML += `
+            <div style="margin-bottom: 25px; margin-left: 15px; background: #f8f8f8; padding: 15px; border-radius: 5px; border-left: 4px solid #007bff;">
+              <div style="font-size: 16px; font-weight: bold; margin-bottom: 8px; color: #007bff; background: #e3f2fd; padding: 8px 12px; border-radius: 3px; margin: -15px -15px 15px -15px; border-left: 4px solid #007bff;">
+                ${templateName}
+              </div>
+              <div style="font-size: 14px; margin-bottom: 15px; color: #666; padding-left: 5px;">
+                检查时间: ${checkTime}
+              </div>
+              <div style="margin-left: 10px; font-size: 14px; line-height: 2;">
+          `
+
+          // 添加词条详情
+          if (template.details && template.details.length > 0) {
+            template.details.forEach(detail => {
+              const value = formatDetailValue(detail.value, detail.input_type)
+              tempDiv.innerHTML += `
+                <div style="margin-bottom: 5px;">
+                  <span style="font-weight: bold; color: #333;">${detail.word_name || ''}：</span>
+                  <span style="color: #666;">${value}</span>
+                </div>
+              `
+            })
+          } else {
+            tempDiv.innerHTML += `
+              <div style="color: #999; font-style: italic;">暂无词条数据</div>
+            `
+          }
+
+          tempDiv.innerHTML += `
+              </div>
+            </div>
+          `
+        }
+
+        tempDiv.innerHTML += `
+          </div>
+        `
+      }
+
+      tempDiv.innerHTML += `
+        </div>
+      `
+
+      document.body.appendChild(tempDiv)
+
+      // 使用html2canvas转换为图片
+      const canvas = await html2canvas(tempDiv, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        width: 800,
+        height: tempDiv.scrollHeight
+      })
+
+      // 创建PDF
+      const pdf = new jsPDF('p', 'mm', 'a4')
+      const imgData = canvas.toDataURL('image/png')
+      const imgWidth = 210
+      const pageHeight = 297
+      const imgHeight = (canvas.height * imgWidth) / canvas.width
+      let heightLeft = imgHeight
+
+      let position = 0
+
+      // 添加第一页
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+      heightLeft -= pageHeight
+
+      // 如果内容超过一页，添加更多页面
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight
+        pdf.addPage()
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+        heightLeft -= pageHeight
+      }
+
+      // 清理临时元素
+      document.body.removeChild(tempDiv)
+
+      // 生成文件名
+      const patientName = patientInfo.name || '患者'
+      const timeRange = dateRange.exportAll ? '全部数据' :
+        `${dateRange.startDate}_${dateRange.endDate}`.replace(/[:\s]/g, '-')
+      const fileName = `${patientName}_检验报告_${timeRange}.pdf`
+
+      // 保存PDF
+      pdf.save(fileName)
+
+      console.log('PDF生成完成')
+      return { success: true, fileName }
+    } catch (error) {
+      console.error('导出PDF失败:', error)
+      return { success: false, message: '导出PDF失败: ' + error.message }
+    }
+  }
+
   return {
     exportChartToImage,
     exportTableToExcel,
     exportTemplateDataToExcel,
     exportTemplateDataToCsv,
+    exportTemplateDataToPdf,
     processTemplateData
   }
 } 
