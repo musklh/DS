@@ -368,6 +368,7 @@ import {
   ElAlert,
   ElProgress,
   ElImage,
+  ElMessageBox,
 } from 'element-plus';
 import { Refresh, InfoFilled, Camera, Upload } from '@element-plus/icons-vue';
 import { dataCreate } from '../../api/data';
@@ -800,25 +801,159 @@ const getNestedFollowupKey = (option, fu1_answer) => {
   return `${option}_${fu1_answer}`;
 };
 
+// 检查表单是否有未保存的数据
+const hasUnsavedData = () => {
+  // 检查检查时间是否被手动修改过（不检查时间差异，因为时间会自然流逝）
+  // 这里我们主要检查表单字段是否有数据
+  
+  // 检查各个字段是否有值
+  for (const word_code in formData.values) {
+    const value = formData.values[word_code];
+    const item = props.selectedTemplate?.dictionaryList?.find(i => i.word_code === word_code);
+    
+    if (!item) continue;
+    
+    // 检查不同类型的字段是否有值
+    if (item.input_type === 'single_with_other') {
+      if (value && (value.selected || value.other)) {
+        return true;
+      }
+    } else if (item.input_type === 'multi' || item.input_type === 'multi_with_date') {
+      if (value && value.selected && value.selected.length > 0) {
+        return true;
+      }
+    } else if (item.input_type === 'number') {
+      if (value !== undefined && value !== null && value !== '') {
+        return true;
+      }
+    } else {
+      // text, date, single等类型
+      if (value && value.toString().trim() !== '') {
+        return true;
+      }
+    }
+  }
+  
+  // 检查单选类型的后续选择字段
+  for (const word_code in formData.values) {
+    if (word_code.endsWith('_followup')) {
+      const followupValue = formData.values[word_code];
+      if (followupValue && followupValue.toString().trim() !== '') {
+        return true;
+      }
+    }
+  }
+  
+  return false;
+};
+
+// 显示未保存数据的确认对话框
+const showUnsavedDataDialog = (action) => {
+  return ElMessageBox.confirm(
+    '您有未录入的数据，是否要先录入再切换页面？',
+    '提示',
+    {
+      confirmButtonText: '先录入',
+      cancelButtonText: '不录入，直接切换',
+      distinguishCancelAndClose: true,
+      type: 'warning',
+      showClose: true,
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
+    }
+  ).then(() => {
+    // 用户选择先录入
+    return 'save';
+  }).catch((action) => {
+    if (action === 'cancel') {
+      // 用户选择不录入，直接切换
+      return 'continue';
+    } else {
+      // 用户点击关闭或按ESC，取消操作
+      return 'abort';
+    }
+  });
+};
+
 // 切换到上一个模板
-const goToPreviousTemplate = () => {
+const goToPreviousTemplate = async () => {
   console.log('尝试切换到上一个模板');
-  if (hasPreviousTemplate.value) {
-    console.log('切换到模板索引:', props.currentTemplateIndex - 1);
-    emit('switch-template', props.currentTemplateIndex - 1);
-  } else {
+  if (!hasPreviousTemplate.value) {
     console.log('没有上一个模板');
+    return;
+  }
+
+  // 检查是否有未保存的数据
+  if (hasUnsavedData()) {
+    try {
+      const userChoice = await showUnsavedDataDialog('previous');
+      
+      if (userChoice === 'save') {
+        // 用户选择先录入，尝试提交表单
+        try {
+          await submitForm();
+          // 提交成功后再切换页面
+          console.log('数据录入成功，切换到上一个模板');
+          emit('switch-template', props.currentTemplateIndex - 1);
+        } catch (submitError) {
+          // 录入失败，留在当前页面
+          console.error('录入失败，留在当前页面:', submitError);
+          return;
+        }
+      } else if (userChoice === 'continue') {
+        // 用户选择不录入，直接切换
+        console.log('用户选择不录入，切换到模板索引:', props.currentTemplateIndex - 1);
+        emit('switch-template', props.currentTemplateIndex - 1);
+      }
+      // userChoice === 'abort' 时什么都不做，保持在当前页面
+    } catch (error) {
+      console.error('处理上一页切换时出错:', error);
+    }
+  } else {
+    // 没有未保存数据，直接切换
+    console.log('没有未保存数据，切换到模板索引:', props.currentTemplateIndex - 1);
+    emit('switch-template', props.currentTemplateIndex - 1);
   }
 };
 
 // 切换到下一个模板
-const goToNextTemplate = () => {
+const goToNextTemplate = async () => {
   console.log('尝试切换到下一个模板');
-  if (hasNextTemplate.value) {
-    console.log('切换到模板索引:', props.currentTemplateIndex + 1);
-    emit('switch-template', props.currentTemplateIndex + 1);
-  } else {
+  if (!hasNextTemplate.value) {
     console.log('没有下一个模板');
+    return;
+  }
+
+  // 检查是否有未保存的数据
+  if (hasUnsavedData()) {
+    try {
+      const userChoice = await showUnsavedDataDialog('next');
+      
+      if (userChoice === 'save') {
+        // 用户选择先录入，尝试提交表单
+        try {
+          await submitForm();
+          // 提交成功后再切换页面
+          console.log('数据录入成功，切换到下一个模板');
+          emit('switch-template', props.currentTemplateIndex + 1);
+        } catch (submitError) {
+          // 录入失败，留在当前页面
+          console.error('录入失败，留在当前页面:', submitError);
+          return;
+        }
+      } else if (userChoice === 'continue') {
+        // 用户选择不录入，直接切换
+        console.log('用户选择不录入，切换到模板索引:', props.currentTemplateIndex + 1);
+        emit('switch-template', props.currentTemplateIndex + 1);
+      }
+      // userChoice === 'abort' 时什么都不做，保持在当前页面
+    } catch (error) {
+      console.error('处理下一页切换时出错:', error);
+    }
+  } else {
+    // 没有未保存数据，直接切换
+    console.log('没有未保存数据，切换到模板索引:', props.currentTemplateIndex + 1);
+    emit('switch-template', props.currentTemplateIndex + 1);
   }
 };
 
@@ -830,12 +965,13 @@ onMounted(() => {
 
 // 提交表单
 const submitForm = async () => {
-  if (!formRef.value) return;
+  if (!formRef.value) return Promise.reject('表单引用不存在');
 
-  await formRef.value.validate(async (valid) => {
-    if (valid) {
-      submitting.value = true;
-      try {
+  return new Promise((resolve, reject) => {
+    formRef.value.validate(async (valid) => {
+      if (valid) {
+        submitting.value = true;
+        try {
         const dataToSubmit = [];
         for (const word_code in formData.values) {
           const value = formData.values[word_code];
@@ -951,18 +1087,23 @@ const submitForm = async () => {
 
           // 重新初始化表单，准备录入下一个模板
           resetForm();
+          resolve(res.data); // 成功时 resolve
         } else {
           ElMessage.error(res.data.msg || '数据录入失败');
+          reject(new Error(res.data.msg || '数据录入失败'));
         }
       } catch (error) {
         console.error('Submit form error:', error);
         ElMessage.error('数据录入失败，请检查网络或联系管理员。');
+        reject(error);
       } finally {
         submitting.value = false;
       }
     } else {
       ElMessage.error('请检查表单是否填写完整。');
+      reject(new Error('表单验证失败'));
     }
+  });
   });
 };
 

@@ -17,7 +17,8 @@
       <div class="format-selection">
         <h4>选择导出格式</h4>
         <el-radio-group v-model="exportFormat" size="large">
-          <el-radio-button label="pdf">PDF 格式</el-radio-button>
+          <el-radio-button label="pdf-legacy">PDF 格式</el-radio-button>
+          <el-radio-button label="markdown">Markdown 格式</el-radio-button>
           <el-radio-button label="excel">Excel 格式</el-radio-button>
           <el-radio-button label="csv">CSV 格式</el-radio-button>
         </el-radio-group>
@@ -29,7 +30,7 @@
           title="导出说明"
           type="warning"
           :closable="false"
-          description="PDF格式：生成标准的病人检验报告单，包含完整的病人信息和检查数据。Excel/CSV格式：数据将按模板分类导出，相同模板按时间倒序排列。导出文件包含：模板基本信息、词条名称、词条编码、检查值、输入类型等完整信息。"
+          description="PDF格式(传统版)：原有的html2canvas方式。Markdown格式：导出为.md文件，可用任何Markdown编辑器查看或进一步转换。Excel/CSV格式：数据将按模板分类导出，相同模板按时间倒序排列。导出文件包含：模板基本信息、词条名称、词条编码、检查值、输入类型等完整信息。"
         />
       </div>
     </div>
@@ -78,7 +79,14 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'export-success'])
 
 // 组合式函数
-const { exportTemplateDataToExcel, exportTemplateDataToCsv, exportTemplateDataToPdf } = useDataExport()
+const { 
+  exportTemplateDataToExcel, 
+  exportTemplateDataToCsv, 
+  exportTemplateDataToPdf,
+  exportTemplateDataToPdfLegacy,
+  exportTemplateDataToPdfMarkdownStyle,
+  exportTemplateDataToMarkdown
+} = useDataExport()
 
 // 响应式数据
 const visible = ref(props.modelValue)
@@ -137,6 +145,12 @@ const handleExport = async () => {
     let result
     if (exportFormat.value === 'pdf') {
       result = await exportTemplateDataToPdf(exportParams)
+    } else if (exportFormat.value === 'pdf-markdown') {
+      result = await exportTemplateDataToPdfMarkdownStyle(exportParams)
+    } else if (exportFormat.value === 'pdf-legacy') {
+      result = await exportTemplateDataToPdfLegacy(exportParams)
+    } else if (exportFormat.value === 'markdown') {
+      result = await exportTemplateDataToMarkdown(exportParams)
     } else if (exportFormat.value === 'excel') {
       result = await exportTemplateDataToExcel(exportParams)
     } else {
